@@ -61,6 +61,52 @@ const get = async (req, res) => {
   }
 };
 
+const getByClinicId = async (req, res) => {
+  try {
+    const clinicRecord = await table.ClinicModel.getById(req);
+    if (!clinicRecord)
+      return res
+        .code(404)
+        .send({ status: false, message: "Clinic not found." });
+
+    const data = await table.BookingModel.getBookingsByClinicId(req);
+
+    res.send({ status: true, data: data });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateById = async (req, res) => {
+  try {
+    const bookingRecord = await table.BookingModel.getById(req);
+    if (!bookingRecord)
+      return res
+        .code(404)
+        .send({ status: false, message: "Booking not found." });
+
+    const data = await table.BookingModel.update(req);
+    res.send({ status: true, data: data, message: "Updated." });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateStatus = async (req, res) => {
+  try {
+    const bookingRecord = await table.BookingModel.getById(req);
+    if (!bookingRecord)
+      return res
+        .code(404)
+        .send({ status: false, message: "Booking not found." });
+
+    const data = await table.BookingModel.update(req);
+    res.send({ status: true, data: data, message: "Updated." });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const deleteById = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
@@ -86,4 +132,7 @@ export default {
   create: create,
   get: get,
   deleteById: deleteById,
+  getByClinicId: getByClinicId,
+  updateById: updateById,
+  updateStatus: updateStatus,
 };

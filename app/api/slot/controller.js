@@ -39,7 +39,11 @@ const create = async (req, res) => {
     });
 
     await transaction.commit();
-    res.send({ status: true, data: data });
+    res.send({
+      status: true,
+      data: data,
+      message: "Slot created successfully.",
+    });
   } catch (error) {
     await transaction.rollback();
     throw error;
@@ -128,29 +132,21 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
     const record = await table.SlotModel.getByPk(req);
     if (!record)
       return res
         .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment not found!" });
+        .send({ status: false, message: "Slot not found!" });
 
-    const isTreatmentDeleted = await table.SlotModel.deleteById(
-      req,
-      req.params.id,
-      { transaction }
-    );
-
-    if (isTreatmentDeleted) {
-      deleteFile(record?.image);
-    }
+    await table.SlotModel.deleteById(req, req.params.id, { transaction });
 
     await transaction.commit();
-    res.send({ status: true, message: "Treatment deleted." });
+    res.send({ status: true, message: "Slot deleted.", data: [] });
   } catch (error) {
-    await (await transaction).rollback();
+    await transaction.rollback();
     throw error;
   }
 };

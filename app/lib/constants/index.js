@@ -47,6 +47,7 @@ const constants = {
     DOCTOR_TABLE: "doctors",
     CLINIC_TABLE: "clinics",
     CLINIC_PATIENT_TABLE: "clinic_patient_mappings",
+    DOCTOR_PATIENT_TABLE: "doctor_patient_mappings",
     PATIENT_TABLE: "patients",
     PROCEDURE_TABLE: "procedures",
     SERVICE_TABLE: "services",

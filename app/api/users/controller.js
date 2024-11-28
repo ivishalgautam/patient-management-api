@@ -9,8 +9,8 @@ import { userSchema } from "../../validation-schemas/user.schema.js";
 
 const create = async (req, res) => {
   const transaction = await sequelize.transaction();
-
   try {
+    const { role } = req.user_data;
     const validateUserData = userSchema.parse(req.body);
 
     const data = await table.UserModel.create(req, { transaction });
@@ -19,7 +19,16 @@ const create = async (req, res) => {
 
     if (data.role === "patient") {
       const validatePatientData = patientSchema.parse(req.body);
-      await table.PatientModel.create(req, data.id, { transaction });
+      const patient = await table.PatientModel.create(req, data.id, {
+        transaction,
+      });
+
+      if (role === "doctor") {
+        const drRecord = await table.DoctorModel.getByUserId(req);
+        await table.DoctorPatientMapModel.create(drRecord.id, patient.id, {
+          transaction,
+        });
+      }
     }
 
     if (data.role === "doctor") {
@@ -84,6 +93,8 @@ const deleteById = async (req, res) => {
     if (record === 0) {
       return res.code(404).send({ status: false, message: "User not exists" });
     }
+
+    await table.UserModel.deleteById(req);
 
     return res.send({ status: true, data: record });
   } catch (error) {
@@ -189,6 +200,28 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const getMyPatients = async (req, res) => {
+  try {
+    res.send({
+      status: true,
+      data: await table.DoctorPatientMapModel.get(req),
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getMyPatientsByClinicId = async (req, res) => {
+  try {
+    res.send({
+      status: true,
+      data: await table.ClinicPatientMapModel.get(req),
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default {
   create: create,
   update: update,
@@ -200,4 +233,6 @@ export default {
   getUser: getUser,
   resetPassword: resetPassword,
   updateStatus: updateStatus,
+  getMyPatients: getMyPatients,
+  getMyPatientsByClinicId: getMyPatientsByClinicId,
 };

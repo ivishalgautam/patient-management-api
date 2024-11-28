@@ -102,6 +102,7 @@ const get = async (req) => {
     whereConditions.push(`srvc.name ILIKE :query OR prcd.name ILIKE :query`);
     queryParams.query = `%${q}%`;
   }
+
   if (featured) {
     whereConditions.push(`srvc.is_featured = true`);
   }

@@ -23,7 +23,6 @@ const init = async (sequelize) => {
           key: "id",
           deferrable: Deferrable.INITIALLY_IMMEDIATE,
         },
-        onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
       patient_id: {
@@ -34,7 +33,6 @@ const init = async (sequelize) => {
           key: "id",
           deferrable: Deferrable.INITIALLY_IMMEDIATE,
         },
-        onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
       procedure_id: {
@@ -45,7 +43,6 @@ const init = async (sequelize) => {
           key: "id",
           deferrable: Deferrable.INITIALLY_IMMEDIATE,
         },
-        onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
     },

@@ -53,6 +53,11 @@ const init = async (sequelize) => {
         type: DataTypes.TIME,
         allowNull: false,
       },
+      status: {
+        type: DataTypes.ENUM(["pending", "canceled", "completed"]),
+        defaultValue: "pending",
+        validate: { isIn: [["pending", "canceled", "completed"]] },
+      },
     },
     {
       createdAt: "created_at",
@@ -147,13 +152,60 @@ const getById = async (req, id) => {
   });
 };
 
-const getByClinicId = async (req, id) => {
-  return await BookingModel.findOne({
-    where: {
-      clinic_id: req?.params?.id || id,
-    },
+const getBookingsByClinicId = async (req, id) => {
+  const whereConditions = [`bk.clinic_id = :clinicId`];
+  const queryParams = { clinicId: req?.params?.id || id };
+
+  let page = req.query.page ? Number(req.query.page) : 1;
+  let limit = req.query.limit ? Number(req.query.limit) : null;
+  let offset = (page - 1) * limit;
+
+  let whereClause = "";
+
+  if (whereConditions.length)
+    whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+
+  let query = `
+  SELECT
+      bk.id, bk.date, bk.slot, bk.status, bk.created_at,  
+      ptusr.fullname as patient_name,
+      CONCAT('+', ptusr.country_code, ' ', ptusr.mobile_number) as patient_contact,
+      drusr.fullname as doctor_name
+    FROM ${constants.models.BOOKING_TABLE} bk
+    LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
+    LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
+    LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
+    LEFT JOIN ${constants.models.USER_TABLE} ptusr ON ptusr.id = pt.user_id
+    ${whereClause}
+    ORDER BY bk.created_at DESC
+    LIMIT :limit OFFSET :offset
+    `;
+
+  let countQuery = `
+    SELECT
+        COUNT(bk.id) OVER()::INTEGER total
+      FROM ${constants.models.BOOKING_TABLE} bk
+      LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
+      LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
+      LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
+      LEFT JOIN ${constants.models.USER_TABLE} ptusr ON ptusr.id = pt.user_id
+      ${whereClause}
+      LIMIT :limit OFFSET :offset
+  `;
+
+  const data = await BookingModel.sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    replacements: { ...queryParams, limit, offset },
     raw: true,
   });
+
+  const count = await BookingModel.sequelize.query(countQuery, {
+    type: QueryTypes.SELECT,
+    replacements: { ...queryParams, limit, offset },
+    raw: true,
+  });
+
+  return { bookings: data, total: count?.[0]?.total ?? 0 };
 };
 
 const getByClinicAndSlot = async (req, clinic_id, slot) => {
@@ -187,6 +239,24 @@ const update = async (req, id) => {
       clinic_id: req.body.clinic_id,
       date: req.body.date,
       slot: req.body.slot,
+      status: req.body.status,
+    },
+    {
+      where: {
+        id: req?.params?.id || id,
+      },
+      returning: true,
+      plain: true,
+    }
+  );
+
+  return data[1];
+};
+
+const updateStatus = async (req, id) => {
+  const data = await BookingModel.update(
+    {
+      status: req.body.status,
     },
     {
       where: {
@@ -215,10 +285,11 @@ export default {
   create: create,
   get: get,
   getById: getById,
-  getByClinicId: getByClinicId,
+  getBookingsByClinicId: getBookingsByClinicId,
   getByPk: getByPk,
   getByDoctorId: getByDoctorId,
   update: update,
+  updateStatus: updateStatus,
   deleteById: deleteById,
   getByClinicAndSlot: getByClinicAndSlot,
 };

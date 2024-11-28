@@ -61,7 +61,7 @@ const init = async (sequelize) => {
 };
 
 const create = async (req, user_id, { transaction }) => {
-  return await PatientModel.create(
+  const data = await PatientModel.create(
     {
       user_id: user_id,
       blood_group: req.body.blood_group,
@@ -72,6 +72,8 @@ const create = async (req, user_id, { transaction }) => {
     },
     { transaction }
   );
+
+  return data.dataValues;
 };
 
 const get = async () => {

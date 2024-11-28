@@ -151,14 +151,17 @@ const update = async (req, id) => {
   return data[1];
 };
 
-const deleteById = async (req, id) => {
-  return await SlotModel.destroy({
-    where: {
-      id: req?.params?.id || id,
+const deleteById = async (req, id, { transaction }) => {
+  return await SlotModel.destroy(
+    {
+      where: {
+        id: req?.params?.id || id,
+      },
+      returning: true,
+      raw: true,
     },
-    returning: true,
-    raw: true,
-  });
+    { transaction }
+  );
 };
 
 export default {
