@@ -4,9 +4,82 @@ import table from "../../db/models.js";
 import slugify from "slugify";
 import { deleteFile } from "../../helpers/file.js";
 import { sequelize } from "../../db/postgres.js";
-import { treatmentSchema } from "../../validation-schemas/treatment.schema.js";
+import { clinicPatientSchema } from "../../validation-schemas/clinic-patient.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
+
+const create = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const validateData = clinicPatientSchema.parse(req.body);
+
+    const clinic = await table.ClinicModel.getById(0, req.body.clinic_id);
+    if (!clinic)
+      return res
+        .code(409)
+        .send({ status: false, message: "Clinic not found." });
+
+    const patient = await table.PatientModel.getById(0, req.body.patient_id);
+    if (!patient)
+      return res
+        .code(409)
+        .send({ status: false, message: "Patient not found." });
+
+    const appointment = await table.BookingModel.getById(
+      0,
+      req.body.appointment_id
+    );
+    if (!appointment)
+      return res
+        .code(409)
+        .send({ status: false, message: "Appointment not found." });
+
+    const service = await table.ServiceModel.getById(0, appointment.service_id);
+    if (!service)
+      return res
+        .code(409)
+        .send({ status: false, message: "Service not found." });
+
+    const record = await table.ClinicPatientMapModel.getByClinicPatientId(
+      patient.id,
+      clinic.id
+    );
+    if (!record) {
+      await table.ClinicPatientMapModel.create(patient.id, clinic.id, {
+        transaction,
+      });
+    }
+
+    const treatmentRecord =
+      await table.TreatmentModel.getByClinicPatientServiceId(
+        patient.id,
+        clinic.id,
+        appointment.service_id
+      );
+
+    if (treatmentRecord) {
+      return res
+        .code(409)
+        .send({ status: false, message: "Treatment already exist." });
+    }
+    await table.TreatmentModel.create(
+      {
+        patient_id: patient.id,
+        clinic_id: clinic.id,
+        service_id: service.id,
+        appointment_id: appointment.id,
+        cost: service.discounted_price,
+      },
+      { transaction }
+    );
+
+    await transaction.commit();
+    res.send({ status: true, message: "Added to treatment process." });
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+};
 
 const updateById = async (req, res) => {
   try {
@@ -53,7 +126,7 @@ const getBySlug = async (req, res) => {
 
 const getById = async (req, res) => {
   try {
-    const record = await table.TreatmentModel.getByPk(req);
+    const record = await table.TreatmentModel.getById(req);
     if (!record) {
       return res
         .code(NOT_FOUND)
@@ -61,6 +134,23 @@ const getById = async (req, res) => {
     }
 
     res.send({ status: true, data: record });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getByClinicId = async (req, res) => {
+  try {
+    const record = await table.ClinicModel.getByPk(req);
+    if (!record) {
+      return res
+        .code(NOT_FOUND)
+        .send({ status: false, message: "Clinic not found!" });
+    }
+
+    const data = await table.TreatmentModel.getByClinicId(req);
+
+    res.send({ status: true, data: data });
   } catch (error) {
     throw error;
   }
@@ -76,7 +166,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
     const record = await table.TreatmentModel.getByPk(req);
@@ -85,28 +175,22 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Treatment not found!" });
 
-    const isTreatmentDeleted = await table.TreatmentModel.deleteById(
-      req,
-      req.params.id,
-      { transaction }
-    );
-
-    if (isTreatmentDeleted) {
-      deleteFile(record?.image);
-    }
+    await table.TreatmentModel.deleteById(req, req.params.id, { transaction });
 
     await transaction.commit();
     res.send({ status: true, message: "Treatment deleted." });
   } catch (error) {
-    await (await transaction).rollback();
+    await transaction.rollback();
     throw error;
   }
 };
 
 export default {
+  create: create,
   get: get,
   updateById: updateById,
   deleteById: deleteById,
   getBySlug: getBySlug,
   getById: getById,
+  getByClinicId: getByClinicId,
 };

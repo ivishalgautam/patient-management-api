@@ -32,7 +32,9 @@ const create = async (req, res) => {
 
     const clinicRecord = await table.ClinicModel.getById(0, req.body.clinic_id);
     if (!clinicRecord)
-      return res.code(404).send({ status: false, message: "Clini not exist." });
+      return res
+        .code(404)
+        .send({ status: false, message: "Clinic not exist." });
 
     const data = await table.SlotModel.create(req, doctorRecord.id, {
       transaction,

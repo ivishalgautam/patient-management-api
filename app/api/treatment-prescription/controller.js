@@ -1,7 +1,6 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import slugify from "slugify";
 import { deleteFile } from "../../helpers/file.js";
 import { sequelize } from "../../db/postgres.js";
 import { treatmentPrescriptionSchema } from "../../validation-schemas/treatment.schema.js";
@@ -23,9 +22,6 @@ const create = async (req, res) => {
         .code(404)
         .send({ status: false, message: "Treatment not found." });
 
-    let slug = slugify(req.body.name, { lower: true });
-    req.body.slug = slug;
-
     const data = await table.TreatmentPrescriptionModel.create(req, {
       transaction,
     });
@@ -44,12 +40,6 @@ const create = async (req, res) => {
 
 const updateById = async (req, res) => {
   try {
-    let slug = "";
-    if (req.body.name) {
-      slug = slugify(req.body?.name, { lower: true });
-      req.body.slug = slug;
-    }
-
     const record = await table.TreatmentPrescriptionModel.getByPk(req);
     if (!record) {
       return res
@@ -126,7 +116,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
     const record = await table.TreatmentPrescriptionModel.getByPk(req);
@@ -136,18 +126,14 @@ const deleteById = async (req, res) => {
         .send({ status: false, message: "Treatment prescription not found!" });
 
     const isTreatmentDeleted =
-      await table.TreatmentPrescriptionModel.deleteById(req, req.params.id, {
+      await table.TreatmentPrescriptionModel.deleteById(req, 0, {
         transaction,
       });
-
-    if (isTreatmentDeleted) {
-      deleteFile(record?.image);
-    }
 
     await transaction.commit();
     res.send({ status: true, message: "Treatment prescription deleted." });
   } catch (error) {
-    await (await transaction).rollback();
+    await transaction.rollback();
     throw error;
   }
 };

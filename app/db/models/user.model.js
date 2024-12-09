@@ -98,6 +98,10 @@ const init = async (sequelize) => {
           isIn: [["admin", "patient", "doctor"]],
         },
       },
+      avatar: {
+        type: DataTypes.STRING,
+        defaultValue: "",
+      },
       reset_password_token: {
         type: DataTypes.STRING,
       },
@@ -127,6 +131,7 @@ const create = async (req, { transaction }) => {
       role: req.body?.role,
       gender: req.body?.gender,
       dob: req.body?.dob,
+      avatar: req.body?.avatar,
     },
     { transaction }
   );
@@ -198,12 +203,42 @@ const get = async (req) => {
 };
 
 const getById = async (req, user_id) => {
-  return await UserModel.findOne({
-    where: {
-      id: req?.params?.id || user_id,
-    },
-    raw: true,
+  const query = `
+  SELECT
+    usr.*,
+    CASE 
+      WHEN usr.role = 'patient' THEN 
+        json_agg(json_build_object(
+          'id', pt.id,
+          'blood_group', pt.blood_group,
+          'marital_status', pt.marital_status,
+          'height_in_cm', pt.height_in_cm,
+          'emergency_contact', pt.emergency_contact,
+          'source', pt.source
+        )) FILTER (WHERE pt.id IS NOT NULL)
+      ELSE 
+        json_agg(json_build_object(
+          'id', dr.id,
+          'specialization', dr.specialization,
+          'experience_years', dr.experience_years
+        )) FILTER (WHERE dr.id IS NOT NULL)
+    END AS details
+  FROM ${constants.models.USER_TABLE} usr
+  LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.user_id = usr.id
+  LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.user_id = usr.id
+  WHERE usr.id = :userId
+  GROUP BY usr.id
+  `;
+
+  const data = await UserModel.sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    replacements: { userId: req?.params?.id || user_id },
+    plain: true,
+    limit: 1,
   });
+
+  console.log({ data });
+  return { ...data, details: data.details?.[0] ?? {} };
 };
 
 const getByPk = async (req, id) => {
@@ -226,24 +261,29 @@ const getByUsername = async (req, record = undefined) => {
   return data;
 };
 
-const update = async (req) => {
-  return await UserModel.update(
+const update = async (req, id, { transaction }) => {
+  const [rowCount, rows] = await UserModel.update(
     {
-      username: req.body?.username,
+      username: req.body.username,
       fullname: req.body?.fullname,
       email: req.body?.email,
       mobile_number: req.body?.mobile_number,
-      country_code: req.body?.country_code.replace(/\s/g, ""),
-
-      role: req.body?.role,
+      country_code: req.body?.country_code,
+      gender: req.body?.gender,
+      dob: req.body?.dob,
+      avatar: req.body?.avatar,
     },
     {
       where: {
-        id: req.params.id,
+        id: req?.params?.id || id,
       },
+      returning: true,
+      raw: true,
       plain: true,
-    }
+    },
+    { transaction }
   );
+  return rows;
 };
 
 const updatePassword = async (req, user_id) => {

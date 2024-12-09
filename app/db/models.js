@@ -16,6 +16,10 @@ import blockedSlotModel from "./models/blocked-slot.model.js";
 import doctorServiceMapModel from "./models/doctor-service-map.model.js";
 import bookingModel from "./models/booking.model.js";
 import doctorPatientMapModel from "./models/doctor-patient-map.model.js";
+import dentalChartModel from "./models/dental-chart.model.js";
+import dentalNoteModel from "./models/dental-note.model.js";
+import investigationModel from "./models/investigation.model.js";
+import treatmentPaymentModel from "./models/treatment-payment.model.js";
 
 export default {
   UserModel: userModel,
@@ -35,4 +39,8 @@ export default {
   TreatmentPrescriptionModel: treatmentPrescriptionModel,
   DoctorServiceMapModel: doctorServiceMapModel,
   BookingModel: bookingModel,
+  DentalChartModel: dentalChartModel,
+  DentalNoteModel: dentalNoteModel,
+  InvestigationModel: investigationModel,
+  TreatmentPaymentModel: treatmentPaymentModel,
 };

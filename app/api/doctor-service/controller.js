@@ -75,7 +75,7 @@ const deleteById = async (req, res) => {
     await table.DoctorServiceMapModel.deleteById(req, 0, { transaction });
     await transaction.commit();
 
-    res.send({ status: true, mesage: "Service deleted." });
+    res.send({ status: true, message: "Service deleted." });
   } catch (error) {
     await transaction.rollback();
     throw error;

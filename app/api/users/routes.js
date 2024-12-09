@@ -13,10 +13,6 @@ export default async function routes(fastify, options) {
   fastify.get("/", {}, controller.get);
   fastify.get("/:id", {}, controller.getById);
   fastify.get("/patients", {}, controller.getMyPatients);
-  fastify.get(
-    "/patients/getByClinicId/:id",
-    {},
-    controller.getMyPatientsByClinicId
-  );
+
   fastify.delete("/:id", {}, controller.deleteById);
 }

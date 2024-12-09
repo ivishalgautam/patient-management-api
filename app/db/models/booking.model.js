@@ -1,6 +1,7 @@
 "use strict";
+import moment from "moment";
 import constants from "../../lib/constants/index.js";
-import { DataTypes, Deferrable, QueryTypes } from "sequelize";
+import { DataTypes, Deferrable, Op, QueryTypes } from "sequelize";
 
 let BookingModel = null;
 
@@ -45,6 +46,16 @@ const init = async (sequelize) => {
         },
         onDelete: "CASCADE",
       },
+      service_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+          model: constants.models.SERVICE_TABLE,
+          key: "id",
+          deferrable: Deferrable.INITIALLY_IMMEDIATE,
+        },
+        onDelete: "CASCADE",
+      },
       date: {
         type: DataTypes.DATEONLY,
         allowNull: false,
@@ -74,6 +85,7 @@ const create = async (req, { transaction }) => {
       doctor_id: req.body.doctor_id,
       patient_id: req.body.patient_id,
       clinic_id: req.body.clinic_id,
+      service_id: req.body.service_id,
       date: req.body.date,
       slot: req.body.slot,
     },
@@ -167,11 +179,14 @@ const getBookingsByClinicId = async (req, id) => {
 
   let query = `
   SELECT
-      bk.id, bk.date, bk.slot, bk.status, bk.created_at,  
+      bk.id, bk.date, bk.slot, bk.status, bk.created_at,
+      pt.id as patient_id,
       ptusr.fullname as patient_name,
       CONCAT('+', ptusr.country_code, ' ', ptusr.mobile_number) as patient_contact,
-      drusr.fullname as doctor_name
+      drusr.fullname as doctor_name,
+      srvc.name as service_name
     FROM ${constants.models.BOOKING_TABLE} bk
+    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = bk.service_id
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
     LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
     LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
@@ -280,6 +295,26 @@ const deleteById = async (req, id) => {
   });
 };
 
+const count = async (clinicId, today = false) => {
+  const whereCondition = {};
+  if (clinicId) {
+    whereCondition.clinic_id = clinicId;
+  }
+  if (today) {
+    const startOfToday = moment().startOf("day").toDate();
+    const endOfToday = moment().endOf("day").toDate();
+
+    whereCondition.created_at = {
+      [Op.between]: [startOfToday, endOfToday],
+    };
+  }
+
+  return await BookingModel.count({
+    where: whereCondition,
+    raw: true,
+  });
+};
+
 export default {
   init: init,
   create: create,
@@ -292,4 +327,5 @@ export default {
   updateStatus: updateStatus,
   deleteById: deleteById,
   getByClinicAndSlot: getByClinicAndSlot,
+  count: count,
 };

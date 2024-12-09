@@ -26,20 +26,78 @@ export const treatmentHistorySchema = z.object({
   files: z.array(z.string()).optional(),
 });
 
-export const treatmentPlanSchema = z.object({
+export const treatmentDentalChartSchema = z.object({
   treatment_id: z
     .string({ required_error: "Treatment ID is required." })
     .uuid()
     .min(1, { message: "Treatment ID is required." }),
-  affected_tooth: z
-    .number({ required_error: "Affected tooth required." })
+  affected_tooths: z
+    .array(z.string(), { required_error: "Affected tooth required." })
     .min(1, { message: "Affected tooth is required." }),
+});
+
+export const dentalNoteSchema = z.object({
+  treatment_id: z
+    .string({ required_error: "Treatment ID is required." })
+    .uuid()
+    .min(1, { message: "Treatment ID is required." }),
   total_cost: z
     .number({ required_error: "Total cost is required." })
     .min(1, { message: "Total cost is required." }),
   notes: z
     .string({ required_error: "Notes is required." })
     .min(1, { message: "Notes is required." }),
+  affected_tooth: z
+    .string({ required_error: "Affected tooth is required." })
+    .min(1, { message: "Affected tooth is required." }),
+});
+
+export const investigationSchema = z.object({
+  treatment_id: z
+    .string({ required_error: "Treatment ID is required." })
+    .uuid()
+    .min(1, { message: "Treatment ID is required." }),
+  temperature: z
+    .number({ required_error: "Temperature is required." })
+    .min(1, { message: "Temperature is required." }),
+  weight: z
+    .number({ required_error: "Weight is required." })
+    .min(1, { message: "Weight is required." }),
+  blood_pressure: z
+    .number({ required_error: "Blood pressure is required." })
+    .min(1, { message: "Blood pressure is required." }),
+  oxygen_saturation: z
+    .number({ required_error: "Oxygen saturation is required." })
+    .min(1, { message: "Oxygen saturation is required." }),
+});
+
+export const treatmentPlanSchema = z.object({
+  treatment_id: z
+    .string({ required_error: "Treatment ID is required." })
+    .uuid()
+    .min(1, { message: "Treatment ID is required." }),
+  total_cost: z
+    .number({ required_error: "Total cost is required." })
+    .min(1, { message: "Total cost is required." }),
+  notes: z
+    .string({ required_error: "Notes is required." })
+    .min(1, { message: "Notes is required." }),
+});
+export const treatmentPaymentSchema = z.object({
+  treatment_id: z
+    .string({ required_error: "Treatment ID is required." })
+    .uuid()
+    .min(1, { message: "Treatment ID is required." }),
+  payment_type: z.enum(["full", "installment"], {
+    required_error: "Payment type is required.",
+  }),
+  payment_method: z.enum(["upi", "cash", "other"], {
+    required_error: "Payment method is required.",
+  }),
+  amount_paid: z
+    .number({ required_error: "Amount paid is required." })
+    .min(1, { message: "Amount paid is required." }),
+  remarks: z.string().optional(),
 });
 
 export const treatmentPrescriptionSchema = z.object({
@@ -50,24 +108,25 @@ export const treatmentPrescriptionSchema = z.object({
   data: z
     .array(
       z.object({
-        drugName: z
-          .string({ required_error: "Drug name is required." })
-          .min(1, { message: "Drug name is required." }),
-        brandName: z
-          .string({ required_error: "Brand name is required." })
-          .min(1, { message: "Brand name is required." }),
-        dosageForm: z
-          .string({ required_error: "Dosage form is required." })
-          .min(1, { message: "Dosage form is required." }),
-        quantiy: z
-          .string({ required_error: "Quantiy is required." })
-          .min(1, { message: "Quantiy is required." }),
-        frequencyAndDosage: z
-          .string({ required_error: "Frequency and dosage is required." })
-          .min(1, { message: "Frequency and dosage is required." }),
+        medicine_name: z
+          .string({ required_error: "Medicine name is required." })
+          .min(1, "Medicine name is required. Example: 'Amoxicillin'"),
+        dosage: z
+          .string({ required_error: "Dosage is required." })
+          .min(1, "Dosage is required. Example: '500mg'"),
+        tablet_amount: z
+          .number()
+          .int()
+          .positive("Tablet amount must be a positive integer. Example: 2"),
+        frequency: z.enum(["morning", "afternoon", "evening"], {
+          required_error: "Frequency is required. Example: 'morning'",
+          invalid_type_error:
+            "Frequency must be one of: 'morning', 'afternoon', 'evening'.",
+        }),
         duration: z
-          .string({ required_error: "Duration is required." })
-          .min(1, { message: "Duration is required." }),
+          .number()
+          .positive("Duration must be a positive number. Example: 7"),
+        notes: z.string().optional().describe("Example: 'Take with food.'"),
       }),
       "Data is required."
     )

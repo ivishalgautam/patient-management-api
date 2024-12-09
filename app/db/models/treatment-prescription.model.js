@@ -1,6 +1,6 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
-import { DataTypes, Deferrable } from "sequelize";
+import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
 let TreatmentPrescriptionModel = null;
 
@@ -23,7 +23,6 @@ const init = async (sequelize) => {
           key: "id",
           deferrable: Deferrable.INITIALLY_IMMEDIATE,
         },
-        onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
       data: {
@@ -65,7 +64,7 @@ const getById = async (req, id) => {
   });
 };
 
-const updateById = async (req, id) => {
+const update = async (req, id) => {
   return await TreatmentPrescriptionModel.update(
     { data: req.body.data },
     {
@@ -74,15 +73,66 @@ const updateById = async (req, id) => {
     }
   );
 };
+
 const getByTreatmentId = async (req, treatment_id) => {
-  return await TreatmentPrescriptionModel.findAll({
-    where: {
-      treatment_id: req?.params?.treatment_id || treatment_id,
+  const whereConditions = [`trmnt.id = :treatmentId`];
+  const queryParams = { treatmentId: req?.params?.id || treatment_id };
+  const q = req.query.q ? req.query.q : null;
+  if (q) {
+    whereConditions.push(`
+      EXISTS (
+        SELECT 1
+      FROM jsonb_array_elements(prs.data) AS elem
+      WHERE elem->>'medicine_name' ILIKE :q OR elem->>'notes' ILIKE :q
+)`);
+    queryParams.q = `%${q.trim()}%`;
+  }
+  let whereClause = "";
+  if (whereConditions.length) {
+    whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+  }
+  const page = req.query.page ? Number(req.query.page) : 1;
+  const limit = req.query.limit ? Number(req.query.limit) : null;
+  const offset = (page - 1) * limit;
+
+  let query = `
+  SELECT
+      prs.*
+    FROM ${constants.models.TREATMENT_PRESCRIPTION_TABLE} prs
+    LEFT JOIN ${constants.models.TREATMENT_TABLE} trmnt ON trmnt.id = prs.treatment_id
+    ${whereClause}
+    ORDER BY prs.created_at desc
+    LIMIT :limit OFFSET :offset
+  `;
+
+  let countQuery = `
+  SELECT
+      COUNT(prs.id) OVER()::integer as total
+    FROM ${constants.models.TREATMENT_PRESCRIPTION_TABLE} prs
+    LEFT JOIN ${constants.models.TREATMENT_TABLE} trmnt ON trmnt.id = prs.treatment_id
+    ${whereClause}
+  `;
+
+  const data = await TreatmentPrescriptionModel.sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    replacements: {
+      ...queryParams,
+      limit,
+      offset,
     },
     raw: true,
   });
-};
 
+  const count = await TreatmentPrescriptionModel.sequelize.query(countQuery, {
+    type: QueryTypes.SELECT,
+    replacements: {
+      ...queryParams,
+    },
+    raw: true,
+  });
+
+  return { prescriptions: data, total: count?.[0]?.total ?? 0 };
+};
 const getByPk = async (req, id) => {
   return await TreatmentPrescriptionModel.findByPk(req?.params?.id || id);
 };
@@ -104,6 +154,6 @@ export default {
   getById: getById,
   getByPk: getByPk,
   deleteById: deleteById,
-  updateById: updateById,
+  update: update,
   getByTreatmentId: getByTreatmentId,
 };

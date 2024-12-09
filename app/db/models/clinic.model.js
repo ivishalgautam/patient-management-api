@@ -124,7 +124,7 @@ const get = async (req) => {
     raw: true,
   });
 
-  return { clinics, total: count?.[0]?.total };
+  return { clinics, total: count?.[0]?.total ?? 0 };
 };
 
 const update = async (req, id) => {

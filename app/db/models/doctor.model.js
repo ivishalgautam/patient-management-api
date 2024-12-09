@@ -49,6 +49,8 @@ const create = async (req, user_id, { transaction }) => {
   return await DoctorModel.create(
     {
       user_id: user_id,
+      specialization: req.body.specialization,
+      experience_years: req.body.experience_years,
     },
     { transaction }
   );
@@ -82,16 +84,44 @@ const getByUserId = async (req, id) => {
   });
 };
 
-const update = async (req, id) => {
-  return await DoctorModel.update(
-    {},
+const update = async (req, id, { transaction }) => {
+  const [, rows] = await DoctorModel.update(
+    {
+      specialization: req.body.specialization,
+      experience_years: req.body.experience_years,
+    },
     {
       where: {
         id: req?.params?.id || id,
       },
+      returning: true,
       plain: true,
-    }
+      raw: true,
+    },
+    { transaction }
   );
+
+  return rows;
+};
+
+const updateByUserId = async (req, id, { transaction }) => {
+  const [, rows] = await DoctorModel.update(
+    {
+      specialization: req.body.specialization,
+      experience_years: req.body.experience_years,
+    },
+    {
+      where: {
+        user_id: req?.params?.id || id,
+      },
+      returning: true,
+      plain: true,
+      raw: true,
+    },
+    { transaction }
+  );
+
+  return rows;
 };
 
 const deleteById = async (req, id) => {
@@ -113,4 +143,5 @@ export default {
   getByUserId: getByUserId,
   update: update,
   deleteById: deleteById,
+  updateByUserId: updateByUserId,
 };

@@ -12,6 +12,13 @@ import slotRoutes from "../../api/slot/routes.js";
 import blockSlotRoutes from "../../api/block-slot/routes.js";
 import doctorServiceRoutes from "../../api/doctor-service/routes.js";
 import bookingRoutes from "../../api/booking/routes.js";
+import clinicPatientRoutes from "../../api/clinic-patient/routes.js";
+import dentalChartRoutes from "../../api/dental-chart/routes.js";
+import dentalNoteRoutes from "../../api/dental-note/routes.js";
+import investigationRoutes from "../../api/investigation/routes.js";
+import treatmentPaymentRoutes from "../../api/treatment-payment/routes.js";
+import patientRoutes from "../../api/patients/routes.js";
+import reportRoutes from "../../api/report/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
@@ -24,13 +31,20 @@ export default async function routes(fastify, options) {
   fastify.register(bannerRoutes, { prefix: "banners" });
   fastify.register(treatmentRoutes, { prefix: "treatments" });
   fastify.register(treatmentHistoryRoutes, { prefix: "treatment-history" });
-  fastify.register(treatmentPlanRoutes, { prefix: "treatment-plan" });
+  fastify.register(treatmentPlanRoutes, { prefix: "treatment-plans" });
   fastify.register(treatmentPrescriptionRoutes, {
-    prefix: "treatment-prescription",
+    prefix: "treatment-prescriptions",
   });
   fastify.register(clinicRoutes, { prefix: "clinics" });
   fastify.register(slotRoutes, { prefix: "slots" });
   fastify.register(blockSlotRoutes, { prefix: "block-slots" });
   fastify.register(doctorServiceRoutes, { prefix: "doctor-services" });
   fastify.register(bookingRoutes, { prefix: "bookings" });
+  fastify.register(clinicPatientRoutes, { prefix: "clinic-patients" });
+  fastify.register(dentalChartRoutes, { prefix: "dental-charts" });
+  fastify.register(dentalNoteRoutes, { prefix: "dental-notes" });
+  fastify.register(investigationRoutes, { prefix: "investigations" });
+  fastify.register(treatmentPaymentRoutes, { prefix: "treatment-payments" });
+  fastify.register(patientRoutes, { prefix: "patients" });
+  fastify.register(reportRoutes, { prefix: "reports" });
 }

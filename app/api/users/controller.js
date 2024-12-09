@@ -9,6 +9,7 @@ import { userSchema } from "../../validation-schemas/user.schema.js";
 
 const create = async (req, res) => {
   const transaction = await sequelize.transaction();
+
   try {
     const { role } = req.user_data;
     const validateUserData = userSchema.parse(req.body);
@@ -49,20 +50,29 @@ const create = async (req, res) => {
 };
 
 const update = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const record = await table.UserModel.getByPk(req);
     if (!record) {
       return res.code(404).send({ status: false, message: "User not exists" });
     }
 
-    const user = await table.UserModel.update(req);
+    const user = await table.UserModel.update(req, 0, { transaction });
+    if (user.role === "doctor") {
+      const doctor = await table.DoctorModel.updateByUserId(req, user.id, {
+        transaction,
+      });
+    }
 
     if (user && req.body.password) {
       req.body.new_password = req.body.password;
       await table.UserModel.updatePassword(req, req.user_data.id);
     }
+
+    await transaction.commit();
     return res.send({ status: true, message: "Updated" });
   } catch (error) {
+    await transaction.rollback();
     throw error;
   }
 };
@@ -96,7 +106,7 @@ const deleteById = async (req, res) => {
 
     await table.UserModel.deleteById(req);
 
-    return res.send({ status: true, data: record });
+    return res.send({ status: true, data: record, message: "Users deleted." });
   } catch (error) {
     throw error;
   }
@@ -112,7 +122,7 @@ const get = async (req, res) => {
 
 const getById = async (req, res) => {
   try {
-    const record = await table.UserModel.getByPk(req);
+    const record = await table.UserModel.getById(req);
     if (!record) {
       return res.code(404).send({ status: false, message: "User not exists" });
     }
@@ -211,17 +221,6 @@ const getMyPatients = async (req, res) => {
   }
 };
 
-const getMyPatientsByClinicId = async (req, res) => {
-  try {
-    res.send({
-      status: true,
-      data: await table.ClinicPatientMapModel.get(req),
-    });
-  } catch (error) {
-    throw error;
-  }
-};
-
 export default {
   create: create,
   update: update,
@@ -234,5 +233,4 @@ export default {
   resetPassword: resetPassword,
   updateStatus: updateStatus,
   getMyPatients: getMyPatients,
-  getMyPatientsByClinicId: getMyPatientsByClinicId,
 };

@@ -221,8 +221,11 @@ const update = async (req, id) => {
       image: req.body.image,
       slug: req.body.slug,
       procedure_id: req.body.procedure_id,
+      actual_price: req.body.actual_price,
+      discounted_price: req.body.discounted_price,
       is_featured: req.body.is_featured,
-      fields: req.body.fields,
+      main_points: req.body.main_points,
+      custom_points: req.body.custom_points,
     },
     {
       where: {

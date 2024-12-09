@@ -1,15 +1,16 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
+import { deleteFile } from "../../helpers/file.js";
 import { sequelize } from "../../db/postgres.js";
-import { treatmentPlanSchema } from "../../validation-schemas/treatment.schema.js";
+import { treatmentDentalChartSchema } from "../../validation-schemas/treatment.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const validatePlanData = treatmentPlanSchema.parse(req.body);
+    const validateData = treatmentDentalChartSchema.parse(req.body);
     const treatment = await table.TreatmentModel.getByPk(
       0,
       req.body.treatment_id
@@ -19,13 +20,20 @@ const create = async (req, res) => {
         .code(404)
         .send({ status: false, message: "Treatment not found." });
 
-    const data = await table.TreatmentPlanModel.create(req, { transaction });
+    const record = await table.DentalChartModel.getByTreatmentId(
+      0,
+      req.body.treatment_id
+    );
+    if (record) {
+      await table.DentalChartModel.updateById(req, record.id, { transaction });
+    } else {
+      await table.DentalChartModel.create(req, { transaction });
+    }
 
     await transaction.commit();
     res.send({
       status: true,
-      data: data,
-      message: "Treatment plan created.",
+      message: "Dental chart created.",
     });
   } catch (error) {
     await transaction.rollback();
@@ -34,19 +42,18 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  const transaction = await sequelize.transaction();
   try {
-    const record = await table.TreatmentPlanModel.getByPk(req);
+    const record = await table.DentalChartModel.getByPk(req);
     if (!record) {
       return res
         .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment plan not found!" });
+        .send({ status: false, message: "Dental chart not found!" });
     }
 
     res.send({
       status: true,
-      data: await table.TreatmentPlanModel.update(req, 0, { transaction }),
-      message: "Treatment plan updated.",
+      data: await table.DentalChartModel.update(req),
+      message: "Dental chart updated.",
     });
   } catch (error) {
     throw error;
@@ -55,16 +62,16 @@ const updateById = async (req, res) => {
 
 const getBySlug = async (req, res) => {
   try {
-    const record = await table.TreatmentPlanModel.getBySlug(req);
+    const record = await table.DentalChartModel.getBySlug(req);
     if (!record) {
       return res
         .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment plan not found!" });
+        .send({ status: false, message: "Dental chart not found!" });
     }
 
     res.send({
       status: true,
-      data: await table.TreatmentPlanModel.getBySlug(req),
+      data: await table.DentalChartModel.getBySlug(req),
     });
   } catch (error) {
     throw error;
@@ -73,11 +80,11 @@ const getBySlug = async (req, res) => {
 
 const getById = async (req, res) => {
   try {
-    const record = await table.TreatmentPlanModel.getByPk(req);
+    const record = await table.DentalChartModel.getByPk(req);
     if (!record) {
       return res
         .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment plan not found!" });
+        .send({ status: false, message: "Dental chart not found!" });
     }
 
     res.send({ status: true, data: record });
@@ -94,7 +101,7 @@ const getByTreatmentId = async (req, res) => {
         .code(404)
         .send({ status: false, message: "Treatment not found." });
 
-    const record = await table.TreatmentPlanModel.getByTreatmentId(req);
+    const record = await table.DentalChartModel.getByTreatmentId(req);
 
     res.send({ status: true, data: record });
   } catch (error) {
@@ -104,7 +111,7 @@ const getByTreatmentId = async (req, res) => {
 
 const get = async (req, res) => {
   try {
-    const data = await table.TreatmentPlanModel.get(req);
+    const data = await table.DentalChartModel.get(req);
     res.send({ status: true, data: data, total: data?.[0]?.total });
   } catch (error) {
     throw error;
@@ -112,25 +119,23 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = sequelize.transaction();
 
   try {
-    const record = await table.TreatmentPlanModel.getByPk(req);
+    const record = await table.DentalChartModel.getByPk(req);
     if (!record)
       return res
         .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment plan not found!" });
+        .send({ status: false, message: "Dental chart not found!" });
 
-    const isTreatmentDeleted = await table.TreatmentPlanModel.deleteById(
-      req,
-      req.params.id,
-      { transaction }
-    );
+    await table.DentalChartModel.deleteById(req, req.params.id, {
+      transaction,
+    });
 
     await transaction.commit();
-    res.send({ status: true, message: "Treatment plan deleted." });
+    res.send({ status: true, message: "Dental chart deleted." });
   } catch (error) {
-    await transaction.rollback();
+    await (await transaction).rollback();
     throw error;
   }
 };

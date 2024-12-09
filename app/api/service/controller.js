@@ -11,7 +11,7 @@ const { NOT_FOUND } = constants.http.status;
 const create = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    // const validateProcedureData = serviceSchema.parse(req.body);
+    const validateProcedureData = serviceSchema.parse(req.body);
     const procedure = await table.ProcedureModel.getByPk(
       0,
       req.body.procedure_id

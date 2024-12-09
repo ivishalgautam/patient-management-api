@@ -1,6 +1,7 @@
 "use strict";
+import moment from "moment";
 import constants from "../../lib/constants/index.js";
-import { DataTypes, Deferrable, QueryTypes } from "sequelize";
+import { DataTypes, Deferrable, Op, QueryTypes } from "sequelize";
 
 let ClinicPatientMappingModel = null;
 
@@ -78,7 +79,8 @@ const get = async (req, id) => {
 
   const query = `
     SELECT 
-      usr.id, usr.fullname, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at
+      cp.id, usr.fullname, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at,
+      pt.id as patient_id
     FROM ${constants.models.CLINIC_PATIENT_TABLE} cp
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = cp.patient_id
     LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = pt.user_id
@@ -135,12 +137,36 @@ const getByPk = async (req, id) => {
   return await ClinicPatientMappingModel.findByPk(req?.params?.id || id);
 };
 
-const deleteById = async (req, id) => {
-  return await ClinicPatientMappingModel.destroy({
-    where: {
-      id: req?.params?.id || id,
+const deleteById = async (req, id, { transaction }) => {
+  return await ClinicPatientMappingModel.destroy(
+    {
+      where: {
+        id: req?.params?.id || id,
+      },
+      returning: true,
+      raw: true,
     },
-    returning: true,
+    { transaction }
+  );
+};
+
+const count = async (clinicId, today = false) => {
+  const whereCondition = {};
+  if (clinicId) {
+    whereCondition.clinic_id = clinicId;
+  }
+
+  if (today) {
+    const startOfToday = moment().startOf("day").toDate();
+    const endOfToday = moment().endOf("day").toDate();
+
+    whereCondition.created_at = {
+      [Op.between]: [startOfToday, endOfToday],
+    };
+  }
+
+  return await ClinicPatientMappingModel.count({
+    where: whereCondition,
     raw: true,
   });
 };
@@ -153,4 +179,5 @@ export default {
   getByClinicPatientId: getByClinicPatientId,
   getByPk: getByPk,
   deleteById: deleteById,
+  count: count,
 };

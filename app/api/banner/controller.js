@@ -82,7 +82,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
     const record = await table.BannerModel.getByPk(req);
@@ -91,18 +91,17 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Banner not found!" });
 
-    const isBannerDeleted = await table.BannerModel.deleteById(
-      req,
-      req.params.id,
-      {
-        transaction,
-      }
-    );
+    const isBannerDeleted = await table.BannerModel.deleteById(req, 0, {
+      transaction,
+    });
 
     if (isBannerDeleted) {
-      deleteFile(record?.image);
+      try {
+        deleteFile(record?.url); // Move within the transaction context
+      } catch (error) {
+        throw new Error(`File deletion failed: ${error.message}`);
+      }
     }
-
     await transaction.commit();
     res.send({ status: true, message: "Banner deleted." });
   } catch (error) {

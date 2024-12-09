@@ -34,6 +34,15 @@ const create = async (req, res) => {
         .send({ status: false, message: "Clinic not exist." });
     req.body.doctor_id = clinicRecord.doctor_id;
 
+    const serviceRecord = await table.ServiceModel.getById(
+      0,
+      req.body.service_id
+    );
+    if (!serviceRecord)
+      return res
+        .code(404)
+        .send({ status: false, message: "Service not exist." });
+
     const slotRecord = await table.SlotModel.getByClinicId(
       0,
       req.body.clinic_id

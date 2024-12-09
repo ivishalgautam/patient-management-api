@@ -1,6 +1,6 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
-import { DataTypes, Deferrable } from "sequelize";
+import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
 let PatientModel = null;
 
@@ -76,10 +76,45 @@ const create = async (req, user_id, { transaction }) => {
   return data.dataValues;
 };
 
-const get = async () => {
-  return await PatientModel.findAll({
-    order: [["created_at", "DESC"]],
+const get = async (req) => {
+  const whereConditions = [];
+  const queryParams = {};
+  const q = req.query.q ? req.query.q : null;
+
+  if (q) {
+    whereConditions.push(
+      `(usr.fullname ILIKE :query OR usr.username ILIKE :query)`
+    );
+    queryParams.query = `%${q}%`;
+  }
+
+  const page = req.query.page ? Number(req.query.page) : 1;
+  const limit = req.query.limit ? Number(req.query.limit) : null;
+  const offset = (page - 1) * limit;
+
+  let whereClause = "";
+  if (whereConditions.length) {
+    whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+  }
+
+  const query = `
+  SELECT 
+    pt.id as patient_id, 
+    usr.fullname, usr.username
+  FROM ${constants.models.PATIENT_TABLE} pt
+  LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = pt.user_id
+  ${whereClause}
+  ORDER BY usr.created_at DESC
+  LIMIT :limit OFFSET :offset
+  `;
+
+  const patients = await PatientModel.sequelize.query(query, {
+    replacements: { ...queryParams, limit, offset },
+    type: QueryTypes.SELECT,
+    raw: true,
   });
+
+  return { patients };
 };
 
 const getById = async (req, id) => {

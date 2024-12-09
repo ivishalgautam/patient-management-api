@@ -2,11 +2,11 @@
 import constants from "../../lib/constants/index.js";
 import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
-let TreatmentPlanModel = null;
+let InvestigationModel = null;
 
 const init = async (sequelize) => {
-  TreatmentPlanModel = sequelize.define(
-    constants.models.TREATMENT_PLAN_TABLE,
+  InvestigationModel = sequelize.define(
+    constants.models.INVESTIGATION_TABLE,
     {
       id: {
         allowNull: false,
@@ -26,19 +26,20 @@ const init = async (sequelize) => {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      status: {
-        type: DataTypes.ENUM({ values: ["pending", "completed"] }),
-        defaultValue: "pending",
-        validate: {
-          isIn: [["pending", "completed"]],
-        },
-      },
-      total_cost: {
-        type: DataTypes.INTEGER,
+      temperature: {
+        type: DataTypes.STRING,
         allowNull: false,
       },
-      notes: {
-        type: DataTypes.TEXT,
+      weight: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      blood_pressure: {
+        type: DataTypes.STRING,
+        defaultValue: "",
+      },
+      oxygen_saturation: {
+        type: DataTypes.STRING,
         defaultValue: "",
       },
     },
@@ -48,29 +49,30 @@ const init = async (sequelize) => {
     }
   );
 
-  await TreatmentPlanModel.sync({ alter: true });
+  await InvestigationModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {
-  return await TreatmentPlanModel.create(
+  return await InvestigationModel.create(
     {
       treatment_id: req.body.treatment_id,
-      status: req.body.status,
-      total_cost: req.body.total_cost,
-      notes: req.body.notes,
+      temperature: req.body.temperature,
+      weight: req.body.weight,
+      blood_pressure: req.body.blood_pressure,
+      oxygen_saturation: req.body.oxygen_saturation,
     },
     { transaction }
   );
 };
 
 const get = async () => {
-  return await TreatmentPlanModel.findAll({
+  return await InvestigationModel.findAll({
     order: [["created_at", "DESC"]],
   });
 };
 
 const getById = async (req, id) => {
-  return await TreatmentPlanModel.findOne({
+  return await InvestigationModel.findOne({
     where: {
       id: req?.params?.id || id,
     },
@@ -79,11 +81,12 @@ const getById = async (req, id) => {
 };
 
 const update = async (req, id, { transaction }) => {
-  return await TreatmentPlanModel.update(
+  return await InvestigationModel.update(
     {
-      status: req.body.status,
-      total_cost: req.body.total_cost,
-      notes: req.body.notes,
+      temperature: req.body.temperature,
+      weight: req.body.weight,
+      blood_pressure: req.body.blood_pressure,
+      oxygen_saturation: req.body.oxygen_saturation,
     },
     {
       where: {
@@ -96,7 +99,7 @@ const update = async (req, id, { transaction }) => {
 };
 
 const getByPk = async (req, id) => {
-  return await TreatmentPlanModel.findByPk(req?.params?.id || id);
+  return await InvestigationModel.findByPk(req?.params?.id || id);
 };
 
 const getByTreatmentId = async (req, treatment_id) => {
@@ -109,42 +112,39 @@ const getByTreatmentId = async (req, treatment_id) => {
 
   let query = `
   SELECT
-      tp.*,
-      srvc.name as treatment_name
-    FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
-    LEFT JOIN ${constants.models.TREATMENT_TABLE} trmnt ON trmnt.id = tp.treatment_id
-    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
+      invt.*
+    FROM ${constants.models.INVESTIGATION_TABLE} invt
+    LEFT JOIN ${constants.models.TREATMENT_TABLE} trmnt ON trmnt.id = invt.treatment_id
     WHERE trmnt.id = :treatmentId
     LIMIT :limit OFFSET :offset
   `;
 
   let countQuery = `
   SELECT
-      COUNT(tp.id) OVER()::integer as total
-    FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
-    LEFT JOIN ${constants.models.TREATMENT_TABLE} trmnt ON trmnt.id = tp.treatment_id
-    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
+      COUNT(invt.id) OVER()::integer as total
+    FROM ${constants.models.INVESTIGATION_TABLE} invt
+    LEFT JOIN ${constants.models.TREATMENT_TABLE} trmnt ON trmnt.id = invt.treatment_id
     WHERE trmnt.id = :treatmentId
     LIMIT :limit OFFSET :offset
   `;
 
-  const data = await TreatmentPlanModel.sequelize.query(query, {
+  const data = await InvestigationModel.sequelize.query(query, {
     type: QueryTypes.SELECT,
     replacements: { treatmentId: req.params.id || treatment_id, limit, offset },
     raw: true,
   });
 
-  const count = await TreatmentPlanModel.sequelize.query(countQuery, {
+  const count = await InvestigationModel.sequelize.query(countQuery, {
     type: QueryTypes.SELECT,
     replacements: { treatmentId: req.params.id || treatment_id, limit, offset },
     raw: true,
   });
 
-  return { plans: data, total: count?.[0]?.total ?? 0 };
+  return { investigations: data, total: count?.[0]?.total ?? 0 };
 };
 
 const deleteById = async (req, id) => {
-  return await TreatmentPlanModel.destroy({
+  return await InvestigationModel.destroy({
     where: {
       id: req?.params?.id || id,
     },

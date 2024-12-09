@@ -60,6 +60,10 @@ const constants = {
     TREATMENT_HISTORY_TABLE: "treatment_histories",
     DOCTOR_SERVICE_MAP_TABLE: "doctor_service_mappings",
     BOOKING_TABLE: "bookings",
+    DENTAL_CHART_TABLE: "dental_charts",
+    DENTAL_NOTE_TABLE: "dental_notes",
+    INVESTIGATION_TABLE: "investigations",
+    PAYMENT_TABLE: "treatment_payments",
   },
   bcrypt: {
     SALT_ROUNDS: 10,

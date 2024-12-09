@@ -3,6 +3,7 @@ import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { sequelize } from "../../db/postgres.js";
 import { clinicSchema } from "../../validation-schemas/clinic.schema.js";
+import { clinicPatientSchema } from "../../validation-schemas/clinic-patient.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
 
@@ -12,6 +13,10 @@ const create = async (req, res) => {
     const validateData = clinicSchema.parse(req.body);
 
     const doctor = await table.DoctorModel.getByUserId(req);
+    if (!doctor)
+      return res
+        .code(409)
+        .send({ status: false, message: "Doctor not registered." });
 
     const data = await table.ClinicModel.create(req, doctor.id, {
       transaction,
@@ -67,7 +72,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
     const record = await table.ClinicModel.getByPk(req);

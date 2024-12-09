@@ -23,12 +23,7 @@ const _delete = async (req, res) => {
     });
   }
 
-  const { status, message } = deleteStoredFile(req.query.file_path);
-  if (status) {
-    res.send({ message });
-  } else {
-    return ErrorHandler({ code: 404, message });
-  }
+  deleteStoredFile(req.query.file_path);
 };
 
 export default {
