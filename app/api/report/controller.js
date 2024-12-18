@@ -1,7 +1,7 @@
 "use strict";
 import table from "../../db/models.js";
 
-const get = async (req, res) => {
+const getClinicReports = async (req, res) => {
   try {
     const clinicId = req.params.id;
     const clinic = await table.ClinicModel.getByPk(0, clinicId);
@@ -25,7 +25,30 @@ const get = async (req, res) => {
     );
     const totalCollection = await table.TreatmentPaymentModel.count(clinicId);
 
-    console.log({ todayCollection, totalCollection });
+    const report = {
+      today_appointments: todayAppointments,
+      today_patients: todayPatients,
+      today_visited_patients: todayVisitedPatients,
+      today_collection: todayCollection,
+      total_collection: totalCollection,
+    };
+
+    res.send({
+      status: true,
+      data: report,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getAdminReports = async (req, res) => {
+  try {
+    const todayAppointments = await table.BookingModel.count(0, true);
+    const todayPatients = await table.ClinicPatientMapModel.count(0, true);
+    const todayVisitedPatients = await table.TreatmentModel.count(0, true);
+    const todayCollection = await table.TreatmentPaymentModel.count(0, true);
+    const totalCollection = await table.TreatmentPaymentModel.count(0);
 
     const report = {
       today_appointments: todayAppointments,
@@ -45,5 +68,6 @@ const get = async (req, res) => {
 };
 
 export default {
-  get: get,
+  getClinicReports: getClinicReports,
+  getAdminReports: getAdminReports,
 };

@@ -327,14 +327,14 @@ const deleteById = async (req, id) => {
 
 const count = async (clinicId, today = false) => {
   const whereCondition = {};
-  if (clinicId) {
-    whereCondition.clinic_id = clinicId;
-  }
+
+  if (clinicId) whereCondition.clinic_id = clinicId;
+
   if (today) {
     const startOfToday = moment().startOf("day").toDate();
     const endOfToday = moment().endOf("day").toDate();
 
-    whereCondition.created_at = {
+    whereCondition.date = {
       [Op.between]: [startOfToday, endOfToday],
     };
   }
