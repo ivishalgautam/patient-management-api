@@ -104,7 +104,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
     const record = await table.ProcedureModel.getByPk(req);

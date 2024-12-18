@@ -98,7 +98,6 @@ export const deleteFile = (filepath) => {
     const currentDirPath = dirname(currentFilePath);
     const publicPath = path.join(currentDirPath, "../../", filepath);
     fs.unlinkSync(publicPath);
-    console.log("File deleted");
   } catch (error) {
     console.error({ error });
     throw new Error(error.message || "Error deleting file.");

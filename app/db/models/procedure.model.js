@@ -166,12 +166,10 @@ const getBySlug = async (req, slug) => {
 };
 
 const deleteById = async (req, id, { transaction }) => {
-  return await ProcedureModel.destroy(
-    {
-      where: { id: req.params.id || id },
-    },
-    { transaction }
-  );
+  return await ProcedureModel.destroy({
+    where: { id: req.params.id || id },
+    transaction,
+  });
 };
 
 const countProcedures = async (last_30_days = false) => {
