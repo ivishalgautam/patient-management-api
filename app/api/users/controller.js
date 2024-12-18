@@ -18,6 +18,11 @@ const create = async (req, res) => {
     if (!data)
       return res.code(400).send({ message: "Error while registering." });
 
+    if (data.role === "doctor") {
+      const validateDoctorData = doctorSchema.parse(req.body);
+      await table.DoctorModel.create(req, data.id, { transaction });
+    }
+
     if (data.role === "patient") {
       const validatePatientData = patientSchema.parse(req.body);
       const patient = await table.PatientModel.create(req, data.id, {
@@ -30,11 +35,33 @@ const create = async (req, res) => {
           transaction,
         });
       }
+      if (role === "staff") {
+        await table.ClinicPatientMapModel.create(
+          patient.id,
+          req.body.clinic_id,
+          {
+            transaction,
+          }
+        );
+      }
     }
 
-    if (data.role === "doctor") {
-      const validateDoctorData = doctorSchema.parse(req.body);
-      await table.DoctorModel.create(req, data.id, { transaction });
+    if (data.role === "staff") {
+      let drRecord = null;
+
+      if (role === "doctor")
+        drRecord = await table.DoctorModel.getByUserId(req);
+      if (role === "admin")
+        drRecord = await table.DoctorModel.getById(0, req.body.doctor_id);
+
+      if (!drRecord)
+        return res
+          .code(404)
+          .send({ status: false, message: "Doctor not found." });
+
+      await table.StaffModel.create(drRecord.id, data.id, {
+        transaction,
+      });
     }
 
     await transaction.commit();
@@ -60,6 +87,11 @@ const update = async (req, res) => {
     const user = await table.UserModel.update(req, 0, { transaction });
     if (user.role === "doctor") {
       const doctor = await table.DoctorModel.updateByUserId(req, user.id, {
+        transaction,
+      });
+    }
+    if (user.role === "patient") {
+      const patient = await table.PatientModel.updateByUserId(req, user.id, {
         transaction,
       });
     }
@@ -221,6 +253,17 @@ const getMyPatients = async (req, res) => {
   }
 };
 
+const getMyStaff = async (req, res) => {
+  try {
+    res.send({
+      status: true,
+      data: await table.ClinicStaffMapModel.get(req),
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default {
   create: create,
   update: update,
@@ -233,4 +276,5 @@ export default {
   resetPassword: resetPassword,
   updateStatus: updateStatus,
   getMyPatients: getMyPatients,
+  getMyStaff: getMyStaff,
 };

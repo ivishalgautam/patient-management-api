@@ -99,6 +99,17 @@ const get = async (req) => {
   const { role, id } = req.user_data;
   const whereConditions = [];
   const queryParams = {};
+  const recent = req.query.recent == 1 ? true : false;
+  const status = req.query.status ? req.query.status : null;
+  if (recent) {
+    whereConditions.push(`bk.date >= :date`);
+    queryParams.date = moment().format("YYYY-MM-DD");
+  }
+
+  if (status) {
+    whereConditions.push(`bk.status = :status`);
+    queryParams.status = status;
+  }
 
   if (role === "doctor") {
     whereConditions.push(`dr.user_id = :userId`);
@@ -109,7 +120,6 @@ const get = async (req) => {
     whereConditions.push(`pt.user_id = :userId`);
     queryParams.userId = id;
   }
-
   let page = req.query.page ? Number(req.query.page) : 1;
   let limit = req.query.limit ? Number(req.query.limit) : null;
   let offset = (page - 1) * limit;
@@ -121,10 +131,15 @@ const get = async (req) => {
 
   let query = `
   SELECT
-      bk.*
+      bk.id, bk.date, bk.slot, bk.status, bk.created_at, bk.clinic_id,
+      drusr.fullname as doctor_name, drusr.avatar as doctor_avatar,
+      srvc.id as service_id, srvc.name as service_name
     FROM ${constants.models.BOOKING_TABLE} bk
+    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = bk.service_id
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
     LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
+    LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
+    LEFT JOIN ${constants.models.USER_TABLE} ptusr ON ptusr.id = pt.user_id
     ${whereClause}
     ORDER BY bk.created_at DESC
     LIMIT :limit OFFSET :offset
@@ -132,12 +147,13 @@ const get = async (req) => {
 
   let countQuery = `
     SELECT
-    COUNT(bk.id) OVER()::INTEGER total
-    FROM ${constants.models.BOOKING_TABLE} bk
-    LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
-    LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
-    ${whereClause}
-    LIMIT :limit OFFSET :offset
+        COUNT(bk.id) OVER()::INTEGER total
+      FROM ${constants.models.BOOKING_TABLE} bk
+      LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
+      LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
+      LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
+      LEFT JOIN ${constants.models.USER_TABLE} ptusr ON ptusr.id = pt.user_id
+      ${whereClause}
   `;
 
   const data = await BookingModel.sequelize.query(query, {
@@ -148,7 +164,7 @@ const get = async (req) => {
 
   const count = await BookingModel.sequelize.query(countQuery, {
     type: QueryTypes.SELECT,
-    replacements: { ...queryParams, limit, offset },
+    replacements: { ...queryParams },
     raw: true,
   });
 
@@ -160,6 +176,18 @@ const getById = async (req, id) => {
     where: {
       id: req?.params?.id || id,
     },
+    raw: true,
+  });
+};
+
+const getByDateAndClinic = async (req, clinicId, date) => {
+  return await BookingModel.findAll({
+    where: {
+      clinic_id: req?.query?.clinic || clinicId,
+      date: req?.query?.date || date,
+      status: "pending",
+    },
+    returning: true,
     raw: true,
   });
 };
@@ -205,7 +233,6 @@ const getBookingsByClinicId = async (req, id) => {
       LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
       LEFT JOIN ${constants.models.USER_TABLE} ptusr ON ptusr.id = pt.user_id
       ${whereClause}
-      LIMIT :limit OFFSET :offset
   `;
 
   const data = await BookingModel.sequelize.query(query, {
@@ -216,7 +243,7 @@ const getBookingsByClinicId = async (req, id) => {
 
   const count = await BookingModel.sequelize.query(countQuery, {
     type: QueryTypes.SELECT,
-    replacements: { ...queryParams, limit, offset },
+    replacements: { ...queryParams },
     raw: true,
   });
 
@@ -228,6 +255,7 @@ const getByClinicAndSlot = async (req, clinic_id, slot) => {
     where: {
       clinic_id: req?.body?.clinic_id || clinic_id,
       slot: req?.body?.slot || slot,
+      status: "pending",
     },
     raw: true,
   });
@@ -246,7 +274,7 @@ const getByDoctorId = async (doctor_id) => {
   });
 };
 
-const update = async (req, id) => {
+const update = async (req, id, { transaction }) => {
   const data = await BookingModel.update(
     {
       doctor_id: req.body.doctor_id,
@@ -262,6 +290,8 @@ const update = async (req, id) => {
       },
       returning: true,
       plain: true,
+      raw: true,
+      transaction,
     }
   );
 
@@ -328,4 +358,5 @@ export default {
   deleteById: deleteById,
   getByClinicAndSlot: getByClinicAndSlot,
   count: count,
+  getByDateAndClinic: getByDateAndClinic,
 };

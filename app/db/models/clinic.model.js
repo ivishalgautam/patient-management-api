@@ -69,6 +69,15 @@ const getById = async (req, id) => {
   });
 };
 
+const getByDoctorId = async (req, id) => {
+  return await ClinicModel.findAll({
+    where: {
+      doctor_id: req?.params?.id || id,
+    },
+    raw: true,
+  });
+};
+
 const getByPk = async (req, id) => {
   return await ClinicModel.findByPk(req?.params?.id || id);
 };
@@ -80,6 +89,11 @@ const get = async (req) => {
 
   if (role === "doctor") {
     whereConditions.push("usr.id = :userId");
+    queryParams.userId = id;
+  }
+
+  if (role === "staff") {
+    whereConditions.push("stf.user_id = :userId");
     queryParams.userId = id;
   }
 
@@ -98,16 +112,19 @@ const get = async (req) => {
     FROM ${constants.models.CLINIC_TABLE} clnc
     LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = clnc.doctor_id
     LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = dr.user_id
+    LEFT JOIN ${constants.models.CLINIC_STAFF_TABLE} cstf ON cstf.clinic_id = clnc.id
+    LEFT JOIN ${constants.models.STAFF_TABLE} stf ON stf.id = cstf.staff_id
     ${whereClause} 
     LIMIT :limit OFFSET :offset
   `;
-
   let countQuery = `
   SELECT
       COUNT(clnc.id) OVER()::integer as total
     FROM ${constants.models.CLINIC_TABLE} clnc
     LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = clnc.doctor_id
     LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = dr.user_id
+    LEFT JOIN ${constants.models.CLINIC_STAFF_TABLE} cstf ON cstf.clinic_id = clnc.id
+    LEFT JOIN ${constants.models.STAFF_TABLE} stf ON stf.id = cstf.staff_id
     ${whereClause} 
     LIMIT :limit OFFSET :offset
   `;
@@ -160,4 +177,5 @@ export default {
   getByPk: getByPk,
   update: update,
   deleteById: deleteById,
+  getByDoctorId: getByDoctorId,
 };

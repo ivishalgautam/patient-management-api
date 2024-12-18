@@ -35,6 +35,11 @@ const init = async (sequelize) => {
         allowNull: true,
         defaultValue: 0,
       },
+      about: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: "",
+      },
     },
     {
       createdAt: "created_at",
@@ -51,6 +56,7 @@ const create = async (req, user_id, { transaction }) => {
       user_id: user_id,
       specialization: req.body.specialization,
       experience_years: req.body.experience_years,
+      about: req.body.about,
     },
     { transaction }
   );
@@ -89,6 +95,7 @@ const update = async (req, id, { transaction }) => {
     {
       specialization: req.body.specialization,
       experience_years: req.body.experience_years,
+      about: req.body.about,
     },
     {
       where: {

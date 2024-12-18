@@ -156,6 +156,16 @@ const getByClinicId = async (req, res) => {
   }
 };
 
+const getByPatientId = async (req, res) => {
+  try {
+    const data = await table.TreatmentModel.getByPatientId(req);
+
+    res.send({ status: true, data: data });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const get = async (req, res) => {
   try {
     const data = await table.TreatmentModel.get(req);
@@ -193,4 +203,5 @@ export default {
   getBySlug: getBySlug,
   getById: getById,
   getByClinicId: getByClinicId,
+  getByPatientId: getByPatientId,
 };

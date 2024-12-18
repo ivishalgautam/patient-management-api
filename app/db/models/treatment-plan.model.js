@@ -100,8 +100,16 @@ const getByPk = async (req, id) => {
 };
 
 const getByTreatmentId = async (req, treatment_id) => {
-  // const whereConditions = [`trmnt.id = :treatmentId`];
-  // const queryParams = { treatmentId: treatment_id };
+  const whereConditions = [`trmnt.id = :treatmentId`];
+  const queryParams = { treatmentId: req?.params?.id || treatment_id };
+
+  const q = req.query.q ? req.query.q : null;
+  if (q) {
+    whereConditions.push(`(srvc.name ILIKE :query OR tp.notes ILIKE :query)`);
+    queryParams.query = `%${q}%`;
+  }
+
+  let whereClause = `WHERE ${whereConditions.join(" AND ")}`;
 
   const page = req.query.page ? Number(req.query.page) : 1;
   const limit = req.query.limit ? Number(req.query.limit) : null;
@@ -114,7 +122,7 @@ const getByTreatmentId = async (req, treatment_id) => {
     FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
     LEFT JOIN ${constants.models.TREATMENT_TABLE} trmnt ON trmnt.id = tp.treatment_id
     LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
-    WHERE trmnt.id = :treatmentId
+    ${whereClause}
     LIMIT :limit OFFSET :offset
   `;
 
@@ -124,19 +132,18 @@ const getByTreatmentId = async (req, treatment_id) => {
     FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
     LEFT JOIN ${constants.models.TREATMENT_TABLE} trmnt ON trmnt.id = tp.treatment_id
     LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
-    WHERE trmnt.id = :treatmentId
-    LIMIT :limit OFFSET :offset
+    ${whereClause}
   `;
 
   const data = await TreatmentPlanModel.sequelize.query(query, {
     type: QueryTypes.SELECT,
-    replacements: { treatmentId: req.params.id || treatment_id, limit, offset },
+    replacements: { ...queryParams, limit, offset },
     raw: true,
   });
 
   const count = await TreatmentPlanModel.sequelize.query(countQuery, {
     type: QueryTypes.SELECT,
-    replacements: { treatmentId: req.params.id || treatment_id, limit, offset },
+    replacements: { ...queryParams },
     raw: true,
   });
 

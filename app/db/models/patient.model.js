@@ -152,6 +152,24 @@ const update = async (req, id) => {
   );
 };
 
+const updateByUserId = async (req, id) => {
+  return await PatientModel.update(
+    {
+      blood_group: req.body.blood_group,
+      marital_status: req.body.marital_status,
+      height_in_cm: req.body.height_in_cm,
+      emergency_contact: req.body.emergency_contact,
+      source: req.body.source,
+    },
+    {
+      where: {
+        user_id: req?.params?.id || id,
+      },
+      plain: true,
+    }
+  );
+};
+
 const deleteById = async (req, id) => {
   return await PatientModel.destroy({
     where: {
@@ -170,4 +188,5 @@ export default {
   getByUserId: getByUserId,
   update: update,
   deleteById: deleteById,
+  updateByUserId: updateByUserId,
 };

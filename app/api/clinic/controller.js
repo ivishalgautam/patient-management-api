@@ -62,6 +62,24 @@ const getById = async (req, res) => {
   }
 };
 
+const getByDoctorId = async (req, res) => {
+  try {
+    const record = await table.DoctorModel.getByPk(req);
+    if (!record) {
+      return res
+        .code(NOT_FOUND)
+        .send({ status: false, message: "Doctor not found!" });
+    }
+
+    res.send({
+      status: true,
+      data: await table.ClinicModel.getByDoctorId(req),
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const get = async (req, res) => {
   try {
     const data = await table.ClinicModel.get(req);
@@ -99,4 +117,5 @@ export default {
   updateById: updateById,
   deleteById: deleteById,
   getById: getById,
+  getByDoctorId: getByDoctorId,
 };

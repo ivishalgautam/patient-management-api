@@ -61,6 +61,19 @@ const get = async (req, res) => {
   }
 };
 
+const getByServiceId = async (req, res) => {
+  try {
+    const service = await table.ServiceModel.getById(req);
+    if (!service) return res.code(404).send({ message: "Service not found!" });
+
+    const data = await table.DoctorServiceMapModel.getByServiceId(req);
+
+    res.send({ status: true, data: data });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const deleteById = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
@@ -86,4 +99,5 @@ export default {
   create: create,
   get: get,
   deleteById: deleteById,
+  getByServiceId: getByServiceId,
 };

@@ -20,6 +20,8 @@ import dentalChartModel from "./models/dental-chart.model.js";
 import dentalNoteModel from "./models/dental-note.model.js";
 import investigationModel from "./models/investigation.model.js";
 import treatmentPaymentModel from "./models/treatment-payment.model.js";
+import staffModel from "./models/staff.model.js";
+import clinicStaffMapModel from "./models/clinic-staff-map.model.js";
 
 export default {
   UserModel: userModel,
@@ -43,4 +45,6 @@ export default {
   DentalNoteModel: dentalNoteModel,
   InvestigationModel: investigationModel,
   TreatmentPaymentModel: treatmentPaymentModel,
+  StaffModel: staffModel,
+  ClinicStaffMapModel: clinicStaffMapModel,
 };

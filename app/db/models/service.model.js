@@ -178,9 +178,10 @@ const getByProcedureId = async (req, procedure_id) => {
     whereClause = "WHERE " + whereConditions.join(" AND ");
   }
 
-  let countQuery = `
+  let query = `
   SELECT
-      COUNT(srvc.id) OVER()::integer as total
+      srvc.*,
+      prcd.name as procedure_name
     FROM ${constants.models.SERVICE_TABLE} srvc
     LEFT JOIN ${constants.models.PROCEDURE_TABLE} prcd ON prcd.id = srvc.procedure_id
     ${whereClause}
@@ -188,15 +189,13 @@ const getByProcedureId = async (req, procedure_id) => {
     LIMIT :limit OFFSET :offset
   `;
 
-  let query = `
+  let countQuery = `
   SELECT
-      srvc.id, srvc.name, srvc.image, srvc.slug, srvc.created_at,
-      prcd.name as procedure_name
+      COUNT(srvc.id) OVER()::integer as total
     FROM ${constants.models.SERVICE_TABLE} srvc
     LEFT JOIN ${constants.models.PROCEDURE_TABLE} prcd ON prcd.id = srvc.procedure_id
     ${whereClause}
     ORDER BY srvc.name DESC
-    LIMIT :limit OFFSET :offset
   `;
 
   const data = await ServiceModel.sequelize.query(query, {
@@ -206,7 +205,7 @@ const getByProcedureId = async (req, procedure_id) => {
   });
 
   const count = await ServiceModel.sequelize.query(countQuery, {
-    replacements: { ...queryParams, limit, offset },
+    replacements: { ...queryParams },
     type: QueryTypes.SELECT,
     raw: true,
   });

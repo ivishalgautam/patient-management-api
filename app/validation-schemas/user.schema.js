@@ -26,7 +26,7 @@ export const userSchema = z.object({
   password: z
     .string({ required_error: "Password is required." })
     .min(1, { message: "Password is required." }),
-  role: z.enum(["patient", "doctor", "admin"], {
+  role: z.enum(["patient", "doctor", "admin", "staff"], {
     message: "Role is required.",
   }),
   avatar: z.string().optional(),

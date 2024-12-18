@@ -19,6 +19,9 @@ import investigationRoutes from "../../api/investigation/routes.js";
 import treatmentPaymentRoutes from "../../api/treatment-payment/routes.js";
 import patientRoutes from "../../api/patients/routes.js";
 import reportRoutes from "../../api/report/routes.js";
+import staffRoutes from "../../api/staff/routes.js";
+import clinicStaffRoutes from "../../api/clinic-staff/routes.js";
+import doctorRoutes from "../../api/doctor/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
@@ -47,4 +50,7 @@ export default async function routes(fastify, options) {
   fastify.register(treatmentPaymentRoutes, { prefix: "treatment-payments" });
   fastify.register(patientRoutes, { prefix: "patients" });
   fastify.register(reportRoutes, { prefix: "reports" });
+  fastify.register(staffRoutes, { prefix: "staff" });
+  fastify.register(clinicStaffRoutes, { prefix: "clinic-staff" });
+  fastify.register(doctorRoutes, { prefix: "doctors" });
 }

@@ -2,11 +2,11 @@
 import constants from "../../lib/constants/index.js";
 import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
-let DoctorPatientMappingModel = null;
+let StaffModel = null;
 
 const init = async (sequelize) => {
-  DoctorPatientMappingModel = sequelize.define(
-    constants.models.DOCTOR_PATIENT_TABLE,
+  StaffModel = sequelize.define(
+    constants.models.STAFF_TABLE,
     {
       id: {
         allowNull: false,
@@ -25,12 +25,12 @@ const init = async (sequelize) => {
           deferrable: Deferrable.INITIALLY_IMMEDIATE,
         },
       },
-      patient_id: {
+      user_id: {
         type: DataTypes.UUID,
         allowNull: false,
         onDelete: "CASCADE",
         references: {
-          model: constants.models.PATIENT_TABLE,
+          model: constants.models.USER_TABLE,
           key: "id",
           deferrable: Deferrable.INITIALLY_IMMEDIATE,
         },
@@ -42,22 +42,44 @@ const init = async (sequelize) => {
     }
   );
 
-  await DoctorPatientMappingModel.sync({ alter: true });
+  await StaffModel.sync({ alter: true });
 };
 
-const create = async (doctor_id, patient_id, { transaction }) => {
-  return await DoctorPatientMappingModel.create(
+const create = async (doctor_id, user_id, { transaction }) => {
+  return await StaffModel.create(
     {
       doctor_id: doctor_id,
-      patient_id: patient_id,
+      user_id: user_id,
     },
     { transaction }
   );
 };
 
-const get = async (req) => {
-  const whereConditions = [`usr.role = 'patient'`];
-  const queryParams = {};
+const getById = async (req, id) => {
+  return await StaffModel.findOne({
+    where: {
+      id: req?.params?.id || id,
+    },
+    raw: true,
+  });
+};
+
+const getByUserId = async (req, id) => {
+  return await StaffModel.findOne({
+    where: {
+      user_id: req?.user_data?.id || id,
+    },
+    raw: true,
+  });
+};
+
+const getByPk = async (req, id) => {
+  return await StaffModel.findByPk(req?.params?.id || id);
+};
+
+const get = async (req, id) => {
+  const whereConditions = [`dr.user_id = :drUserId`];
+  const queryParams = { drUserId: req.user_data.id || id };
   const q = req.query.q ? req.query.q : null;
 
   if (q) {
@@ -65,12 +87,6 @@ const get = async (req) => {
       `(usr.fullname ILIKE :query OR usr.email ILIKE :query OR usr.username ILIKE :query)`
     );
     queryParams.query = `%${q}%`;
-  }
-
-  const { role, id } = req.user_data;
-  if (role === "doctor") {
-    whereConditions.push(`dr.user_id = :userId`);
-    queryParams.userId = id;
   }
 
   const page = req.query.page ? Number(req.query.page) : 1;
@@ -84,56 +100,42 @@ const get = async (req) => {
 
   const query = `
     SELECT 
-      usr.id, usr.fullname, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at
-    FROM ${constants.models.DOCTOR_PATIENT_TABLE} dp
-    LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = dp.doctor_id
-    LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = dp.patient_id
-    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = pt.user_id
+      stf.id, usr.fullname, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at
+      FROM ${constants.models.STAFF_TABLE} stf
+    LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = stf.doctor_id
+    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = stf.user_id
     ${whereClause}
     ORDER BY usr.created_at DESC
     LIMIT :limit OFFSET :offset
     `;
+
   const countQuery = `
     SELECT 
-      COUNT(usr.id) OVER()::integer as total
-    FROM ${constants.models.DOCTOR_PATIENT_TABLE} dp
-    LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = dp.doctor_id
-    LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = dp.patient_id
-    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = pt.user_id
+      COUNT(stf.id) OVER()::integer as total 
+    FROM ${constants.models.STAFF_TABLE} stf
+    LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = stf.doctor_id
+    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = stf.user_id
     ${whereClause}
+    ORDER BY usr.created_at DESC
     `;
 
-  const users = await DoctorPatientMappingModel.sequelize.query(query, {
+  const users = await StaffModel.sequelize.query(query, {
     replacements: { ...queryParams, limit, offset },
     type: QueryTypes.SELECT,
     raw: true,
   });
 
-  const count = await DoctorPatientMappingModel.sequelize.query(countQuery, {
+  const count = await StaffModel.sequelize.query(countQuery, {
     replacements: { ...queryParams },
     type: QueryTypes.SELECT,
     raw: true,
   });
 
-  return { users, total: count?.[0]?.total ?? 0 };
-};
-
-const getByDoctorPatientId = async (doctor_id, patient_id) => {
-  return await DoctorPatientMappingModel.findOne({
-    where: {
-      doctor_id: doctor_id,
-      patient_id: patient_id,
-    },
-    raw: true,
-  });
-};
-
-const getByPk = async (req, id) => {
-  return await DoctorPatientMappingModel.findByPk(req?.params?.id || id);
+  return { staff: users, total: count?.[0]?.total ?? 0 };
 };
 
 const deleteById = async (req, id) => {
-  return await DoctorPatientMappingModel.destroy({
+  return await StaffModel.destroy({
     where: {
       id: req?.params?.id || id,
     },
@@ -146,7 +148,8 @@ export default {
   init: init,
   create: create,
   get: get,
-  getByDoctorPatientId: getByDoctorPatientId,
+  getById: getById,
   getByPk: getByPk,
   deleteById: deleteById,
+  getByUserId: getByUserId,
 };

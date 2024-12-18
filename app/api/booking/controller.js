@@ -86,6 +86,19 @@ const getByClinicId = async (req, res) => {
   }
 };
 
+const getByDateAndClinic = async (req, res) => {
+  try {
+    const record = await table.BookingModel.getByDateAndClinic(req);
+    if (!record) {
+      return res.send({ status: false, data: {} });
+    }
+
+    res.send({ status: true, data: record });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const updateById = async (req, res) => {
   try {
     const bookingRecord = await table.BookingModel.getById(req);
@@ -93,6 +106,7 @@ const updateById = async (req, res) => {
       return res
         .code(404)
         .send({ status: false, message: "Booking not found." });
+    // return console.log({ bookingRecord });
 
     const data = await table.BookingModel.update(req);
     res.send({ status: true, data: data, message: "Updated." });
@@ -102,16 +116,55 @@ const updateById = async (req, res) => {
 };
 
 const updateStatus = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
   try {
+    const status = req.body.status;
+    if (!status)
+      return res
+        .code(400)
+        .send({ status: false, message: "Status is required." });
+
     const bookingRecord = await table.BookingModel.getById(req);
     if (!bookingRecord)
       return res
         .code(404)
         .send({ status: false, message: "Booking not found." });
 
-    const data = await table.BookingModel.update(req);
+    if (bookingRecord.status === "canceled")
+      return res.code(400).send({
+        status: false,
+        message: "Can't change booking canceled.",
+      });
+
+    if (bookingRecord.status === "completed")
+      return res.code(400).send({
+        status: false,
+        message: "Can't change booking completed.",
+      });
+
+    const data = await table.BookingModel.update(req, 0, { transaction });
+
+    if (data.status === "completed") {
+      const service = await table.ServiceModel.getById(
+        0,
+        bookingRecord.service_id
+      );
+      await table.TreatmentModel.create(
+        {
+          patient_id: bookingRecord.patient_id,
+          clinic_id: bookingRecord.clinic_id,
+          service_id: bookingRecord.service_id,
+          appointment_id: bookingRecord.id,
+          cost: service.discounted_price,
+        },
+        { transaction }
+      );
+    }
+    await transaction.commit();
     res.send({ status: true, data: data, message: "Updated." });
   } catch (error) {
+    await transaction.rollback();
     throw error;
   }
 };
@@ -144,4 +197,5 @@ export default {
   getByClinicId: getByClinicId,
   updateById: updateById,
   updateStatus: updateStatus,
+  getByDateAndClinic: getByDateAndClinic,
 };

@@ -1,5 +1,4 @@
 "use strict";
-import moment from "moment";
 import constants from "../../lib/constants/index.js";
 import sequelizeFwk, { Op, QueryTypes } from "sequelize";
 const { DataTypes } = sequelizeFwk;
@@ -57,10 +56,10 @@ const get = async (req) => {
     queryParams.type = type;
   }
 
-  const isFeatured = req.query.featured ? req.query.featured : null;
-  if (isFeatured) {
+  const isFeatured = req.query.featured;
+  if (isFeatured !== undefined) {
     whereConditions.push("bnr.is_featured = :is_featured");
-    queryParams.is_featured = isFeatured;
+    queryParams.is_featured = isFeatured === "1";
   }
 
   const page = req.query.page ? Number(req.query.page) : 1;
@@ -72,7 +71,7 @@ const get = async (req) => {
     whereClause = `WHERE ${whereConditions.join(" AND ")}`;
 
   let query = `
-  SELECT 
+  SELECT
     bnr.id, bnr.url, bnr.created_at, bnr.type, bnr.is_featured
   FROM ${constants.models.BANNER_TABLE} bnr
   ${whereClause}
@@ -82,10 +81,9 @@ const get = async (req) => {
 
   let countQuery = `
   SELECT 
-    COUNT(bnr.id) OVER()::integer AS total_count
+    COUNT(bnr.id) OVER()::integer AS total
   FROM ${constants.models.BANNER_TABLE} bnr
   ${whereClause}
-  LIMIT :limit OFFSET :offset
   `;
 
   const data = await BannerModel.sequelize.query(query, {
@@ -96,11 +94,11 @@ const get = async (req) => {
 
   const count = await BannerModel.sequelize.query(countQuery, {
     type: QueryTypes.SELECT,
-    replacements: { ...queryParams, limit, offset },
+    replacements: { ...queryParams },
     raw: true,
   });
 
-  return { banners: data, total: count?.[0]?.total_count ?? 0 };
+  return { banners: data, total: count?.[0]?.total ?? 0 };
 };
 
 const update = async (req, id) => {

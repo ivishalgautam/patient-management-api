@@ -64,13 +64,15 @@ const constants = {
     DENTAL_NOTE_TABLE: "dental_notes",
     INVESTIGATION_TABLE: "investigations",
     PAYMENT_TABLE: "treatment_payments",
+    STAFF_TABLE: "staffs",
+    CLINIC_STAFF_TABLE: "clinic_staff_mappings",
   },
   bcrypt: {
     SALT_ROUNDS: 10,
   },
   time: {
-    TOKEN_EXPIRES_IN: 15 * 6000000, // 15 * 1 minute = 15 minutes
-    REFRESH_TOKEN_EXPIRES_IN: "1d", // 1 day
+    TOKEN_EXPIRES_IN: 60 * 60 * 24 * 365,
+    REFRESH_TOKEN_EXPIRES_IN: "20d",
   },
   mime: {
     imageMime: ["jpeg", "jpg", "png", "gif", "webp"],

@@ -101,14 +101,27 @@ const getByTreatmentId = async (req, treatment_id) => {
   const whereConditions = [`trmnt.id = :treatmentId`];
   const queryParams = { treatmentId: req?.params?.id || treatment_id };
   const q = req.query.q ? req.query.q : null;
-  if (false && q) {
-    whereConditions.push(``);
-    queryParams.q = `%${q.trim()}%`;
+  const type = req.query.type ? req.query.type.split(".") : null;
+  const method = req.query.method ? req.query.method.split(".") : null;
+
+  if (q) {
+    whereConditions.push(
+      `(pymnt.remarks ILIKE :query OR CAST(pymnt.amount_paid AS TEXT) ILIKE :query)`
+    );
+    queryParams.query = `%${String(q.trim())}%`;
   }
-  let whereClause = "";
-  if (whereConditions.length) {
-    whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+  console.log({ type, method });
+  if (Array.isArray(type)) {
+    whereConditions.push(`pymnt.payment_type = any(:type)`);
+    queryParams.type = `{${type.join(",")}}`;
   }
+  if (Array.isArray(method)) {
+    whereConditions.push(`pymnt.payment_method = any(:method)`);
+    queryParams.method = `{${method.join(",")}}`;
+  }
+
+  let whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+
   const page = req.query.page ? Number(req.query.page) : 1;
   const limit = req.query.limit ? Number(req.query.limit) : null;
   const offset = (page - 1) * limit;
@@ -196,7 +209,7 @@ const count = async (clinicId, today = false) => {
 
   console.log({ result });
 
-  return result?.[0]?.count;
+  return result?.[0]?.count ?? 0;
 };
 
 export default {

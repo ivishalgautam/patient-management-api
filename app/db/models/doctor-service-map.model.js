@@ -125,6 +125,61 @@ const get = async (req) => {
   return { services: data, total: count?.[0]?.total ?? 0 };
 };
 
+const getByServiceId = async (req, id) => {
+  let whereConditions = [`srvc.id = :serviceId`];
+  const queryParams = { serviceId: req?.params?.id || id };
+
+  let q = req.query.q;
+  if (q) {
+    whereConditions.push(`srvc.name ILIKE :query`);
+    queryParams.query = `%${q}%`;
+  }
+
+  const limit = req.query.limit ? Number(req.query.limit) : null;
+  const page = req.query.page ? Math.max(1, parseInt(req.query.page)) : 1;
+  const offset = (page - 1) * limit;
+
+  let whereClause = "";
+  if (whereConditions.length > 0) {
+    whereClause = "WHERE " + whereConditions.join(" AND ");
+  }
+
+  let query = `
+  SELECT
+      usr.fullname, dr.id as doctor_id, usr.gender, usr.avatar
+    FROM ${constants.models.DOCTOR_SERVICE_MAP_TABLE} drsr
+    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = drsr.service_id
+    LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = drsr.doctor_id
+    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = dr.user_id
+    ${whereClause}
+    ORDER BY drsr.created_at DESC
+    LIMIT :limit OFFSET :offset
+  `;
+
+  let countQuery = `
+  SELECT
+      COUNT(drsr.id) OVER()::integer as total
+    FROM ${constants.models.DOCTOR_SERVICE_MAP_TABLE} drsr
+    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = drsr.service_id
+    LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = drsr.doctor_id
+    ${whereClause}
+  `;
+
+  const data = await DoctorServiceMapModel.sequelize.query(query, {
+    replacements: { ...queryParams, limit, offset },
+    type: QueryTypes.SELECT,
+    raw: true,
+  });
+
+  const count = await DoctorServiceMapModel.sequelize.query(countQuery, {
+    replacements: { ...queryParams, limit, offset },
+    type: QueryTypes.SELECT,
+    raw: true,
+  });
+
+  return { doctors: data, total: count?.[0]?.total ?? 0 };
+};
+
 const getByPk = async (req, id) => {
   return await DoctorServiceMapModel.findByPk(req?.params?.id || id);
 };
@@ -155,4 +210,5 @@ export default {
   getByPk: getByPk,
   getByDoctorAndServiceId: getByDoctorAndServiceId,
   deleteById: deleteById,
+  getByServiceId: getByServiceId,
 };

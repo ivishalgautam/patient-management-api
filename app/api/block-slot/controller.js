@@ -112,11 +112,13 @@ const getById = async (req, res) => {
 const getByDateAndClinic = async (req, res) => {
   try {
     const record = await table.BlockedSlotModel.getByDateAndClinic(req);
-    if (!record) {
-      return res.send({ status: false, data: {} });
+    const booked = await table.BookingModel.getByDateAndClinic(req);
+    let bookedSlotArr = [];
+    if (booked.length) {
+      bookedSlotArr = booked.map(({ slot }) => slot);
     }
 
-    res.send({ status: true, data: record });
+    res.send({ status: true, data: record ?? {}, booked: bookedSlotArr });
   } catch (error) {
     throw error;
   }

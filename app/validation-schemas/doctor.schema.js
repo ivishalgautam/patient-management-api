@@ -7,5 +7,6 @@ export const doctorSchema = z.object({
   experience_years: z
     .number()
     .positive("Experience years must be a positive number."),
+  about: z.string().optional(),
   certifications: z.array(z.string()).optional(),
 });

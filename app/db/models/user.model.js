@@ -91,11 +91,11 @@ const init = async (sequelize) => {
       },
       role: {
         type: DataTypes.ENUM({
-          values: ["admin", "patient", "doctor"],
+          values: ["admin", "patient", "doctor", "staff"],
         }),
         allowNull: false,
         validate: {
-          isIn: [["admin", "patient", "doctor"]],
+          isIn: [["admin", "patient", "doctor", "staff"]],
         },
       },
       avatar: {

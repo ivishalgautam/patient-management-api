@@ -7,5 +7,6 @@ export default async function roues(fastify, opts) {
   fastify.get("/", {}, controller.get);
   fastify.get("/getByClinicId/:id", {}, controller.getByClinicId);
   fastify.put("/:id", {}, controller.updateById);
+  fastify.get("/getByDateAndClinic", {}, controller.getByDateAndClinic);
   fastify.put("/status/:id", {}, controller.updateStatus);
 }
