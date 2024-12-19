@@ -8,10 +8,10 @@ const create = async (req, res) => {
   try {
     const validateData = bookingSchema.parse(req.body);
     const { role, id: userId } = req.user_data;
-    const isSlotBooked = await table.BookingModel.getByClinicAndSlot(req);
+    const isSlotBooked = await table.BookingModel.getByClinicDateAndSlot(req);
     if (isSlotBooked)
       return res
-        .code(409)
+        .code(400)
         .send({ status: false, message: "Slot already booked." });
 
     let patientRecord = null;

@@ -250,11 +250,12 @@ const getBookingsByClinicId = async (req, id) => {
   return { bookings: data, total: count?.[0]?.total ?? 0 };
 };
 
-const getByClinicAndSlot = async (req, clinic_id, slot) => {
+const getByClinicDateAndSlot = async (req, clinic_id, slot, date) => {
   return await BookingModel.count({
     where: {
       clinic_id: req?.body?.clinic_id || clinic_id,
       slot: req?.body?.slot || slot,
+      date: req?.body?.date || date,
       status: "pending",
     },
     raw: true,
@@ -356,7 +357,7 @@ export default {
   update: update,
   updateStatus: updateStatus,
   deleteById: deleteById,
-  getByClinicAndSlot: getByClinicAndSlot,
+  getByClinicDateAndSlot: getByClinicDateAndSlot,
   count: count,
   getByDateAndClinic: getByDateAndClinic,
 };
