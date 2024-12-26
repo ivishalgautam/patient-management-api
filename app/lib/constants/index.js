@@ -71,7 +71,7 @@ const constants = {
     SALT_ROUNDS: 10,
   },
   time: {
-    TOKEN_EXPIRES_IN: 60 * 60 * 24 * 365,
+    TOKEN_EXPIRES_IN: 1000 * 60 * 60 * 24 * 30,
     REFRESH_TOKEN_EXPIRES_IN: "20d",
   },
   mime: {
