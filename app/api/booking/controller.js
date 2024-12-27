@@ -40,7 +40,6 @@ const create = async (req, res) => {
       table.ServiceModel.getById(0, req.body.service_id),
       table.SlotModel.getByClinicId(0, req.body.clinic_id),
     ]);
-    console.log(clinicRecord, serviceRecord, slotRecord);
     // Validate clinic existence
     if (!clinicRecord) {
       return res
@@ -60,6 +59,8 @@ const create = async (req, res) => {
     if (!slotRecord?.slots?.includes(validateData.slot)) {
       return res.code(404).send({ status: false, message: "Slot not found." });
     }
+
+    console.log("slot", req.body);
 
     // Create the booking
     await table.BookingModel.create(req.body, { transaction });
