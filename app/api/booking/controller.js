@@ -182,7 +182,7 @@ const updateStatus = async (req, res) => {
           bookingRecord.service_id
         );
       console.log({ treatmentRecord });
-      if (!treatmentRecord) {
+      if (!treatmentRecord?.id) {
         await table.TreatmentModel.create(
           {
             patient_id: bookingRecord.patient_id,
