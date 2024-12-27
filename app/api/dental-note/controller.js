@@ -100,7 +100,10 @@ const getByToothAndTreatmentId = async (req, res) => {
   try {
     const validateData = schema.parse(req.body);
 
-    const treatment = await table.TreatmentModel.getByPk(req);
+    const treatment = await table.TreatmentModel.getByPk(
+      0,
+      req.body.treatment_id
+    );
     if (!treatment)
       return res
         .code(404)
