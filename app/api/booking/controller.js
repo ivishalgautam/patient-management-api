@@ -4,59 +4,84 @@ import { sequelize } from "../../db/postgres.js";
 import { bookingSchema } from "../../validation-schemas/booking.schema.js";
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  let transaction;
   try {
+    // Start a transaction
+    transaction = await sequelize.transaction();
+
+    // Validate the input data
     const validateData = bookingSchema.parse(req.body);
     const { role, id: userId } = req.user_data;
+
+    // Check if the slot is already booked
     const isSlotBooked = await table.BookingModel.getByClinicDateAndSlot(req);
-    if (isSlotBooked)
+    if (isSlotBooked) {
       return res
         .code(400)
         .send({ status: false, message: "Slot already booked." });
-
-    let patientRecord = null;
-    if (role === "patient") {
-      patientRecord = await table.PatientModel.getByUserId(userId);
-      req.body.patient_id = patientRecord.id;
-    } else {
-      patientRecord = await table.PatientModel.getById(0, req.body.patient_id);
     }
 
-    if (!patientRecord)
+    // Retrieve the patient record
+    const patientRecord =
+      role === "patient"
+        ? await table.PatientModel.getByUserId(userId)
+        : await table.PatientModel.getById(0, req.body.patient_id);
+
+    if (!patientRecord || !patientRecord.id) {
       return res
         .code(404)
         .send({ status: false, message: "Patient not registered." });
+    }
+    req.body.patient_id = patientRecord.id;
 
-    const clinicRecord = await table.ClinicModel.getById(0, req.body.clinic_id);
-    if (!clinicRecord)
+    // Fetch clinic, service, and slot details concurrently
+    const [clinicRecord, serviceRecord, slotRecord] = await Promise.all([
+      table.ClinicModel.getById(0, req.body.clinic_id),
+      table.ServiceModel.getById(0, req.body.service_id),
+      table.SlotModel.getByClinicId(0, req.body.clinic_id),
+    ]);
+
+    // Validate clinic existence
+    if (!clinicRecord) {
       return res
         .code(404)
-        .send({ status: false, message: "Clinic not exist." });
+        .send({ status: false, message: "Clinic does not exist." });
+    }
     req.body.doctor_id = clinicRecord.doctor_id;
 
-    const serviceRecord = await table.ServiceModel.getById(
-      0,
-      req.body.service_id
-    );
-    if (!serviceRecord)
+    // Validate service existence
+    if (!serviceRecord) {
       return res
         .code(404)
-        .send({ status: false, message: "Service not exist." });
+        .send({ status: false, message: "Service does not exist." });
+    }
 
-    const slotRecord = await table.SlotModel.getByClinicId(
-      0,
-      req.body.clinic_id
-    );
-    if (!slotRecord.slots.includes(validateData.slot)) {
+    // Validate slot availability
+    if (!slotRecord?.slots?.includes(validateData.slot)) {
       return res.code(404).send({ status: false, message: "Slot not found." });
     }
 
-    await table.BookingModel.create(req, { transaction });
+    // Create the booking
+    await table.BookingModel.create(req.body, { transaction });
+
+    // Commit the transaction
     await transaction.commit();
+
+    // Respond with success
     res.send({ status: true, message: "Successfully booked a slot." });
   } catch (error) {
-    await transaction.rollback();
-    throw error;
+    // Rollback transaction in case of error
+    if (transaction) {
+      try {
+        await transaction.rollback();
+      } catch (rollbackError) {
+        console.error("Transaction rollback failed:", rollbackError);
+      }
+    }
+
+    // Log the error and send a response
+    console.error("Error during booking creation:", error);
+    res.code(500).send({ status: false, message: "Internal server error." });
   }
 };
 
