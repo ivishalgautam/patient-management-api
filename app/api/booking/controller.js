@@ -60,10 +60,8 @@ const create = async (req, res) => {
       return res.code(404).send({ status: false, message: "Slot not found." });
     }
 
-    console.log("slot", req.body);
-
     // Create the booking
-    await table.BookingModel.create(req.body, { transaction });
+    await table.BookingModel.create(req, { transaction });
 
     // Commit the transaction
     await transaction.commit();
