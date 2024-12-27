@@ -174,16 +174,26 @@ const updateStatus = async (req, res) => {
         0,
         bookingRecord.service_id
       );
-      await table.TreatmentModel.create(
-        {
-          patient_id: bookingRecord.patient_id,
-          clinic_id: bookingRecord.clinic_id,
-          service_id: bookingRecord.service_id,
-          appointment_id: bookingRecord.id,
-          cost: service.discounted_price,
-        },
-        { transaction }
-      );
+
+      const treatmentRecord =
+        await table.TreatmentModel.getByClinicPatientServiceId(
+          bookingRecord.patient_id,
+          bookingRecord.clinic_id,
+          bookingRecord.service_id
+        );
+      console.log({ treatmentRecord });
+      if (!treatmentRecord) {
+        await table.TreatmentModel.create(
+          {
+            patient_id: bookingRecord.patient_id,
+            clinic_id: bookingRecord.clinic_id,
+            service_id: bookingRecord.service_id,
+            appointment_id: bookingRecord.id,
+            cost: service.discounted_price,
+          },
+          { transaction }
+        );
+      }
     }
     await transaction.commit();
     res.send({ status: true, data: data, message: "Updated." });

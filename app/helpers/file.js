@@ -8,13 +8,17 @@ import constants from "../lib/constants/index.js";
 import { ErrorHandler } from "./error-handler.js";
 const { imageMime, videoMime, docsMime } = constants.mime;
 
+function bytesToMB(bytes) {
+  const MB = bytes / 1024;
+  return MB.toFixed(5); // Returns the result rounded to 5 decimal places
+}
+
 export const uploadFiles = async (req, isFileUpload = false) => {
   const path = [];
   const body = {};
   const parts = req.parts();
 
   for await (const file of parts) {
-    console.log({ file });
     if (file.type !== "file") {
       body[file.fieldname] = file.value;
       continue;
