@@ -8,4 +8,9 @@ export default async function routes(fastify, opt) {
   fastify.get("/:id", {}, controller.getById);
   fastify.delete("/:id", {}, controller.deleteById);
   fastify.get("/getByTreatmentId/:id", {}, controller.getByTreatmentId);
+  fastify.post(
+    "/getByToothAndTreatmentId",
+    {},
+    controller.getByToothAndTreatmentId
+  );
 }

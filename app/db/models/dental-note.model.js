@@ -75,6 +75,16 @@ const getById = async (req, id) => {
   });
 };
 
+const getByToothAndTreatmentId = async (req) => {
+  return await DentalNoteModel.findOne({
+    where: {
+      treatment_id: req.body.treatment_id,
+      affected_tooth: req.body.affected_tooth,
+    },
+    raw: true,
+  });
+};
+
 const update = async (req, id, { transaction }) => {
   return await DentalNoteModel.update(
     {
@@ -168,4 +178,5 @@ export default {
   getByTreatmentId: getByTreatmentId,
   deleteById: deleteById,
   update: update,
+  getByToothAndTreatmentId: getByToothAndTreatmentId,
 };

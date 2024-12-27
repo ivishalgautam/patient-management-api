@@ -3,6 +3,7 @@ import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { sequelize } from "../../db/postgres.js";
 import { dentalNoteSchema } from "../../validation-schemas/treatment.schema.js";
+import { z } from "zod";
 
 const { NOT_FOUND } = constants.http.status;
 
@@ -86,6 +87,33 @@ const getById = async (req, res) => {
   }
 };
 
+const getByToothAndTreatmentId = async (req, res) => {
+  const schema = z.object({
+    treatment_id: z
+      .string({ required_error: "Treatment Id is required." })
+      .uuid(),
+    affected_tooth: z
+      .string({ required_error: "Affected tooth is required." })
+      .min(1, { message: "Affected tooth is required." }),
+  });
+
+  try {
+    const validateData = schema.parse(req.body);
+
+    const treatment = await table.TreatmentModel.getByPk(req);
+    if (!treatment)
+      return res
+        .code(404)
+        .send({ status: false, message: "Treatment not found." });
+
+    const record = await table.DentalNoteModel.getByToothAndTreatmentId(req);
+
+    res.send({ status: true, data: record });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const getByTreatmentId = async (req, res) => {
   try {
     const treatment = await table.TreatmentModel.getByPk(req);
@@ -143,4 +171,5 @@ export default {
   getBySlug: getBySlug,
   getById: getById,
   getByTreatmentId: getByTreatmentId,
+  getByToothAndTreatmentId: getByToothAndTreatmentId,
 };
