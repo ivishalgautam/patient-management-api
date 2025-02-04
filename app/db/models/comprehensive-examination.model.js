@@ -23,7 +23,6 @@ const init = async (sequelize) => {
           key: "id",
           deferrable: Deferrable.INITIALLY_IMMEDIATE,
         },
-        onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
       chief_complaint: {
@@ -54,6 +53,10 @@ const init = async (sequelize) => {
           notEmpty: true,
         },
       },
+      affected_tooths: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        defaultValue: [],
+      },
       gallery: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: false,
@@ -66,7 +69,6 @@ const init = async (sequelize) => {
           key: "id",
           deferrable: Deferrable.INITIALLY_IMMEDIATE,
         },
-        onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
     },
@@ -87,6 +89,7 @@ const create = async (req, { transaction }) => {
       medical_history: req.body.medical_history,
       dental_history: req.body.dental_history,
       examination: req.body.examination,
+      affected_tooths: req.body.affected_tooths,
       gallery: req.body.gallery,
       added_by: req.user_data.id,
     },
@@ -101,6 +104,27 @@ const getById = async (req, id) => {
     },
     raw: true,
   });
+};
+
+const update = async (req, id, { transaction }) => {
+  const [, rows] = await ComprehensiveExaminationModel.update(
+    {
+      chief_complaint: req.body.chief_complaint,
+      medical_history: req.body.medical_history,
+      dental_history: req.body.dental_history,
+      examination: req.body.examination,
+      affected_tooths: req.body.affected_tooths,
+      gallery: req.body.gallery,
+    },
+    {
+      where: {
+        id: req?.params?.id || id,
+      },
+      transaction,
+    }
+  );
+
+  return rows;
 };
 
 const getByPatientId = async (req, patient_id) => {
@@ -137,4 +161,5 @@ export default {
   getById: getById,
   getByPatientId: getByPatientId,
   deleteById: deleteById,
+  update: update,
 };

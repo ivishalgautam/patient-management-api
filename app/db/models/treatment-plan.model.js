@@ -129,8 +129,8 @@ const update = async (req, id, { transaction }) => {
         id: req?.params?.id || id,
       },
       raw: true,
-    },
-    { transaction }
+      transaction,
+    }
   );
 };
 

@@ -1,10 +1,9 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import slugify from "slugify";
-import { deleteFile } from "../../helpers/file.js";
 import { sequelize } from "../../db/postgres.js";
 import { comprehensiveExaminationSchema } from "../../validation-schemas/comprehensive-examination.schema.js";
+import { cleanupFiles } from "../../helpers/cleanup-files.js";
 
 const { NOT_FOUND } = constants.http.status;
 
@@ -27,9 +26,9 @@ const create = async (req, res) => {
       req.body.patient_id
     );
 
-    // req.body.treatment_id = treatment.id;
-    // req.body.total_cost = 0;
-    // await table.TreatmentPlanModel.create(req, { transaction });
+    req.body.treatment_id = treatment.id;
+    req.body.total_cost = 0;
+    await table.TreatmentPlanModel.create(req, { transaction });
 
     await transaction.commit();
     res.send({
@@ -45,7 +44,7 @@ const create = async (req, res) => {
 
 const getById = async (req, res) => {
   try {
-    const record = await table.ComprehensiveExaminationModel.getByPk(req);
+    const record = await table.ComprehensiveExaminationModel.getById(req);
     if (!record) {
       return res.code(NOT_FOUND).send({
         status: false,
@@ -78,10 +77,10 @@ const getByPatientId = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
-    const record = await table.ComprehensiveExaminationModel.getByPk(req);
+    const record = await table.ComprehensiveExaminationModel.getById(req);
     if (!record)
       return res.code(NOT_FOUND).send({
         status: false,
@@ -94,13 +93,36 @@ const deleteById = async (req, res) => {
       });
 
     if (isTreatmentDeleted) {
-      deleteFile(record?.image);
+      cleanupFiles(record?.gallery);
     }
 
     await transaction.commit();
     res.send({ status: true, message: "Comprehensive examination deleted." });
   } catch (error) {
-    await (await transaction).rollback();
+    await transaction.rollback();
+    throw error;
+  }
+};
+
+const update = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const record = await table.ComprehensiveExaminationModel.getById(req);
+    if (!record)
+      return res.code(NOT_FOUND).send({
+        status: false,
+        message: "Comprehensive examination not found!",
+      });
+
+    await table.ComprehensiveExaminationModel.update(req, 0, {
+      transaction,
+    });
+
+    await transaction.commit();
+    res.send({ status: true, message: "Comprehensive examination updated." });
+  } catch (error) {
+    await transaction.rollback();
     throw error;
   }
 };
@@ -110,4 +132,5 @@ export default {
   deleteById: deleteById,
   getById: getById,
   getByPatientId: getByPatientId,
+  update: update,
 };
