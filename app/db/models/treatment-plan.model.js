@@ -2,10 +2,10 @@
 import constants from "../../lib/constants/index.js";
 import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
-let TreartmentPlanModel = null;
+let TreatmentPlanModel = null;
 
 const init = async (sequelize) => {
-  TreartmentPlanModel = sequelize.define(
+  TreatmentPlanModel = sequelize.define(
     constants.models.TREATMENT_PLAN_TABLE,
     {
       id: {
@@ -73,11 +73,11 @@ const init = async (sequelize) => {
     }
   );
 
-  await TreartmentPlanModel.sync({ alter: true });
+  await TreatmentPlanModel.sync({ force: true });
 };
 
 const create = async (req, { transaction }) => {
-  return await TreartmentPlanModel.create(
+  return await TreatmentPlanModel.create(
     {
       treatment_id: req.body.treatment_id,
       patient_id: req.body.patient_id,
@@ -92,13 +92,13 @@ const create = async (req, { transaction }) => {
 };
 
 const get = async () => {
-  return await TreartmentPlanModel.findAll({
+  return await TreatmentPlanModel.findAll({
     order: [["created_at", "DESC"]],
   });
 };
 
 const getById = async (req, id) => {
-  return await TreartmentPlanModel.findOne({
+  return await TreatmentPlanModel.findOne({
     where: {
       id: req?.params?.id || id,
     },
@@ -107,7 +107,7 @@ const getById = async (req, id) => {
 };
 
 const getByToothAndTreatmentId = async (req) => {
-  return await TreartmentPlanModel.findOne({
+  return await TreatmentPlanModel.findOne({
     where: {
       treatment_id: req.body.treatment_id,
       affected_tooths: req.body.affected_tooths,
@@ -117,7 +117,7 @@ const getByToothAndTreatmentId = async (req) => {
 };
 
 const update = async (req, id, { transaction }) => {
-  return await TreartmentPlanModel.update(
+  return await TreatmentPlanModel.update(
     {
       radiographic_diagnosis: req.body.radiographic_diagnosis,
       affected_tooths: req.body.affected_tooths,
@@ -135,7 +135,7 @@ const update = async (req, id, { transaction }) => {
 };
 
 const getByPk = async (req, id) => {
-  return await TreartmentPlanModel.findByPk(req?.params?.id || id);
+  return await TreatmentPlanModel.findByPk(req?.params?.id || id);
 };
 
 const getByTreatmentId = async (req, treatmentId) => {
@@ -190,13 +190,13 @@ const getByTreatmentId = async (req, treatmentId) => {
     ${whereClause}
   `;
 
-  const data = await TreartmentPlanModel.sequelize.query(query, {
+  const data = await TreatmentPlanModel.sequelize.query(query, {
     type: QueryTypes.SELECT,
     replacements: { ...queryParams, limit, offset },
     raw: true,
   });
 
-  const count = await TreartmentPlanModel.sequelize.query(countQuery, {
+  const count = await TreatmentPlanModel.sequelize.query(countQuery, {
     type: QueryTypes.SELECT,
     replacements: { ...queryParams },
     raw: true,
@@ -257,13 +257,13 @@ const getByPatientId = async (req, patientId) => {
     ${whereClause}
   `;
 
-  const data = await TreartmentPlanModel.sequelize.query(query, {
+  const data = await TreatmentPlanModel.sequelize.query(query, {
     type: QueryTypes.SELECT,
     replacements: { ...queryParams, limit, offset },
     raw: true,
   });
 
-  const count = await TreartmentPlanModel.sequelize.query(countQuery, {
+  const count = await TreatmentPlanModel.sequelize.query(countQuery, {
     type: QueryTypes.SELECT,
     replacements: { ...queryParams },
     raw: true,
@@ -273,13 +273,41 @@ const getByPatientId = async (req, patientId) => {
 };
 
 const deleteById = async (req, id) => {
-  return await TreartmentPlanModel.destroy({
+  return await TreatmentPlanModel.destroy({
     where: {
       id: req?.params?.id || id,
     },
     returning: true,
     raw: true,
   });
+};
+
+const countRemainingCostByTreatmentId = async (treatment_id) => {
+  const query = `
+  SELECT 
+      COALESCE(SUM(tp.total_cost)::integer, 0) - COALESCE(SUM(pmnt.amount_paid)::integer, 0) as remaining_cost
+    FROM (
+    SELECT 
+      SUM(tp.total_cost) as total_cost
+      FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
+      WHERE tp.treatment_id = :treatmentId
+    ) tp
+    FULL OUTER JOIN (
+    SELECT 
+      SUM(pmnt.amount_paid) as amount_paid
+      FROM ${constants.models.PAYMENT_TABLE} pmnt
+      WHERE pmnt.treatment_id = :treatmentId
+    ) pmnt ON true
+  `;
+
+  const data = await TreatmentPlanModel.sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    replacements: { treatmentId: treatment_id },
+    plain: true,
+    raw: true,
+  });
+
+  return data?.remaining_cost ?? 0;
 };
 
 export default {
@@ -293,4 +321,5 @@ export default {
   deleteById: deleteById,
   update: update,
   getByToothAndTreatmentId: getByToothAndTreatmentId,
+  countRemainingCostByTreatmentId: countRemainingCostByTreatmentId,
 };

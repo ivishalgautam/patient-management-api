@@ -70,9 +70,12 @@ const init = async (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      is_active: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true,
+      status: {
+        type: DataTypes.ENUM("active", "close"),
+        defaultValue: "active",
+        validate: {
+          isIn: [["active", "close"]],
+        },
       },
     },
     {
@@ -183,7 +186,7 @@ const getByPatientAndClinicId = async (req, patient_id, clinic_id) => {
 
   if (q) {
     whereConditions.push(
-      `(usr.fullname ILIKE :query OR usr.email ILIKE :query)`
+      `(drusr.fullname ILIKE :query OR srvc.name ILIKE :query)`
     );
     queryParams.query = `%${q}%`;
   }
@@ -196,7 +199,7 @@ const getByPatientAndClinicId = async (req, patient_id, clinic_id) => {
 
   const query = `
     SELECT 
-      trmnt.id, usr.fullname, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at,
+      trmnt.id, trmnt.status, trmnt.created_at,
       pt.id as patient_id,
       srvc.name as service_name,
       drusr.fullname as added_by
@@ -204,7 +207,6 @@ const getByPatientAndClinicId = async (req, patient_id, clinic_id) => {
     LEFT JOIN ${constants.models.CLINIC_TABLE} cln ON cln.id = trmnt.clinic_id
     LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
-    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = pt.user_id
     LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = trmnt.added_by
     ${whereClause}
     ORDER BY trmnt.created_at DESC
@@ -213,11 +215,12 @@ const getByPatientAndClinicId = async (req, patient_id, clinic_id) => {
 
   const countQuery = `
     SELECT 
-      COUNT(usr.id) OVER()::integer as total
+      COUNT(trmnt.id) OVER()::integer as total
     FROM ${constants.models.TREATMENT_TABLE} trmnt
     LEFT JOIN ${constants.models.CLINIC_TABLE} cln ON cln.id = trmnt.clinic_id
+    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
-    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = pt.user_id
+    LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = trmnt.added_by
     ${whereClause}
     `;
 
@@ -350,17 +353,21 @@ const deleteById = async (req, id) => {
   });
 };
 
-const update = async (req, id) => {
-  return await TreatmentModel.update(
-    { is_active: req.body.is_active },
+const update = async (req, id, { transaction }) => {
+  const [, rows] = await TreatmentModel.update(
+    { status: req.body.status },
     {
       where: {
         id: req?.params?.id || id,
       },
       returning: true,
       raw: true,
+      plain: true,
+      transaction,
     }
   );
+
+  return rows;
 };
 
 const getByClinicPatientServiceId = async (

@@ -27,9 +27,9 @@ const create = async (req, res) => {
       req.body.patient_id
     );
 
-    req.body.treatment_id = treatment.id;
-    req.body.total_cost = 0;
-    await table.TreatmentPlanModel.create(req, { transaction });
+    // req.body.treatment_id = treatment.id;
+    // req.body.total_cost = 0;
+    // await table.TreatmentPlanModel.create(req, { transaction });
 
     await transaction.commit();
     res.send({

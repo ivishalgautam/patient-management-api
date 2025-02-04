@@ -19,6 +19,24 @@ const create = async (req, res) => {
         .code(404)
         .send({ status: false, message: "Treatment not found." });
 
+    const remainingCost =
+      await table.TreatmentPlanModel.countRemainingCostByTreatmentId(
+        req.body.treatment_id
+      );
+
+    if (!remainingCost)
+      return res.status(409).send({
+        status: false,
+        message: "Please add treatment plan to make payments!",
+      });
+    const currPaid = req.body.amount_paid;
+    if (remainingCost < currPaid) {
+      return res.status(409).send({
+        message: `Remaining balance is ${remainingCost}!`,
+        status: false,
+      });
+    }
+
     const data = await table.TreatmentPaymentModel.create(req, {
       transaction,
     });

@@ -83,6 +83,7 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const record = await table.TreatmentModel.getByPk(req);
     if (!record) {
@@ -91,7 +92,8 @@ const updateById = async (req, res) => {
         .send({ status: false, message: "Treatment not found!" });
     }
 
-    const data = await table.TreatmentModel.update(req);
+    const data = await table.TreatmentModel.update(req, 0, { transaction });
+    await transaction.commit();
 
     res.send({
       status: true,
@@ -99,6 +101,7 @@ const updateById = async (req, res) => {
       message: "Treatment updated.",
     });
   } catch (error) {
+    await transaction.rollback();
     throw error;
   }
 };
