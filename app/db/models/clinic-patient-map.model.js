@@ -96,7 +96,7 @@ const get = async (req, id) => {
   const query = `
     SELECT 
       cp.id, 
-      usr.fullname, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at,
+      usr.id as user_id, usr.fullname, usr.avatar, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at,
       pt.id AS patient_id,
       COALESCE(tp.total_cost_sum, 0) AS total_cost,
       COALESCE(pmnt.total_amount_paid_sum, 0) AS total_amount_paid
@@ -122,7 +122,7 @@ const get = async (req, id) => {
     ${whereClause}
     GROUP BY 
       cp.id, pt.id, 
-      usr.fullname, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at, tp.total_cost_sum, pmnt.total_amount_paid_sum
+      usr.id, tp.total_cost_sum, pmnt.total_amount_paid_sum
     ORDER BY usr.created_at DESC
     LIMIT :limit OFFSET :offset;
   `;

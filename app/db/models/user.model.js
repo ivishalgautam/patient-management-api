@@ -237,7 +237,7 @@ const getById = async (req, user_id) => {
     limit: 1,
   });
 
-  return { ...data, details: data.details?.[0] ?? {} };
+  return { ...data, details: data?.details?.[0] ?? {} };
 };
 
 const getByPk = async (req, id) => {
