@@ -38,6 +38,44 @@ const create = async (req, res) => {
     });
   } catch (error) {
     await transaction.rollback();
+    await cleanupFiles(req.filePaths);
+    throw error;
+  }
+};
+
+const createMultipart = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    req.body.gallery = req.filePaths;
+    const validateHistoryData = comprehensiveExaminationSchema.parse(req.body);
+    const patient = await table.PatientModel.getById(0, req.body.patient_id);
+    if (!patient)
+      return res
+        .code(404)
+        .send({ status: false, message: "Patient not found." });
+
+    const data = await table.ComprehensiveExaminationModel.create(req, {
+      transaction,
+    });
+
+    const treatment = await table.TreatmentModel.getByPatientId(
+      0,
+      req.body.patient_id
+    );
+
+    req.body.treatment_id = treatment.id;
+    req.body.total_cost = 0;
+    await table.TreatmentPlanModel.create(req, { transaction });
+
+    await transaction.commit();
+    res.send({
+      status: true,
+      data: data,
+      message: "Comprehensive examination created.",
+    });
+  } catch (error) {
+    await transaction.rollback();
+    await cleanupFiles(req.filePaths);
     throw error;
   }
 };
@@ -61,7 +99,6 @@ const getById = async (req, res) => {
 const getByPatientId = async (req, res) => {
   try {
     const patient = await table.PatientModel.getById(req);
-    console.log({ patient });
     if (!patient)
       return res
         .code(404)
@@ -127,10 +164,57 @@ const update = async (req, res) => {
   }
 };
 
+const updateMultipart = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const record = await table.ComprehensiveExaminationModel.getById(req);
+    console.log({ record });
+    if (!record)
+      return res.code(NOT_FOUND).send({
+        status: false,
+        message: "Comprehensive examination not found!",
+      });
+
+    console.log(
+      "record: ",
+      record.gallery,
+      "existing: ",
+      existingDocuments,
+      "do delete: ",
+      documentsToDelete,
+      "req.filePaths: ",
+      req.filePaths
+    );
+
+    const existingDocuments = record.gallery;
+    const documentsToDelete = existingDocuments.filter(
+      (doc) => !req.body?.gallery.includes(doc)
+    );
+    req.body.gallery = [...req.filePaths, ...req.body.gallery];
+    await table.ComprehensiveExaminationModel.update(req, 0, {
+      transaction,
+    });
+
+    if (documentsToDelete.length) {
+      await cleanupFiles(documentsToDelete);
+    }
+
+    await transaction.commit();
+    res.send({ status: true, message: "Comprehensive examination updated." });
+  } catch (error) {
+    await transaction.rollback();
+    await cleanupFiles(req.filePaths);
+    throw error;
+  }
+};
+
 export default {
   create: create,
+  createMultipart: createMultipart,
   deleteById: deleteById,
   getById: getById,
   getByPatientId: getByPatientId,
   update: update,
+  updateMultipart: updateMultipart,
 };

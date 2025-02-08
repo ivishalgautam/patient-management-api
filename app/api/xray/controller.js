@@ -10,7 +10,6 @@ const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
   const transaction = await sequelize.transaction();
-  console.log("isMultipart", req.isMultipart());
   try {
     req.body.files = req.filePaths;
     const validateData = xraySchema.parse(req.body);
