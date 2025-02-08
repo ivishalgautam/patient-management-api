@@ -4,6 +4,7 @@ import table from "../../db/models.js";
 import { sequelize } from "../../db/postgres.js";
 import { comprehensiveExaminationSchema } from "../../validation-schemas/comprehensive-examination.schema.js";
 import { cleanupFiles } from "../../helpers/cleanup-files.js";
+import { getItemsToDelete } from "../../helpers/filter.js";
 
 const { NOT_FOUND } = constants.http.status;
 
@@ -169,29 +170,18 @@ const updateMultipart = async (req, res) => {
 
   try {
     const record = await table.ComprehensiveExaminationModel.getById(req);
-    console.log({ record });
+
     if (!record)
       return res.code(NOT_FOUND).send({
         status: false,
         message: "Comprehensive examination not found!",
       });
 
-    console.log(
-      "record: ",
-      record.gallery,
-      "existing: ",
-      existingDocuments,
-      "do delete: ",
-      documentsToDelete,
-      "req.filePaths: ",
-      req.filePaths
-    );
+    const existingGallery = record.gallery;
+    const updatedGallery = req.body.gallery;
+    const documentsToDelete = getItemsToDelete(existingGallery, updatedGallery);
 
-    const existingDocuments = record.gallery;
-    const documentsToDelete = existingDocuments.filter(
-      (doc) => !req.body?.gallery.includes(doc)
-    );
-    req.body.gallery = [...req.filePaths, ...req.body.gallery];
+    req.body.gallery = [...(req.filePaths ?? []), ...updatedGallery];
     await table.ComprehensiveExaminationModel.update(req, 0, {
       transaction,
     });

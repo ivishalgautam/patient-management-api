@@ -1,6 +1,10 @@
 import { saveFile } from "../../helpers/multer.js";
 
-export const multipartPreHandler = async (req, reply, checkForArrays = []) => {
+export const multipartPreHandler = async (
+  req,
+  reply,
+  checkForArrayElements = []
+) => {
   const parts = req.parts();
   const body = {};
   const filePaths = [];
@@ -10,7 +14,7 @@ export const multipartPreHandler = async (req, reply, checkForArrays = []) => {
       const filePath = await saveFile(part);
       filePaths.push(filePath);
     } else {
-      checkForArrays.includes(part.fieldname)
+      checkForArrayElements.includes(part.fieldname)
         ? (body[part.fieldname] = JSON.parse(part.value))
         : (body[part.fieldname] = part.value);
     }
