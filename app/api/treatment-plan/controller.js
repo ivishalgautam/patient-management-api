@@ -43,12 +43,15 @@ const updateById = async (req, res) => {
         .send({ status: false, message: "Treatment plan not found!" });
     }
 
+    const data = await table.TreatmentPlanModel.update(req, 0, { transaction });
+    await transaction.commit();
     res.send({
       status: true,
-      data: await table.TreatmentPlanModel.update(req, 0, { transaction }),
+      data: data,
       message: "Treatment plan updated.",
     });
   } catch (error) {
+    await transaction.rollback();
     throw error;
   }
 };

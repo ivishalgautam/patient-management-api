@@ -325,79 +325,76 @@ const count = async (clinicId, today = false) => {
 
 const paymentsSummary = async (req, id) => {
   const { year = new Date().getFullYear() } = req.query;
-
-  const paymentsSummary = await TreatmentPaymentModel.sequelize.query(
-    `
+  const query = `
    WITH plan_data AS (
+    SELECT 
+      date_trunc('month', tp.created_at) AS month, 
+      SUM(tp.total_cost) AS total_cost
+    FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
+    JOIN ${constants.models.TREATMENT_TABLE} t ON t.id = tp.treatment_id
+    WHERE t.clinic_id = :clinicId
+    GROUP BY date_trunc('month', tp.created_at)
+  ),
+  payment_data AS (
+    SELECT 
+      date_trunc('month', p.created_at) AS month, 
+      SUM(p.amount_paid) AS total_paid
+    FROM ${constants.models.PAYMENT_TABLE} p
+    JOIN ${constants.models.TREATMENT_TABLE} t ON t.id = p.treatment_id
+    WHERE t.clinic_id = :clinicId
+    GROUP BY date_trunc('month', p.created_at)
+  ),
+  overall AS (
+    SELECT 
+      (SELECT COALESCE(SUM(total_paid), 0) 
+      FROM payment_data 
+      WHERE month = date_trunc('month', CURRENT_DATE)
+      ) AS payment_received_this_month,
+      (SELECT COALESCE(SUM(total_paid), 0) 
+      FROM payment_data
+      ) AS total_payment_received,
+      (SELECT COALESCE(SUM(total_cost), 0) 
+      FROM plan_data 
+      WHERE month = date_trunc('month', CURRENT_DATE)
+      ) AS payment_cost_this_month,
+      (SELECT COALESCE(SUM(total_cost), 0) 
+      FROM plan_data
+      ) AS total_cost
+  ),
+  months AS (
+    SELECT generate_series(
+      date_trunc('month', CURRENT_DATE) - interval '11 months', 
+      date_trunc('month', CURRENT_DATE), 
+      interval '1 month'
+    ) AS month
+  ),
+  graph_data AS (
+    SELECT 
+      to_char(m.month, 'Mon YYYY') AS month,
+      COALESCE(pd.total_cost, 0) AS total_amount,
+      COALESCE(payd.total_paid, 0) AS received_amount
+    FROM months m
+    LEFT JOIN plan_data pd ON pd.month = m.month
+    LEFT JOIN payment_data payd ON payd.month = m.month
+    ORDER BY m.month
+  )
   SELECT 
-    date_trunc('month', tp.created_at) AS month, 
-    SUM(tp.total_cost) AS total_cost
-  FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
-  JOIN ${constants.models.TREATMENT_TABLE} t ON t.id = tp.treatment_id
-  WHERE t.clinic_id = :clinicId
-  GROUP BY date_trunc('month', tp.created_at)
-),
-payment_data AS (
-  SELECT 
-    date_trunc('month', p.created_at) AS month, 
-    SUM(p.amount_paid) AS total_paid
-  FROM ${constants.models.PAYMENT_TABLE} p
-  JOIN ${constants.models.TREATMENT_TABLE} t ON t.id = p.treatment_id
-  WHERE t.clinic_id = :clinicId
-  GROUP BY date_trunc('month', p.created_at)
-),
-overall AS (
-  SELECT 
-    (SELECT COALESCE(SUM(total_paid), 0) 
-     FROM payment_data 
-     WHERE month = date_trunc('month', CURRENT_DATE)
-    ) AS payment_received_this_month,
-    (SELECT COALESCE(SUM(total_paid), 0) 
-     FROM payment_data
-    ) AS total_payment_received,
-    (SELECT COALESCE(SUM(total_cost), 0) 
-     FROM plan_data 
-     WHERE month = date_trunc('month', CURRENT_DATE)
-    ) AS payment_cost_this_month,
-    (SELECT COALESCE(SUM(total_cost), 0) 
-     FROM plan_data
-    ) AS total_cost
-),
-months AS (
-  SELECT generate_series(
-           date_trunc('month', CURRENT_DATE) - interval '11 months', 
-           date_trunc('month', CURRENT_DATE), 
-           interval '1 month'
-         ) AS month
-),
-graph_data AS (
-  SELECT 
-    to_char(m.month, 'Mon YYYY') AS month,
-    COALESCE(pd.total_cost, 0) AS total_amount,
-    COALESCE(payd.total_paid, 0) AS received_amount
-  FROM months m
-  LEFT JOIN plan_data pd ON pd.month = m.month
-  LEFT JOIN payment_data payd ON payd.month = m.month
-  ORDER BY m.month
-)
-SELECT 
-  o.payment_received_this_month,
-  o.total_payment_received,
-  o.payment_cost_this_month,
-  o.total_cost,
-  (o.total_cost - o.total_payment_received) AS balance_amount,
-  (
-    SELECT json_agg(row_to_json(gd) ORDER BY gd.month)
-    FROM graph_data gd
-  ) AS graph
-FROM overall o;
+    o.payment_received_this_month,
+    o.total_payment_received,
+    o.payment_cost_this_month,
+    o.total_cost,
+    (o.total_cost - o.total_payment_received) AS balance_amount,
+    (
+      SELECT json_agg(row_to_json(gd) ORDER BY gd.month)
+      FROM graph_data gd
+    ) AS graph
+  FROM overall o;
+`;
 
-`,
-    {
-      replacements: { year, clinicId: req?.params?.id || id },
-      type: QueryTypes.SELECT,
-    }
-  );
+  const paymentsSummary = await TreatmentPaymentModel.sequelize.query(query, {
+    replacements: { year, clinicId: req?.params?.id || id },
+    type: QueryTypes.SELECT,
+  });
 
   return paymentsSummary;
 };
