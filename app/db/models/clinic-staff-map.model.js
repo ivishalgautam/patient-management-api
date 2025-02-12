@@ -81,7 +81,7 @@ const get = async (req, id) => {
   }
   const query = `
     SELECT 
-      cstf.id, usr.fullname, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at,
+      cstf.id, usr.id as user_id, usr.fullname, usr.username, usr.mobile_number, usr.email, usr.is_active, usr.created_at,
       stf.id as staff_id
     FROM ${constants.models.CLINIC_STAFF_TABLE} cstf
     LEFT JOIN ${constants.models.CLINIC_TABLE} cln ON cln.id = cstf.clinic_id
