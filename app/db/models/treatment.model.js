@@ -239,6 +239,73 @@ const getByPatientAndClinicId = async (req, patient_id, clinic_id) => {
   return { treatments, total: count?.[0]?.total ?? 0 };
 };
 
+const getByPatientId = async (req, patient_id, clinic_id) => {
+  const whereConditions = [`pt.id = :patientId AND cln.id = :clinicId`];
+  const queryParams = {
+    patientId: patient_id,
+    clinicId: clinic_id,
+  };
+  const q = req.query.q ? req.query.q : null;
+
+  if (q) {
+    whereConditions.push(
+      `(drusr.fullname ILIKE :query OR srvc.name ILIKE :query)`
+    );
+    queryParams.query = `%${q}%`;
+  }
+
+  const page = req.query.page ? Number(req.query.page) : 1;
+  const limit = req.query.limit ? Number(req.query.limit) : null;
+  const offset = (page - 1) * limit;
+
+  const whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+
+  const query = `
+    SELECT 
+      trmnt.id,
+      trmnt.created_at as date,
+      drusr.fullname as doctor_name,
+      bk.slot as slot,
+      prd.name as procedure_name,
+      prd.image as image
+    FROM ${constants.models.TREATMENT_TABLE} trmnt
+    LEFT JOIN ${constants.models.CLINIC_TABLE} cln ON cln.id = trmnt.clinic_id
+    LEFT JOIN ${constants.models.BOOKING_TABLE} bk ON bk.id = trmnt.appointment_id
+    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
+    LEFT JOIN ${constants.models.PROCEDURE_TABLE} prd ON prd.id = srvc.procedure_id
+    LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = trmnt.added_by
+    ${whereClause}
+    ORDER BY trmnt.created_at DESC
+    LIMIT :limit OFFSET :offset
+    `;
+
+  const countQuery = `
+    SELECT 
+      COUNT(trmnt.id) OVER()::integer as total
+    FROM ${constants.models.TREATMENT_TABLE} trmnt
+    LEFT JOIN ${constants.models.CLINIC_TABLE} cln ON cln.id = trmnt.clinic_id
+    LEFT JOIN ${constants.models.BOOKING_TABLE} bk ON bk.id = trmnt.appointment_id
+    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
+    LEFT JOIN ${constants.models.PROCEDURE_TABLE} prd ON prd.id = srvc.procedure_id
+    LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = trmnt.added_by
+    ${whereClause}
+    `;
+
+  const treatments = await TreatmentModel.sequelize.query(query, {
+    replacements: { ...queryParams, limit, offset },
+    type: QueryTypes.SELECT,
+    raw: true,
+  });
+
+  const count = await TreatmentModel.sequelize.query(countQuery, {
+    replacements: { ...queryParams },
+    type: QueryTypes.SELECT,
+    raw: true,
+  });
+
+  return { treatments, total: count?.[0]?.total ?? 0 };
+};
+
 const getById = async (req, id) => {
   let query = `
   SELECT 
@@ -309,32 +376,6 @@ const getPatientDetailsByPatientAndClinicId = async (patientId, clinicId) => {
     replacements: { patientId, clinicId },
     raw: true,
     plain: true,
-  });
-};
-
-const getByPatientId = async (req, id) => {
-  let query = `
-  SELECT
-      trmnt.id,
-      trmnt.created_at as date,
-      usr.fullname as doctor_name,
-      bk.slot as slot,
-      prd.name as procedure_name,
-      prd.image as image
-    FROM ${constants.models.TREATMENT_TABLE} trmnt
-    LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
-    LEFT JOIN ${constants.models.BOOKING_TABLE} bk ON bk.id = trmnt.appointment_id
-    LEFT JOIN ${constants.models.SERVICE_TABLE} srv ON srv.id = bk.service_id
-    LEFT JOIN ${constants.models.PROCEDURE_TABLE} prd ON prd.id = srv.procedure_id
-    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = trmnt.added_by
-    WHERE pt.id = :patientId
-    ORDER BY trmnt.created_at desc
-  `;
-
-  return await TreatmentModel.sequelize.query(query, {
-    type: QueryTypes.SELECT,
-    replacements: { patientId: req?.params?.id || id },
-    raw: true,
   });
 };
 
