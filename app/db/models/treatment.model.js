@@ -315,9 +315,18 @@ const getPatientDetailsByPatientAndClinicId = async (patientId, clinicId) => {
 const getByPatientId = async (req, id) => {
   let query = `
   SELECT
-      trmnt.*
+      trmnt.id,
+      trmnt.created_at as date,
+      usr.fullname as doctor_name,
+      bk.slot as slot,
+      prd.name as procedure_name,
+      prd.image as image
     FROM ${constants.models.TREATMENT_TABLE} trmnt
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
+    LEFT JOIN ${constants.models.BOOKING_TABLE} bk ON bk.id = trmnt.appointment_id
+    LEFT JOIN ${constants.models.SERVICE_TABLE} srv ON srv.id = bk.service_id
+    LEFT JOIN ${constants.models.PROCEDURE_TABLE} prd ON prd.id = srv.procedure_id
+    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = trmnt.added_by
     WHERE pt.id = :patientId
     ORDER BY trmnt.created_at desc
   `;
