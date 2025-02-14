@@ -193,7 +193,7 @@ const getByPatientId = async (req, res) => {
         .send({ status: false, message: "Patient not found!" });
     }
 
-    const data = await table.TreatmentModel.getByPatientId(0, record.id);
+    const data = await table.TreatmentModel.getByPatientId(req, record.id);
 
     res.send({ status: true, data: data });
   } catch (error) {
