@@ -325,7 +325,6 @@ const getByPatientId = async (req, id) => {
   return await TreatmentModel.sequelize.query(query, {
     type: QueryTypes.SELECT,
     replacements: { patientId: req?.params?.id || id },
-    plain: true,
     raw: true,
   });
 };
