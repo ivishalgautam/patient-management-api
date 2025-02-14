@@ -239,8 +239,8 @@ const getByPatientAndClinicId = async (req, patient_id, clinic_id) => {
   return { treatments, total: count?.[0]?.total ?? 0 };
 };
 
-const getByPatientId = async (req, patient_id, clinic_id) => {
-  const whereConditions = [`pt.id = :patientId AND cln.id = :clinicId`];
+const getByPatientId = async (req, patient_id) => {
+  const whereConditions = [`pt.id = :patientId`];
   const queryParams = {
     patientId: patient_id,
     clinicId: clinic_id,
@@ -269,6 +269,7 @@ const getByPatientId = async (req, patient_id, clinic_id) => {
       prd.name as procedure_name,
       prd.image as image
     FROM ${constants.models.TREATMENT_TABLE} trmnt
+    LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
     LEFT JOIN ${constants.models.CLINIC_TABLE} cln ON cln.id = trmnt.clinic_id
     LEFT JOIN ${constants.models.BOOKING_TABLE} bk ON bk.id = trmnt.appointment_id
     LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
@@ -283,6 +284,7 @@ const getByPatientId = async (req, patient_id, clinic_id) => {
     SELECT 
       COUNT(trmnt.id) OVER()::integer as total
     FROM ${constants.models.TREATMENT_TABLE} trmnt
+    LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
     LEFT JOIN ${constants.models.CLINIC_TABLE} cln ON cln.id = trmnt.clinic_id
     LEFT JOIN ${constants.models.BOOKING_TABLE} bk ON bk.id = trmnt.appointment_id
     LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = trmnt.service_id
