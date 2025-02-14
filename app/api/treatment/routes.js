@@ -7,6 +7,7 @@ export default async function routes(fastify, opts) {
   fastify.put("/:id", {}, controller.updateById);
   fastify.get("/:id", {}, controller.getById);
   fastify.get("/getByClinicId/:id", {}, controller.getByClinicId);
+  fastify.get("/getByPatientId/:id", {}, controller.getByPatientId);
   fastify.get(
     "/getByPatientAndClinicId/:patient_id/:clinic_id",
     {},
