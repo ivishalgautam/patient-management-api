@@ -186,7 +186,7 @@ const getByClinicId = async (req, res) => {
 
 const getByPatientId = async (req, res) => {
   try {
-    const record = await table.PatientModel.getByUserId(req.params.id);
+    const record = await table.PatientModel.getByUserId(req.user_data.id);
     if (!record) {
       return res
         .code(NOT_FOUND)
