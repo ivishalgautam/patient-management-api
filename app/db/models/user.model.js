@@ -220,7 +220,8 @@ const getById = async (req, user_id) => {
         json_agg(json_build_object(
           'id', dr.id,
           'specialization', dr.specialization,
-          'experience_years', dr.experience_years
+          'experience_years', dr.experience_years,
+          'about', dr.about
         )) FILTER (WHERE dr.id IS NOT NULL)
     END AS details
   FROM ${constants.models.USER_TABLE} usr
