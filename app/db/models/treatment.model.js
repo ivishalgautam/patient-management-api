@@ -243,7 +243,6 @@ const getByPatientId = async (req, patient_id) => {
   const whereConditions = [`pt.id = :patientId`];
   const queryParams = {
     patientId: patient_id,
-    clinicId: clinic_id,
   };
   const q = req.query.q ? req.query.q : null;
 
