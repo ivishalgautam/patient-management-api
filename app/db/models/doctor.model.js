@@ -116,6 +116,7 @@ const updateByUserId = async (req, id, { transaction }) => {
     {
       specialization: req.body.specialization,
       experience_years: req.body.experience_years,
+      about: req.body.about,
     },
     {
       where: {
