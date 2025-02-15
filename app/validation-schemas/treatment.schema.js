@@ -59,7 +59,7 @@ export const xraySchema = z.object({
     .min(1, { message: "Title is required." }),
 });
 
-export const documentSchema = z.object({
+export const documentDoctorSchema = z.object({
   patient_id: z
     .string({ required_error: "Patient ID is required." })
     .uuid()
@@ -67,9 +67,18 @@ export const documentSchema = z.object({
   title: z
     .string({ required_error: "Title is required." })
     .min(1, { message: "Title is required." }),
-  document: z
-    .string({ required_error: "Document is required." })
-    .min(1, { message: "Document is required." }),
+  documents: z.array(z.string()),
+});
+
+export const documentPatientSchema = z.object({
+  treatment_id: z
+    .string({ required_error: "Treatment ID is required." })
+    .uuid()
+    .min(1, { message: "Treatment ID is required." }),
+  title: z
+    .string({ required_error: "Title is required." })
+    .min(1, { message: "Title is required." }),
+  documents: z.array(z.string()),
 });
 
 export const investigationSchema = z.object({

@@ -3,14 +3,37 @@ import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { sequelize } from "../../db/postgres.js";
 import { deleteFile } from "../../helpers/file.js";
-import { documentSchema } from "../../validation-schemas/treatment.schema.js";
+import {
+  documentDoctorSchema,
+  documentPatientSchema,
+} from "../../validation-schemas/treatment.schema.js";
+import { getItemsToDelete } from "../../helpers/filter.js";
+import { cleanupFiles } from "../../helpers/cleanup-files.js";
 
 const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const validateData = documentSchema.parse(req.body);
+    const { id, role } = req.user_data;
+    req.body.documents = req.filePaths;
+
+    if (["doctor", "staff"].includes(role)) {
+      const validateData = documentDoctorSchema.parse(req.body);
+    }
+
+    if (role === "patient") {
+      const validateData = documentPatientSchema.parse(req.body);
+      const patient = await table.PatientModel.getByUserId(id);
+
+      if (!patient)
+        return res
+          .code(404)
+          .send({ status: false, message: "Patient not found!" });
+
+      req.body.patient_id = patient.id;
+    }
+
     const patient = await table.PatientModel.getById(0, req.body.patient_id);
     if (!patient)
       return res
@@ -27,6 +50,7 @@ const create = async (req, res) => {
     });
   } catch (error) {
     await transaction.rollback();
+    cleanupFiles(req.filePaths);
     throw error;
   }
 };
@@ -34,16 +58,28 @@ const create = async (req, res) => {
 const updateById = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const record = await table.DocumentModel.getByPk(req);
+    const record = await table.DocumentModel.getById(req);
     if (!record) {
       return res
         .code(NOT_FOUND)
         .send({ status: false, message: "Document not found!" });
     }
 
+    const existingGallery = record.documents;
+    const updatedGallery = req.body.documents;
+    req.body.documents = [...(req.filePaths ?? []), ...updatedGallery];
+
+    const documentsToDelete = getItemsToDelete(existingGallery, updatedGallery);
+
+    await table.DocumentModel.update(req, 0, { transaction });
+
+    if (documentsToDelete.length) {
+      await cleanupFiles(documentsToDelete);
+    }
+
+    await transaction.commit();
     res.send({
       status: true,
-      data: await table.DocumentModel.update(req, 0, { transaction }),
       message: "Document updated.",
     });
   } catch (error) {
@@ -100,6 +136,22 @@ const getByPatientId = async (req, res) => {
   }
 };
 
+const getByTreatmentId = async (req, res) => {
+  try {
+    const treatment = await table.TreatmentModel.getById(req);
+    if (!treatment)
+      return res
+        .code(404)
+        .send({ status: false, message: "treatment not found." });
+
+    const record = await table.DocumentModel.getByTreatmentId(req);
+
+    res.send({ status: true, data: record });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const get = async (req, res) => {
   try {
     const data = await table.DocumentModel.get(req);
@@ -143,4 +195,5 @@ export default {
   getBySlug: getBySlug,
   getById: getById,
   getByPatientId: getByPatientId,
+  getByTreatmentId: getByTreatmentId,
 };
