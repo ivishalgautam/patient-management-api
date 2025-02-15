@@ -1,14 +1,11 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import slugify from "slugify";
-import { deleteFile } from "../../helpers/file.js";
 import { sequelize } from "../../db/postgres.js";
 import {
   createSlotSchema,
   updateSlotSchema,
 } from "../../validation-schemas/slot.schema.js";
-import moment from "moment";
 import { createSlots } from "../../helpers/slot.js";
 
 const { NOT_FOUND } = constants.http.status;

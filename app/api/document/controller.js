@@ -165,7 +165,7 @@ const deleteById = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const record = await table.DocumentModel.getByPk(req);
+    const record = await table.DocumentModel.getById(req);
     if (!record)
       return res
         .code(NOT_FOUND)
@@ -176,7 +176,7 @@ const deleteById = async (req, res) => {
     });
 
     if (isDeleted) {
-      deleteFile(record.document);
+      await cleanupFiles(record.documents);
     }
 
     await transaction.commit();
