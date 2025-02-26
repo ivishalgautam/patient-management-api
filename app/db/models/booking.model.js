@@ -203,7 +203,7 @@ const getBookingsByClinicId = async (req, id) => {
   const whereConditions = [`bk.clinic_id = :clinicId`];
   const queryParams = { clinicId: req?.params?.id || id };
 
-  const q = req.query.q == 1;
+  const q = req.query.q || null;
   const recent = req.query.recent == 1;
   const today = req.query.today == 1;
   const status = req.query.status || null;
