@@ -276,6 +276,7 @@ const getBookingsByClinicId = async (req, id) => {
     SELECT
         COUNT(bk.id) OVER()::INTEGER total
       FROM ${constants.models.BOOKING_TABLE} bk
+      LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = bk.service_id
       LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
       LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
       LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
