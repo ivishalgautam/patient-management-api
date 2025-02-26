@@ -99,8 +99,8 @@ const get = async (req) => {
   const { role, id } = req.user_data;
   const whereConditions = [];
   const queryParams = {};
-  const recent = req.query.recent == 1 ? true : false;
-  const status = req.query.status ? req.query.status : null;
+  const recent = req.query.recent == 1;
+  const status = req.query.status || null;
   if (recent) {
     whereConditions.push(`bk.date >= :date`);
     queryParams.date = moment().format("YYYY-MM-DD");
@@ -195,6 +195,39 @@ const getByDateAndClinic = async (req, clinicId, date) => {
 const getBookingsByClinicId = async (req, id) => {
   const whereConditions = [`bk.clinic_id = :clinicId`];
   const queryParams = { clinicId: req?.params?.id || id };
+
+  const recent = req.query.recent == 1;
+  const today = req.query.today == 1;
+  const status = req.query.status || null;
+  const startDate = req.query.start_date || null;
+  const endDate = req.query.end_date || null;
+
+  if (recent) {
+    whereConditions.push(`bk.date >= :date`);
+    queryParams.date = moment().format("YYYY-MM-DD");
+  }
+
+  // if (today) {
+  //   whereConditions.push(`bk.date = :todayDate`);
+  //   queryParams.todayDate = moment().format("YYYY-MM-DD");
+  // }
+
+  if (startDate && endDate) {
+    whereConditions.push(`bk.date BETWEEN :startDate AND :endDate`);
+    queryParams.startDate = startDate;
+    queryParams.endDate = endDate;
+  } else if (startDate) {
+    whereConditions.push(`bk.date >= :startDate`);
+    queryParams.startDate = startDate;
+  } else if (endDate) {
+    whereConditions.push(`bk.date <= :endDate`);
+    queryParams.endDate = endDate;
+  }
+
+  if (status) {
+    whereConditions.push(`bk.status = :status`);
+    queryParams.status = status;
+  }
 
   let page = req.query.page ? Number(req.query.page) : 1;
   let limit = req.query.limit ? Number(req.query.limit) : null;

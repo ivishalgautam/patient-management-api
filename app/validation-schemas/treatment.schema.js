@@ -1,18 +1,18 @@
 import { z } from "zod";
 
 export const treatmentSchema = z.object({
-  doctor_id: z
-    .string({ required_error: "Treatment ID is required." })
+  service_id: z
+    .string({ required_error: "Service is required." })
     .uuid()
-    .min(1, { message: "Treatment ID is required." }),
+    .min(1, { message: "Service is required." }),
   patient_id: z
     .string({ required_error: "Patient ID is required." })
     .uuid()
     .min(1, { message: "Patient ID is required." }),
-  procedure_id: z
-    .string({ required_error: "Procedure Id is required." })
+  clinic_id: z
+    .string({ required_error: "Clinic ID is required." })
     .uuid()
-    .min(1, { message: "Procedure Id is required." }),
+    .min(1, { message: "Clinic ID is required." }),
 });
 
 export const treatmentHistorySchema = z.object({

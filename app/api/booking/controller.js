@@ -171,19 +171,17 @@ const updateStatus = async (req, res) => {
     const data = await table.BookingModel.update(req, 0, { transaction });
 
     if (data.status === "completed") {
-      const service = await table.ServiceModel.getById(
-        0,
-        bookingRecord.service_id
-      );
-
       const treatmentRecord =
         await table.TreatmentModel.getByClinicPatientServiceId(
           bookingRecord.patient_id,
           bookingRecord.clinic_id,
           bookingRecord.service_id
         );
-
-      if (!treatmentRecord?.id) {
+      // return;
+      if (
+        !treatmentRecord ||
+        (treatmentRecord && treatmentRecord.status !== "active")
+      ) {
         await table.TreatmentModel.create(
           req,
           {
@@ -191,7 +189,7 @@ const updateStatus = async (req, res) => {
             clinic_id: bookingRecord.clinic_id,
             service_id: bookingRecord.service_id,
             appointment_id: bookingRecord.id,
-            cost: service.discounted_price,
+            // cost: service.discounted_price,
           },
           { transaction }
         );

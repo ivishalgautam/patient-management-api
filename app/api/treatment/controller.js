@@ -5,13 +5,16 @@ import slugify from "slugify";
 import { deleteFile } from "../../helpers/file.js";
 import { sequelize } from "../../db/postgres.js";
 import { clinicPatientSchema } from "../../validation-schemas/clinic-patient.schema.js";
+import { treatmentSchema } from "../../validation-schemas/treatment.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const validateData = clinicPatientSchema.parse(req.body);
+    const validateData = treatmentSchema.parse(req.body);
+
+    // clinic_id, patient_id, service_id,
 
     const clinic = await table.ClinicModel.getById(0, req.body.clinic_id);
     if (!clinic)
@@ -25,16 +28,7 @@ const create = async (req, res) => {
         .code(409)
         .send({ status: false, message: "Patient not found." });
 
-    const appointment = await table.BookingModel.getById(
-      0,
-      req.body.appointment_id
-    );
-    if (!appointment)
-      return res
-        .code(409)
-        .send({ status: false, message: "Appointment not found." });
-
-    const service = await table.ServiceModel.getById(0, appointment.service_id);
+    const service = await table.ServiceModel.getById(0, req.body.service_id);
     if (!service)
       return res
         .code(409)
@@ -50,26 +44,12 @@ const create = async (req, res) => {
       });
     }
 
-    const treatmentRecord =
-      await table.TreatmentModel.getByClinicPatientServiceId(
-        patient.id,
-        clinic.id,
-        appointment.service_id
-      );
-
-    if (treatmentRecord) {
-      return res
-        .code(409)
-        .send({ status: false, message: "Treatment already exist." });
-    }
     await table.TreatmentModel.create(
       req,
       {
         patient_id: patient.id,
         clinic_id: clinic.id,
         service_id: service.id,
-        appointment_id: appointment.id,
-        cost: service.discounted_price,
       },
       { transaction }
     );

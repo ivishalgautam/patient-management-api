@@ -48,8 +48,8 @@ const init = async (sequelize) => {
       },
       appointment_id: {
         type: DataTypes.UUID,
-        allowNull: false,
-        onDelete: "CASCADE",
+        allowNull: true,
+        onDelete: "SET NULL",
         references: {
           model: constants.models.BOOKING_TABLE,
           key: "id",
@@ -65,10 +65,6 @@ const init = async (sequelize) => {
           key: "id",
           deferrable: Deferrable.INITIALLY_IMMEDIATE,
         },
-      },
-      cost: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
       },
       status: {
         type: DataTypes.ENUM("active", "close"),
@@ -89,7 +85,7 @@ const init = async (sequelize) => {
 
 const create = async (
   req,
-  { patient_id, clinic_id, service_id, appointment_id, cost },
+  { patient_id, clinic_id, service_id, appointment_id = null, cost },
   { transaction }
 ) => {
   return await TreatmentModel.create(
@@ -98,7 +94,6 @@ const create = async (
       clinic_id: clinic_id,
       service_id: service_id,
       appointment_id: appointment_id,
-      cost: cost,
       added_by: req.user_data.id,
     },
     { transaction }

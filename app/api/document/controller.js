@@ -171,7 +171,7 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Document not found!" });
 
-    const isDeleted = await table.DocumentModel.deleteById(req, req.params.id, {
+    const isDeleted = await table.DocumentModel.deleteById(req, 0, {
       transaction,
     });
 
