@@ -99,8 +99,15 @@ const get = async (req) => {
   const { role, id } = req.user_data;
   const whereConditions = [];
   const queryParams = {};
+  const q = req.query.q || null;
   const recent = req.query.recent == 1;
   const status = req.query.status || null;
+  if (q) {
+    whereConditions.push(
+      `(drusr.fullname ILIKE :q OR srvc.name ILIKE :q OR ptusr.fullname ILIKE :q)`
+    );
+    queryParams.q = `%${q}%`;
+  }
   if (recent) {
     whereConditions.push(`bk.date >= :date`);
     queryParams.date = moment().format("YYYY-MM-DD");
