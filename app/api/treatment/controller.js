@@ -44,15 +44,27 @@ const create = async (req, res) => {
       });
     }
 
-    await table.TreatmentModel.create(
-      req,
-      {
-        patient_id: patient.id,
-        clinic_id: clinic.id,
-        service_id: service.id,
-      },
-      { transaction }
-    );
+    const treatmentRecord =
+      await table.TreatmentModel.getByClinicPatientServiceId(
+        req.body.patient_id,
+        req.body.clinic_id,
+        req.body.service_id
+      );
+
+    if (
+      !treatmentRecord ||
+      (treatmentRecord && treatmentRecord.status !== "active")
+    ) {
+      await table.TreatmentModel.create(
+        req,
+        {
+          patient_id: patient.id,
+          clinic_id: clinic.id,
+          service_id: service.id,
+        },
+        { transaction }
+      );
+    }
 
     await transaction.commit();
     res.send({ status: true, message: "Added to treatment process." });
