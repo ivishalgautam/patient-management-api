@@ -142,7 +142,7 @@ const deleteById = async (req, res) => {
     await transaction.commit();
     res.send({ status: true, message: "Service deleted." });
   } catch (error) {
-    await (await transaction).rollback();
+    await transaction.rollback();
     throw error;
   }
 };
