@@ -239,7 +239,7 @@ const getByPatientId = async (req, patient_id) => {
   const queryParams = {
     patientId: patient_id,
   };
-  const q = req.query.q ? req.query.q : null;
+  const q = req.query?.q ? req.query?.q : null;
 
   if (q) {
     whereConditions.push(
@@ -248,8 +248,8 @@ const getByPatientId = async (req, patient_id) => {
     queryParams.query = `%${q}%`;
   }
 
-  const page = req.query.page ? Number(req.query.page) : 1;
-  const limit = req.query.limit ? Number(req.query.limit) : null;
+  const page = req.query?.page ? Number(req.query?.page) : 1;
+  const limit = req.query?.limit ? Number(req.query?.limit) : null;
   const offset = (page - 1) * limit;
 
   const whereClause = `WHERE ${whereConditions.join(" AND ")}`;

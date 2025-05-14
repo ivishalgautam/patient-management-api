@@ -23,11 +23,11 @@ const create = async (req, res) => {
     });
 
     const treatment = await table.TreatmentModel.getByPatientId(
-      0,
+      req,
       req.body.patient_id
     );
-
-    req.body.treatment_id = treatment.id;
+    // console.log(treatment.treatments);
+    req.body.treatment_id = treatment.treatments[0].id;
     req.body.total_cost = 0;
     await table.TreatmentPlanModel.create(req, { transaction });
 

@@ -1,6 +1,7 @@
 import { deleteFile } from "./multer.js";
 
 export const cleanupFiles = async (filePaths) => {
+  if (!filePaths) return;
   for (const filePath of filePaths) {
     try {
       await deleteFile(filePath);
