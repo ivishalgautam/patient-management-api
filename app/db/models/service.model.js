@@ -118,7 +118,7 @@ const get = async (req) => {
 
   let query = `
   SELECT
-      srvc.id, srvc.name, srvc.image, srvc.slug, srvc.created_at,
+      srvc.*,
       prcd.name as procedure_name
     FROM ${constants.models.SERVICE_TABLE} srvc
     LEFT JOIN ${constants.models.PROCEDURE_TABLE} prcd ON prcd.id = srvc.procedure_id
