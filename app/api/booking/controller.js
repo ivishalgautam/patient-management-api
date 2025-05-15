@@ -169,13 +169,13 @@ const updateStatus = async (req, res) => {
       });
 
     const data = await table.BookingModel.update(req, 0, { transaction });
-
     if (data.status === "completed") {
+      const service_id = req.body.service_id;
       const treatmentRecord =
         await table.TreatmentModel.getByClinicPatientServiceId(
           bookingRecord.patient_id,
           bookingRecord.clinic_id,
-          bookingRecord.service_id
+          service_id
         );
       // return;
       if (
@@ -187,7 +187,7 @@ const updateStatus = async (req, res) => {
           {
             patient_id: bookingRecord.patient_id,
             clinic_id: bookingRecord.clinic_id,
-            service_id: bookingRecord.service_id,
+            service_id: service_id,
             appointment_id: bookingRecord.id,
             // cost: service.discounted_price,
           },

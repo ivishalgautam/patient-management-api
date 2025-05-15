@@ -256,12 +256,10 @@ const getByPatientId = async (req, patient_id) => {
 
   const query = `
     SELECT 
-      trmnt.id,
-      trmnt.created_at as date,
-      drusr.fullname as doctor_name,
-      bk.slot as slot,
-      prd.name as procedure_name,
-      prd.image as image
+      trmnt.id, trmnt.status, trmnt.created_at,
+      pt.id as patient_id,
+      srvc.name as service_name,
+      drusr.fullname as added_by
     FROM ${constants.models.TREATMENT_TABLE} trmnt
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
     LEFT JOIN ${constants.models.CLINIC_TABLE} cln ON cln.id = trmnt.clinic_id

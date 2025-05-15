@@ -46,16 +46,16 @@ const init = async (sequelize) => {
         },
         onDelete: "CASCADE",
       },
-      service_id: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: constants.models.SERVICE_TABLE,
-          key: "id",
-          deferrable: Deferrable.INITIALLY_IMMEDIATE,
-        },
-        onDelete: "CASCADE",
-      },
+      // service_id: {
+      //   type: DataTypes.UUID,
+      //   allowNull: false,
+      //   references: {
+      //     model: constants.models.SERVICE_TABLE,
+      //     key: "id",
+      //     deferrable: Deferrable.INITIALLY_IMMEDIATE,
+      //   },
+      //   onDelete: "CASCADE",
+      // },
       date: {
         type: DataTypes.DATEONLY,
         allowNull: false,
@@ -85,7 +85,7 @@ const create = async (req, { transaction }) => {
       doctor_id: req.body.doctor_id,
       patient_id: req.body.patient_id,
       clinic_id: req.body.clinic_id,
-      service_id: req.body.service_id,
+      // service_id: req.body.service_id,
       date: req.body.date,
       slot: req.body.slot,
     },
@@ -104,7 +104,7 @@ const get = async (req) => {
   const status = req.query.status || null;
   if (q) {
     whereConditions.push(
-      `(drusr.fullname ILIKE :q OR srvc.name ILIKE :q OR ptusr.fullname ILIKE :q)`
+      `(drusr.fullname ILIKE :q OR ptusr.fullname ILIKE :q)`
     );
     queryParams.q = `%${q}%`;
   }
@@ -139,10 +139,8 @@ const get = async (req) => {
   let query = `
   SELECT
       bk.id, bk.date, bk.slot, bk.status, bk.created_at, bk.clinic_id,
-      drusr.fullname as doctor_name, drusr.avatar as doctor_avatar,
-      srvc.id as service_id, srvc.name as service_name
+      drusr.fullname as doctor_name, drusr.avatar as doctor_avatar
     FROM ${constants.models.BOOKING_TABLE} bk
-    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = bk.service_id
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
     LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
     LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
@@ -212,7 +210,7 @@ const getBookingsByClinicId = async (req, id) => {
 
   if (q) {
     whereConditions.push(
-      `(drusr.fullname ILIKE :q OR srvc.name ILIKE :q OR ptusr.fullname ILIKE :q)`
+      `(drusr.fullname ILIKE :q OR ptusr.fullname ILIKE :q)`
     );
     queryParams.q = `%${q}%`;
   }
@@ -259,10 +257,8 @@ const getBookingsByClinicId = async (req, id) => {
       pt.id as patient_id,
       ptusr.fullname as patient_name,
       CONCAT('+', ptusr.country_code, ' ', ptusr.mobile_number) as patient_contact,
-      drusr.fullname as doctor_name,
-      srvc.name as service_name
+      drusr.fullname as doctor_name
     FROM ${constants.models.BOOKING_TABLE} bk
-    LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = bk.service_id
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
     LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
     LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
@@ -276,7 +272,6 @@ const getBookingsByClinicId = async (req, id) => {
     SELECT
         COUNT(bk.id) OVER()::INTEGER total
       FROM ${constants.models.BOOKING_TABLE} bk
-      LEFT JOIN ${constants.models.SERVICE_TABLE} srvc ON srvc.id = bk.service_id
       LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = bk.patient_id
       LEFT JOIN ${constants.models.DOCTOR_TABLE} dr ON dr.id = bk.doctor_id
       LEFT JOIN ${constants.models.USER_TABLE} drusr ON drusr.id = dr.user_id
