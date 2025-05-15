@@ -158,7 +158,7 @@ const get = async (req, res) => {
     const patient = await table.PatientModel.getByUserId(req.user_data.id);
 
     const data = await table.TreatmentPaymentModel.getByPatientId(
-      0,
+      req,
       patient.id
     );
     res.send({ status: true, data: data, total: data?.[0]?.total });
