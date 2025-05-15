@@ -253,10 +253,15 @@ const getByPatientId = async (req, patient_id) => {
   const offset = (page - 1) * limit;
 
   const whereClause = `WHERE ${whereConditions.join(" AND ")}`;
-
+  //  trmnt.id,
+  //       trmnt.created_at as date,
+  //       drusr.fullname as doctor_name,
+  //       bk.slot as slot,
+  //       prd.name as procedure_name,
+  //       prd.image as image
   const query = `
     SELECT 
-      trmnt.id, trmnt.status, trmnt.created_at,
+      trmnt.id, trmnt.status, trmnt.created_at, trmnt.updated_at,
       pt.id as patient_id,
       srvc.name as service_name,
       drusr.fullname as added_by

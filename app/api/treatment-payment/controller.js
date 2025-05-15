@@ -155,7 +155,12 @@ const getRemainingPayment = async (req, res) => {
 
 const get = async (req, res) => {
   try {
-    const data = await table.TreatmentPaymentModel.get(req);
+    const patient = await table.PatientModel.getByUserId(req.user_data.id);
+
+    const data = await table.TreatmentPaymentModel.getByPatientId(
+      0,
+      patient.id
+    );
     res.send({ status: true, data: data, total: data?.[0]?.total });
   } catch (error) {
     throw error;
