@@ -145,6 +145,25 @@ const getByPatientId = async (req, patient_id) => {
   });
 };
 
+const get = async (patient_id) => {
+  console.log({ patient_id });
+  let query = `
+  SELECT
+      ce.*
+    FROM ${constants.models.COMPREHENSIVE_EXAMINATION_TABLE} ce
+    LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = ce.patient_id
+    WHERE pt.id = :patientId
+    LIMIT 1
+  `;
+
+  return await ComprehensiveExaminationModel.sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    replacements: { patientId: patient_id },
+    raw: true,
+    plain: true,
+  });
+};
+
 const deleteById = async (req, id) => {
   return await ComprehensiveExaminationModel.destroy({
     where: {
@@ -159,6 +178,7 @@ export default {
   init: init,
   create: create,
   getById: getById,
+  get: get,
   getByPatientId: getByPatientId,
   deleteById: deleteById,
   update: update,

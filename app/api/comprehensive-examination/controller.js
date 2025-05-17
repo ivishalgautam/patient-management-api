@@ -114,6 +114,22 @@ const getByPatientId = async (req, res) => {
   }
 };
 
+const get = async (req, res) => {
+  try {
+    const patient = await table.PatientModel.getByUserId(req.user_data.id);
+    if (!patient)
+      return res
+        .code(404)
+        .send({ status: false, message: "Patient not found." });
+
+    const record = await table.ComprehensiveExaminationModel.get(patient.id);
+
+    res.send({ status: true, data: record });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const deleteById = async (req, res) => {
   const transaction = await sequelize.transaction();
 
@@ -206,5 +222,6 @@ export default {
   getById: getById,
   getByPatientId: getByPatientId,
   update: update,
+  get: get,
   updateMultipart: updateMultipart,
 };

@@ -24,4 +24,5 @@ export default async function routes(fastify, opts) {
     controller.updateMultipart
   );
   fastify.get("/getByPatientId/:id", {}, controller.getByPatientId);
+  fastify.get("/", {}, controller.get);
 }
