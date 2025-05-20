@@ -154,7 +154,13 @@ const getByTreatmentId = async (req, res) => {
 
 const get = async (req, res) => {
   try {
-    const data = await table.DocumentModel.get(req);
+    const patient = await table.PatientModel.getByUserId(req.user_data.id);
+    if (!patient)
+      return res
+        .code(404)
+        .send({ status: false, message: "Patient not found." });
+
+    const data = await table.DocumentModel.getByPatientId(req, patient.id);
     res.send({ status: true, data: data, total: data?.[0]?.total });
   } catch (error) {
     throw error;

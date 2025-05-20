@@ -18,6 +18,15 @@ const getById = async (req, res) => {
   }
 };
 
+const get = async (req, res) => {
+  try {
+    res.send({ status: true, data: await table.DoctorModel.get(req) });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default {
   getById: getById,
+  get: get,
 };

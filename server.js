@@ -51,11 +51,8 @@ export default (app) => {
     limits: { fileSize: 5 * 1024 * 1024 * 1024 }, // Set the limit to 5 GB or adjust as needed
   });
   app.register(fastifyView, {
-    engine: {
-      ejs: ejs,
-    },
+    engine: { ejs: ejs },
   });
-
   app.register(uploadFileRoutes, { prefix: "v1/upload" });
   // Increase the payload size limit
   app.register(routes, { prefix: "v1" });

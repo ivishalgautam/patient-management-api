@@ -26,17 +26,6 @@ const init = async (sequelize) => {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      treatment_id: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        references: {
-          model: constants.models.TREATMENT_TABLE,
-          key: "id",
-          deferrable: Deferrable.INITIALLY_IMMEDIATE,
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
-      },
       title: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -72,7 +61,6 @@ const create = async (req, { transaction }) => {
   return await DocumentModel.create(
     {
       patient_id: req.body.patient_id,
-      treatment_id: req.body.treatment_id,
       title: req.body.title,
       documents: req.body.documents,
       added_by: req.user_data.id,

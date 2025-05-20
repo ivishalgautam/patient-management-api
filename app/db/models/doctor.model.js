@@ -1,6 +1,6 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
-import { DataTypes, Deferrable } from "sequelize";
+import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
 let DoctorModel = null;
 
@@ -63,8 +63,16 @@ const create = async (req, user_id, { transaction }) => {
 };
 
 const get = async () => {
-  return await DoctorModel.findAll({
-    order: [["created_at", "DESC"]],
+  let query = `
+  SELECT
+      dr.id,
+      usr.fullname, usr.avatar, usr.gender
+    FROM ${constants.models.DOCTOR_TABLE} dr
+    LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = dr.user_id
+  `;
+  return await DoctorModel.sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    raw: true,
   });
 };
 

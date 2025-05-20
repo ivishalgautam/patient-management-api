@@ -71,10 +71,6 @@ export const documentDoctorSchema = z.object({
 });
 
 export const documentPatientSchema = z.object({
-  treatment_id: z
-    .string({ required_error: "Treatment ID is required." })
-    .uuid()
-    .min(1, { message: "Treatment ID is required." }),
   title: z
     .string({ required_error: "Title is required." })
     .min(1, { message: "Title is required." }),

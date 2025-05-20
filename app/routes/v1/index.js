@@ -30,6 +30,10 @@ export default async function routes(fastify, options) {
   fastify.addHook("preHandler", async (request, reply) => {
     request.body && console.log("body", request.body);
   });
+  fastify.addHook("onSend", async (request, reply, payload) => {
+    console.log({ response: payload }, "Response payload");
+    // return payload;
+  });
   fastify.register(userRoutes, { prefix: "users" });
   fastify.register(procedureRoutes, { prefix: "procedures" });
   fastify.register(serviceRoutes, { prefix: "services" });

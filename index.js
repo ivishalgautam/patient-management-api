@@ -2,20 +2,21 @@ import config from "./app/config/index.js";
 import server from "./server.js";
 import fastify from "fastify";
 
-// const app = fastify({
-//   logger: {
-//     level: "debug",
-//     transport: {
-//       target: "@mgcrea/pino-pretty-compact",
-//       options: {
-//         translateTime: "HH:MM:ss Z",
-//         ignore: "pid,hostname",
-//       },
-//     },
-//   },
-// });
+const app = fastify({
+  logger: {
+    level: "debug",
+    transport: {
+      target: "@mgcrea/pino-pretty-compact",
+      options: {
+        translateTime: "HH:MM:ss Z",
+        ignore: "pid,hostname",
+        colorize: true,
+      },
+    },
+  },
+});
 
-const app = fastify({ logger: true });
+// const app = fastify({ logger: true });
 
 try {
   server(app);
