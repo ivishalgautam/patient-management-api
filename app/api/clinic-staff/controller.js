@@ -45,11 +45,11 @@ const deleteById = async (req, res) => {
     if (!record)
       return res
         .code(404)
-        .send({ status: false, message: "Patient not found in clinic." });
+        .send({ status: false, message: "Staff not found in clinic." });
 
     await table.ClinicStaffMapModel.deleteById(req, 0, { transaction });
     await transaction.commit();
-    res.send({ status: true, message: "Patient removed from clinic." });
+    res.send({ status: true, message: "Staff removed from clinic." });
   } catch (error) {
     await transaction.rollback();
     throw error;
