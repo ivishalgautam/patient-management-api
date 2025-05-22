@@ -11,10 +11,11 @@ import { loginSchema } from "../../validation-schemas/login.schema.js";
 
 const verifyUserCredentials = async (req, res) => {
   const validateBody = loginSchema.parse(req.body);
+  const role = req.body.role;
 
   try {
     let userData = await table.UserModel.getByUsername(req);
-    if (!userData) {
+    if (!userData || role !== userData.role) {
       return res.code(404).send({ status: false, message: "User not found!" });
     }
 
