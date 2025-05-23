@@ -147,7 +147,7 @@ const update = async (req, id) => {
 const getById = async (req, id) => {
   return await ProcedureModel.findOne({
     where: {
-      id: req.params.id || id,
+      id: req?.params?.id || id,
     },
   });
 };
