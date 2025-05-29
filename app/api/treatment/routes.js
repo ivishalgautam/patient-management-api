@@ -18,5 +18,6 @@ export default async function routes(fastify, opts) {
     {},
     controller.getPatientDetailsByPatientAndClinicId
   );
+  fastify.get("/getPatientDetails", {}, controller.getPatientDetails);
   fastify.delete("/:id", {}, controller.deleteById);
 }

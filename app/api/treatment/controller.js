@@ -131,6 +131,24 @@ const getById = async (req, res) => {
   }
 };
 
+const getPatientDetails = async (req, res) => {
+  try {
+    const patient = await table.PatientModel.getByUserId(req.user_data.id);
+    if (!patient) {
+      return res
+        .code(NOT_FOUND)
+        .send({ status: false, message: "Patient not found!" });
+    }
+
+    res.send({
+      status: true,
+      data: await table.TreatmentModel.getPatientDetails(patient.id),
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const getPatientDetailsByPatientAndClinicId = async (req, res) => {
   try {
     const patient = await table.PatientModel.getById(0, req.params.patient_id);
@@ -247,4 +265,5 @@ export default {
   getByClinicId: getByClinicId,
   getByPatientAndClinicId: getByPatientAndClinicId,
   getPatientDetailsByPatientAndClinicId: getPatientDetailsByPatientAndClinicId,
+  getPatientDetails: getPatientDetails,
 };

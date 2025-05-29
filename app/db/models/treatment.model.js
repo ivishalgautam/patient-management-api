@@ -378,6 +378,47 @@ const getPatientDetailsByPatientAndClinicId = async (patientId, clinicId) => {
   });
 };
 
+const getPatientDetails = async (patientId) => {
+  let query = `
+  SELECT 
+    SUM(COALESCE(tp.total_cost_sum, 0)) AS cost,
+    SUM(
+      CASE 
+        WHEN tp.total_cost_sum IS NULL THEN 0
+        ELSE (COALESCE(tp.total_cost_sum, 0) - COALESCE(pmnt.amount_paid_sum, 0))
+      END
+    ) AS balance,
+    usr.id AS user_id, usr.fullname, usr.avatar, 
+    CONCAT('+', usr.country_code, ' ', usr.mobile_number) AS mobile_number,
+    pt.emergency_contact
+  FROM 
+    ${constants.models.TREATMENT_TABLE} trmnt
+  LEFT JOIN 
+    ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
+  LEFT JOIN 
+    (SELECT treatment_id, SUM(amount_paid)::integer AS amount_paid_sum 
+    FROM ${constants.models.PAYMENT_TABLE} 
+    GROUP BY treatment_id) pmnt ON pmnt.treatment_id = trmnt.id
+  LEFT JOIN 
+    (SELECT treatment_id, SUM(total_cost)::integer AS total_cost_sum 
+    FROM ${constants.models.TREATMENT_PLAN_TABLE} 
+    GROUP BY treatment_id) tp ON tp.treatment_id = trmnt.id
+  LEFT JOIN 
+    ${constants.models.USER_TABLE} usr ON usr.id = pt.user_id
+  WHERE 
+    trmnt.patient_id = :patientId
+  GROUP BY 
+    usr.id, pt.emergency_contact;
+  `;
+
+  return await TreatmentModel.sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    replacements: { patientId },
+    raw: true,
+    plain: true,
+  });
+};
+
 const getByPk = async (req, id) => {
   return await TreatmentModel.findByPk(req?.params?.id || id);
 };
@@ -469,4 +510,5 @@ export default {
   getByPatientId: getByPatientId,
   getPatientDetailsByPatientAndClinicId: getPatientDetailsByPatientAndClinicId,
   update: update,
+  getPatientDetails: getPatientDetails,
 };

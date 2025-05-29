@@ -124,7 +124,7 @@ export const treatmentPaymentSchema = z.object({
   }),
   amount_paid: z
     .number({ required_error: "Amount paid is required." })
-    .min(1, { message: "Amount paid is required." }),
+    .min(0, { message: "Amount paid is required." }),
   remarks: z.string().optional(),
 });
 
