@@ -54,7 +54,7 @@ const init = async (sequelize) => {
         defaultValue: "",
       },
       dob: {
-        type: DataTypes.DATEONLY,
+        type: DataTypes.STRING,
         allowNull: true,
       },
       username: {
