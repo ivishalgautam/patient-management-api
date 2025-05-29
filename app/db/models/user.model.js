@@ -43,6 +43,7 @@ const init = async (sequelize) => {
       },
       email: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
       gender: {
         type: DataTypes.ENUM({
