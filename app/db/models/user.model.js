@@ -55,6 +55,7 @@ const init = async (sequelize) => {
       },
       dob: {
         type: DataTypes.DATEONLY,
+        allowNull: true,
       },
       username: {
         type: DataTypes.STRING,
