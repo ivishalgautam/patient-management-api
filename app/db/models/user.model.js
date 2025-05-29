@@ -54,9 +54,6 @@ const init = async (sequelize) => {
       },
       dob: {
         type: DataTypes.DATEONLY,
-        validate: {
-          isDate: true,
-        },
       },
       username: {
         type: DataTypes.STRING,
