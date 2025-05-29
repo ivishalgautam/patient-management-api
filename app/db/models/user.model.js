@@ -43,9 +43,6 @@ const init = async (sequelize) => {
       },
       email: {
         type: DataTypes.STRING,
-        unique: {
-          msg: "Email address already in use!",
-        },
       },
       gender: {
         type: DataTypes.ENUM({
