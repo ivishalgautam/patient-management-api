@@ -24,7 +24,6 @@ const create = async (req, res) => {
     }
 
     if (data.role === "patient") {
-      const validatePatientData = patientSchema.parse(req.body);
       const patient = await table.PatientModel.create(req, data.id, {
         transaction,
       });

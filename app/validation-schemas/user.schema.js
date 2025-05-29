@@ -10,14 +10,6 @@ export const userSchema = z.object({
   mobile_number: z
     .string({ required_error: "Mobile number is required." })
     .min(1, { message: "Mobile number is required." }),
-  email: z
-    .string({ required_error: "Email is required." })
-    .email("Invalid email format."),
-  gender: z.enum(["male", "female", "other"], "Gender is required."),
-  dob: z
-    .string({ required_error: "Date of birth is required." })
-    .date({ message: "Invalid date of birth string!" })
-    .min(1, { message: "Date of birth is required." }), // Use a string format and parse as needed
   username: z
     .string({ required_error: "Username is required.." })
     .min(3, "Username must be at least 3 characters.")
@@ -26,6 +18,10 @@ export const userSchema = z.object({
   password: z
     .string({ required_error: "Password is required." })
     .min(1, { message: "Password is required." }),
+  email: z.string().email("Invalid email format.").optional(),
+  gender: z.enum(["male", "female", "other"], "Gender is required.").optional(),
+  dob: z.string().date({ message: "Invalid date of birth string!" }).optional(), // Use a string format and parse as needed
+
   role: z.enum(["patient", "doctor", "admin", "staff"], {
     message: "Role is required.",
   }),
