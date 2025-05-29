@@ -18,10 +18,9 @@ export const userSchema = z.object({
   password: z
     .string({ required_error: "Password is required." })
     .min(1, { message: "Password is required." }),
-  email: z.string().email("Invalid email format.").optional(),
-  gender: z.enum(["male", "female", "other"], "Gender is required.").optional(),
-  dob: z.string().date({ message: "Invalid date of birth string!" }).optional(), // Use a string format and parse as needed
-
+  email: z.string().optional(),
+  gender: z.string().optional(),
+  dob: z.string().optional(), // Use a string format and parse as needed
   role: z.enum(["patient", "doctor", "admin", "staff"], {
     message: "Role is required.",
   }),
