@@ -43,10 +43,6 @@ const init = async (sequelize) => {
       },
       email: {
         type: DataTypes.STRING,
-        allowNull: false,
-        validate: {
-          isEmail: true,
-        },
         unique: {
           msg: "Email address already in use!",
         },
@@ -55,14 +51,9 @@ const init = async (sequelize) => {
         type: DataTypes.ENUM({
           values: ["male", "female", "other"],
         }),
-        allowNull: false,
-        validate: {
-          isIn: [["male", "female", "other"]],
-        },
       },
       dob: {
         type: DataTypes.DATEONLY,
-        allowNull: false,
         validate: {
           isDate: true,
         },
