@@ -27,7 +27,7 @@ const create = async (req, res) => {
     if (!remainingCost)
       return res.status(409).send({
         status: false,
-        message: "Don't have any balance!",
+        message: "Don't have any remaining balance!",
       });
     const currPaid = req.body.amount_paid;
     if (remainingCost < currPaid) {
