@@ -24,5 +24,5 @@ export const userSchema = z.object({
   role: z.enum(["patient", "doctor", "admin", "staff"], {
     message: "Role is required.",
   }),
-  avatar: z.string().optional(),
+  avatar: z.string().nullable().optional(),
 });

@@ -49,8 +49,9 @@ const init = async (sequelize) => {
       },
       gender: {
         type: DataTypes.ENUM({
-          values: ["male", "female", "other"],
+          values: ["male", "female", "other", ""],
         }),
+        defaultValue: "",
       },
       dob: {
         type: DataTypes.DATEONLY,
