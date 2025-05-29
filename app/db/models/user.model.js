@@ -41,10 +41,10 @@ const init = async (sequelize) => {
           msg: "Mobile number already in use!",
         },
       },
-      email: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
+      // email: {
+      //   type: DataTypes.STRING,
+      //   allowNull: true,
+      // },
       gender: {
         type: DataTypes.ENUM({
           values: ["male", "female", "other", ""],
