@@ -104,11 +104,9 @@ export const treatmentPlanSchema = z.object({
   total_cost: z
     .number({ required_error: "Total cost is required." })
     .min(1, { message: "Total cost is required." }),
-  notes: z
-    .array(
-      z.object({ note: z.string({ required_error: "Note is required." }) })
-    )
-    .min(1, { message: "Atleast 1 note is required." }),
+  notes: z.array(
+    z.object({ note: z.string({ required_error: "Note is required." }) })
+  ),
 });
 
 export const treatmentPaymentSchema = z.object({

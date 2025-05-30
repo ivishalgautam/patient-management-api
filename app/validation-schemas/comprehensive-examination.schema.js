@@ -13,9 +13,7 @@ export const comprehensiveExaminationSchema = z.object({
   examination: z
     .string({ required_error: "Examination is required." })
     .min(1, { message: "Examination is required." }),
-  gallery: z
-    .array(z.string())
-    .min(1, { message: "Atleast 1 gallery is required." }),
+  gallery: z.array(z.string()).optional().default([]),
   affected_tooths: z
     .array(z.string())
     .min(1, { message: "Atleast 1 affected tooth is required." }),
