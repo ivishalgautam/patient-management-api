@@ -37,11 +37,9 @@ const importPatients = async (req, res) => {
             role: "patient",
           };
 
-          const userRecord = (
-            await table.UserModel.getByUsername({
-              body: { username },
-            })
-          ).dataValues;
+          const userRecord = await table.UserModel.getByUsername({
+            body: { username },
+          });
           if (userRecord) {
             const patientRecord = await table.PatientModel.getByUserId(
               userRecord.id
