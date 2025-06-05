@@ -27,11 +27,9 @@ const importPatients = async (req, res) => {
           const password =
             String(user.fullname.substring(0, 4)).toLowerCase() +
             user.mobile_number.slice(-4);
-          const hashed_password = hash.encrypt(password);
-          console.log({ username, password, hashed_password });
           const payload = {
             username: username,
-            password: hashed_password,
+            password: password,
             fullname: user.fullname,
             country_code: "91",
             mobile_number: user.mobile_number,
