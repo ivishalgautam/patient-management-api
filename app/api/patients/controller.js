@@ -163,8 +163,8 @@ const importPatients = async (req, res) => {
               }
             } else {
               const patientRecord = await table.PatientModel.create(
-                { body: { user_id: userRecord.id } },
-                0,
+                { body: {} },
+                userRecord.id,
                 { transaction }
               );
               await table.ClinicPatientMapModel.create(
@@ -226,8 +226,8 @@ const importPatients = async (req, res) => {
               { transaction }
             );
             const newPatientRecord = await table.PatientModel.create(
-              { body: { user_id: newUserRecord.id } },
-              0,
+              { body: {} },
+              newUserRecord.id,
               { transaction }
             );
             const newClinicPatientMapRecord =
