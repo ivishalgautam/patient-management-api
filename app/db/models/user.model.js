@@ -254,14 +254,12 @@ const getByPk = async (req, id) => {
 };
 
 const getByUsername = async (req, record = undefined) => {
-  const data = await UserModel.findOne(
-    {
-      where: {
-        username: req?.body?.username || record?.user?.username,
-      },
+  const data = await UserModel.findOne({
+    where: {
+      username: req?.body?.username || record?.user?.username,
     },
-    { raw: true }
-  );
+    raw: true,
+  });
 
   return data;
 };
