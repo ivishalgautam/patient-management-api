@@ -115,7 +115,6 @@ const importPatients = async (req, res) => {
 
               const services = [user.td1, user.td2, user.td3].filter(Boolean);
               for (const service of services) {
-                console.log({ service });
                 const slug = slugify(service, { lower: true });
                 const serviceRecord = await table.ServiceModel.getBySlug(
                   0,
