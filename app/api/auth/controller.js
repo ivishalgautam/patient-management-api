@@ -25,7 +25,7 @@ const verifyUserCredentials = async (req, res) => {
         message: "User not active. Please contact administrator!",
       });
     }
-
+    console.log({ userData });
     let passwordIsValid = hash.verify(req.body.password, userData.password);
     if (!passwordIsValid) {
       return res
