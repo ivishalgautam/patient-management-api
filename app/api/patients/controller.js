@@ -25,7 +25,8 @@ const importPatients = async (req, res) => {
         const promises = data.map(async (user) => {
           const username = `ddss${user.patient_id}`;
           const password =
-            user.fullname.substring(0, 4) + user.mobile_number.slice(-4);
+            String(user.fullname.substring(0, 4)).toLowerCase() +
+            user.mobile_number.slice(-4);
           const hashed_password = hash.encrypt(password);
           console.log({ username, password });
           const payload = {
