@@ -76,6 +76,13 @@ const create = async (req, user_id, { transaction }) => {
   return data.dataValues;
 };
 
+const bulkCreate = async (patientData, { transaction }) => {
+  return await PatientModel.bulkCreate(patientData, {
+    transaction,
+    returning: true,
+  });
+};
+
 const get = async (req) => {
   const whereConditions = [];
   const queryParams = {};
@@ -199,4 +206,5 @@ export default {
   update: update,
   deleteById: deleteById,
   updateByUserId: updateByUserId,
+  bulkCreate: bulkCreate,
 };

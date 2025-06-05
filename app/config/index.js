@@ -22,6 +22,11 @@ const config = {
   smtp_port: parseInt(process.env.SMTP_PORT),
   smtp_host: process.env.SMTP_SERVER,
   smtp_password: process.env.SMTP_PASSWORD,
+
+  clinic_id: process.env.CLINIC_ID,
+  doctor_id: process.env.DOCTOR_ID,
+  doctor_user_id: process.env.DOCTOR_USER_ID,
+  procedure_id: process.env.PROCEDURE_ID,
 };
 
 export default config;

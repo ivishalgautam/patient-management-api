@@ -43,7 +43,8 @@ const init = async (sequelize) => {
       },
       image: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
+        defaultValue: "",
       },
       slug: {
         type: DataTypes.STRING,
@@ -251,10 +252,12 @@ const getByPk = async (req, id) => {
 };
 
 const getBySlug = async (req, slug) => {
-  return await ServiceModel.findOne({
-    slug: req?.params?.slug || slug,
+  const data = await ServiceModel.findOne({
+    where: { slug: req?.params?.slug || slug },
     plain: true,
   });
+
+  return data;
 };
 
 const deleteById = async (req, id, { transaction }) => {

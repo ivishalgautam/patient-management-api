@@ -131,6 +131,20 @@ const create = async (req, { transaction }) => {
   return data.dataValues;
 };
 
+const bulkCreate = async (userData, { transaction }) => {
+  const createdUsers = await UserModel.bulkCreate(userData, {
+    transaction,
+    returning: true,
+  });
+
+  const sanitizedUsers = createdUsers.map((user) => {
+    const { password, reset_password_token, confirmation_token, ...safeUser } =
+      user.dataValues;
+    return safeUser;
+  });
+
+  return sanitizedUsers;
+};
 const get = async (req) => {
   const whereConditions = ["usr.role != 'admin'"];
   const queryParams = {};
@@ -381,4 +395,5 @@ export default {
   getByResetToken: getByResetToken,
   getByUserIds: getByUserIds,
   updateStatus: updateStatus,
+  bulkCreate: bulkCreate,
 };

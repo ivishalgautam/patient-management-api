@@ -13,4 +13,5 @@ export default async function routes(fastify, opt) {
 export async function servicePublicRoutes(fastify, opts) {
   fastify.get("/", {}, controller.get);
   fastify.get("/getByProcedureId/:id", {}, controller.getByProcedureId);
+  fastify.post("/import", {}, controller.importServices);
 }
