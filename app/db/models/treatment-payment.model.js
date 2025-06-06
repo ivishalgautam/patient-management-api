@@ -376,7 +376,21 @@ const paymentsSummary = async (req, id) => {
         (SELECT COALESCE(SUM(total_paid), 0) FROM payment_data WHERE month = date_trunc('month', CURRENT_DATE)) AS payment_received_this_month,
         (SELECT COALESCE(SUM(total_cost), 0) FROM plan_data WHERE month = date_trunc('month', CURRENT_DATE)) AS payment_cost_this_month,
         (SELECT COALESCE(SUM(total_paid), 0) FROM payment_data) AS total_payment_received,
-        (SELECT COALESCE(SUM(total_cost), 0) FROM plan_data) AS total_cost
+        (SELECT COALESCE(SUM(total_cost), 0) FROM plan_data) AS total_cost,
+        (
+          SELECT COALESCE(SUM(p.amount_paid), 0)
+          FROM ${constants.models.PAYMENT_TABLE} p
+          JOIN ${constants.models.TREATMENT_TABLE} t ON t.id = p.treatment_id
+          WHERE ${paymentWhereClause}
+            AND DATE(p.created_at) = CURRENT_DATE
+        ) AS total_payment_received_today,
+        (
+          SELECT COALESCE(SUM(tp.total_cost), 0)
+          FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
+          JOIN ${constants.models.TREATMENT_TABLE} t ON t.id = tp.treatment_id
+          WHERE ${planWhereClause}
+            AND DATE(tp.created_at) = CURRENT_DATE
+        ) AS total_cost_today
     ),
     months AS (
       SELECT generate_series(
@@ -400,6 +414,8 @@ const paymentsSummary = async (req, id) => {
       o.total_payment_received,
       o.payment_cost_this_month,
       o.total_cost,
+      o.total_payment_received_today,
+      o.total_cost_today,
       (o.total_cost - o.total_payment_received) AS balance_amount,
       (
         SELECT json_agg(row_to_json(gd) ORDER BY gd.raw_month)

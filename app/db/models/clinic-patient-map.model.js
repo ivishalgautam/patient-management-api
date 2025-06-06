@@ -80,7 +80,7 @@ const get = async (req, id) => {
 
   if (q) {
     whereConditions.push(
-      `(usr.fullname ILIKE :query OR usr.email ILIKE :query OR usr.username ILIKE :query)`
+      `(usr.fullname ILIKE :query OR usr.email ILIKE :query OR usr.username ILIKE :query OR usr.mobile_number ILIKE :query OR usr.mobile_number ILIKE :query)`
     );
     queryParams.query = `%${q}%`;
   }
