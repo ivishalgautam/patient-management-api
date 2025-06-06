@@ -8,6 +8,7 @@ import { userSchema } from "../../validation-schemas/user.schema.js";
 import { patientSchema } from "../../validation-schemas/patient.schema.js";
 import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
 import { loginSchema } from "../../validation-schemas/login.schema.js";
+import { credentialGenerator } from "../../helpers/credential-generator.js";
 
 const verifyUserCredentials = async (req, res) => {
   const validateBody = loginSchema.parse(req.body);
@@ -53,6 +54,19 @@ const createNewUser = async (req, res) => {
 
   try {
     const validateUserData = userSchema.parse(req.body);
+    if (validateUserData.role === "patient") {
+      const currPatientCount = await table.PatientSequenceModel.get();
+      await table.PatientSequenceModel.update(patientNumber, { transaction });
+
+      const patientNumber = currPatientCount.value + 1;
+      const { username, password } = credentialGenerator(
+        patientNumber,
+        validateUserData.fullname,
+        validateUserData.mobile_number
+      );
+      req.body.username = username;
+      req.body.password = password;
+    }
 
     const data = await table.UserModel.create(req, { transaction });
     if (!data)

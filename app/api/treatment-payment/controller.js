@@ -21,7 +21,8 @@ const create = async (req, res) => {
 
     const remainingCost =
       await table.TreatmentPlanModel.countRemainingCostByTreatmentId(
-        req.body.treatment_id
+        req.body.treatment_id,
+        { transaction }
       );
 
     if (!remainingCost)

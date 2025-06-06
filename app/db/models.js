@@ -24,6 +24,7 @@ import comprehensiveExaminationModel from "./models/comprehensive-examination.mo
 import noteModel from "./models/note.model.js";
 import xrayModel from "./models/xray.model.js";
 import documentModel from "./models/document.model.js";
+import patientSequenceModel from "./models/patient-sequence.model.js";
 
 export default {
   UserModel: userModel,
@@ -51,4 +52,5 @@ export default {
   ComprehensiveExaminationModel: comprehensiveExaminationModel,
   XrayModel: xrayModel,
   DocumentModel: documentModel,
+  PatientSequenceModel: patientSequenceModel,
 };

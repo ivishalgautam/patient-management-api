@@ -283,7 +283,10 @@ const deleteById = async (req, id) => {
   });
 };
 
-const countRemainingCostByTreatmentId = async (treatment_id) => {
+const countRemainingCostByTreatmentId = async (
+  treatment_id,
+  { transaction }
+) => {
   const query = `
   SELECT 
       COALESCE(SUM(tp.total_cost)::integer, 0) - COALESCE(SUM(pmnt.amount_paid)::integer, 0) as remaining_cost
@@ -306,6 +309,7 @@ const countRemainingCostByTreatmentId = async (treatment_id) => {
     replacements: { treatmentId: treatment_id },
     plain: true,
     raw: true,
+    transaction,
   });
 
   return data?.remaining_cost ?? 0;

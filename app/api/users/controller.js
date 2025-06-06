@@ -2,6 +2,7 @@
 
 import table from "../../db/models.js";
 import { sequelize } from "../../db/postgres.js";
+import { credentialGenerator } from "../../helpers/credential-generator.js";
 import hash from "../../lib/encryption/index.js";
 import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
 import { patientSchema } from "../../validation-schemas/patient.schema.js";
@@ -13,6 +14,19 @@ const create = async (req, res) => {
   try {
     const { role } = req.user_data;
     const validateUserData = userSchema.parse(req.body);
+
+    if (validateUserData.role === "patient") {
+      const currPatientCount = await table.PatientSequenceModel.get();
+      const patientNumber = currPatientCount.value + 1;
+      const { username, password } = credentialGenerator(
+        patientNumber,
+        validateUserData.fullname,
+        validateUserData.mobile_number
+      );
+      await table.PatientSequenceModel.update(patientNumber, { transaction });
+      req.body.username = username;
+      req.body.password = password;
+    }
 
     const data = await table.UserModel.create(req, { transaction });
     if (!data)

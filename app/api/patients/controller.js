@@ -59,7 +59,6 @@ const importPatients = async (req, res) => {
 
                 const services = [user.td1, user.td2, user.td3].filter(Boolean);
                 for (const service of services) {
-                  console.log({ service });
                   const slug = slugify(service, { lower: true });
                   const serviceRecord = await table.ServiceModel.getBySlug(
                     0,
@@ -78,21 +77,6 @@ const importPatients = async (req, res) => {
                     },
                     { transaction }
                   );
-
-                  const paymentRecord =
-                    await table.TreatmentPaymentModel.create(
-                      {
-                        user_data: { id: config.doctor_user_id },
-                        body: {
-                          treatment_id: treatmentRecord.id,
-                          payment_type: "full",
-                          payment_method: "cash",
-                          amount_paid: parseInt(user.amount_paid, 10),
-                        },
-                      },
-                      { transaction }
-                    );
-
                   const treatmentPlanRecord =
                     await table.TreatmentPlanModel.create(
                       {
@@ -108,6 +92,28 @@ const importPatients = async (req, res) => {
                       },
                       { transaction }
                     );
+                  const remainingCost =
+                    await table.TreatmentPlanModel.countRemainingCostByTreatmentId(
+                      treatmentRecord.id,
+                      { transaction }
+                    );
+                  if (remainingCost) {
+                    const paymentRecord =
+                      await table.TreatmentPaymentModel.create(
+                        {
+                          user_data: { id: config.doctor_user_id },
+                          body: {
+                            treatment_id: treatmentRecord.id,
+                            payment_type: "full",
+                            payment_method: "cash",
+                            amount_paid: Math.floor(
+                              Number(user.amount_paid) / services.length
+                            ),
+                          },
+                        },
+                        { transaction }
+                      );
+                  }
                 }
               }
 
@@ -130,20 +136,6 @@ const importPatients = async (req, res) => {
                   },
                   { transaction }
                 );
-
-                const paymentRecord = await table.TreatmentPaymentModel.create(
-                  {
-                    user_data: { id: config.doctor_user_id },
-                    body: {
-                      treatment_id: treatmentRecord.id,
-                      payment_type: "full",
-                      payment_method: "cash",
-                      amount_paid: parseInt(user.amount_paid, 10),
-                    },
-                  },
-                  { transaction }
-                );
-
                 const treatmentPlanRecord =
                   await table.TreatmentPlanModel.create(
                     {
@@ -159,6 +151,28 @@ const importPatients = async (req, res) => {
                     },
                     { transaction }
                   );
+                const remainingCost =
+                  await table.TreatmentPlanModel.countRemainingCostByTreatmentId(
+                    treatmentRecord.id,
+                    { transaction }
+                  );
+                if (remainingCost) {
+                  const paymentRecord =
+                    await table.TreatmentPaymentModel.create(
+                      {
+                        user_data: { id: config.doctor_user_id },
+                        body: {
+                          treatment_id: treatmentRecord.id,
+                          payment_type: "full",
+                          payment_method: "cash",
+                          amount_paid: Math.floor(
+                            Number(user.amount_paid) / services.length
+                          ),
+                        },
+                      },
+                      { transaction }
+                    );
+                }
               }
             } else {
               const patientRecord = await table.PatientModel.create(
@@ -190,18 +204,6 @@ const importPatients = async (req, res) => {
                   },
                   { transaction }
                 );
-                const paymentRecord = await table.TreatmentPaymentModel.create(
-                  {
-                    user_data: { id: config.doctor_user_id },
-                    body: {
-                      treatment_id: treatmentRecord.id,
-                      payment_type: "full",
-                      payment_method: "cash",
-                      amount_paid: parseInt(user.amount_paid, 10),
-                    },
-                  },
-                  { transaction }
-                );
                 const treatmentPlanRecord =
                   await table.TreatmentPlanModel.create(
                     {
@@ -217,6 +219,28 @@ const importPatients = async (req, res) => {
                     },
                     { transaction }
                   );
+                const remainingCost =
+                  await table.TreatmentPlanModel.countRemainingCostByTreatmentId(
+                    treatmentRecord.id,
+                    { transaction }
+                  );
+                if (remainingCost) {
+                  const paymentRecord =
+                    await table.TreatmentPaymentModel.create(
+                      {
+                        user_data: { id: config.doctor_user_id },
+                        body: {
+                          treatment_id: treatmentRecord.id,
+                          payment_type: "full",
+                          payment_method: "cash",
+                          amount_paid: Math.floor(
+                            Number(user.amount_paid) / services.length
+                          ),
+                        },
+                      },
+                      { transaction }
+                    );
+                }
               }
             }
           } else {
@@ -253,18 +277,7 @@ const importPatients = async (req, res) => {
                 },
                 { transaction }
               );
-              const paymentRecord = await table.TreatmentPaymentModel.create(
-                {
-                  user_data: { id: config.doctor_user_id },
-                  body: {
-                    treatment_id: treatmentRecord.id,
-                    payment_type: "full",
-                    payment_method: "cash",
-                    amount_paid: parseInt(user.amount_paid, 10),
-                  },
-                },
-                { transaction }
-              );
+
               const treatmentPlanRecord = await table.TreatmentPlanModel.create(
                 {
                   user_data: { id: config.doctor_user_id },
@@ -279,6 +292,35 @@ const importPatients = async (req, res) => {
                 },
                 { transaction }
               );
+
+              const remainingCost =
+                await table.TreatmentPlanModel.countRemainingCostByTreatmentId(
+                  treatmentRecord.id,
+                  { transaction }
+                );
+              if (remainingCost) {
+                // const currPaid = req.body.amount_paid;
+                // if (remainingCost < currPaid) {
+                //   return res.status(409).send({
+                //     message: `Remaining balance is ${remainingCost}!`,
+                //     status: false,
+                //   });
+                // }
+                const paymentRecord = await table.TreatmentPaymentModel.create(
+                  {
+                    user_data: { id: config.doctor_user_id },
+                    body: {
+                      treatment_id: treatmentRecord.id,
+                      payment_type: "full",
+                      payment_method: "cash",
+                      amount_paid: Math.floor(
+                        Number(user.amount_paid) / services.length
+                      ),
+                    },
+                  },
+                  { transaction }
+                );
+              }
             }
           }
         });
