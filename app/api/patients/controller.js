@@ -5,6 +5,7 @@ import hash from "../../lib/encryption/index.js";
 import { sequelize } from "../../db/postgres.js";
 import config from "../../config/index.js";
 import slugify from "slugify";
+import constants from "../../lib/constants/index.js";
 
 const get = async (req, res) => {
   try {
@@ -27,6 +28,7 @@ const importPatients = async (req, res) => {
           const password =
             String(user.fullname.substring(0, 4)).toLowerCase() +
             user.mobile_number.slice(-4);
+
           const payload = {
             username: username,
             password: password,
@@ -84,7 +86,15 @@ const importPatients = async (req, res) => {
                         body: {
                           treatment_id: treatmentRecord.id,
                           patient_id: patientRecord.id,
-                          affected_tooths: [Math.floor(Math.random() * 32)],
+                          affected_tooths: [
+                            {
+                              tooth: Math.floor(Math.random() * 32),
+                              color:
+                                constants.toothColors[
+                                  Math.floor(Math.random() * 4)
+                                ],
+                            },
+                          ],
                           total_cost: Math.floor(
                             Number(user.amount_paid) / services.length
                           ),
@@ -143,7 +153,15 @@ const importPatients = async (req, res) => {
                       body: {
                         treatment_id: treatmentRecord.id,
                         patient_id: patientRecord.id,
-                        affected_tooths: [Math.floor(Math.random() * 32)],
+                        affected_tooths: [
+                          {
+                            tooth: Math.floor(Math.random() * 32),
+                            color:
+                              constants.toothColors[
+                                Math.floor(Math.random() * 4)
+                              ],
+                          },
+                        ],
                         total_cost: Math.floor(
                           Number(user.amount_paid) / services.length
                         ),
@@ -211,7 +229,15 @@ const importPatients = async (req, res) => {
                       body: {
                         treatment_id: treatmentRecord.id,
                         patient_id: patientRecord.id,
-                        affected_tooths: [Math.floor(Math.random() * 32)],
+                        affected_tooths: [
+                          {
+                            tooth: Math.floor(Math.random() * 32),
+                            color:
+                              constants.toothColors[
+                                Math.floor(Math.random() * 4)
+                              ],
+                          },
+                        ],
                         total_cost: Math.floor(
                           Number(user.amount_paid) / services.length
                         ),
@@ -284,7 +310,13 @@ const importPatients = async (req, res) => {
                   body: {
                     treatment_id: treatmentRecord.id,
                     patient_id: newPatientRecord.id,
-                    affected_tooths: [Math.floor(Math.random() * 32)],
+                    affected_tooths: [
+                      {
+                        tooth: Math.floor(Math.random() * 32),
+                        color:
+                          constants.toothColors[Math.floor(Math.random() * 4)],
+                      },
+                    ],
                     total_cost: Math.floor(
                       Number(user.amount_paid) / services.length
                     ),
@@ -299,13 +331,6 @@ const importPatients = async (req, res) => {
                   { transaction }
                 );
               if (remainingCost) {
-                // const currPaid = req.body.amount_paid;
-                // if (remainingCost < currPaid) {
-                //   return res.status(409).send({
-                //     message: `Remaining balance is ${remainingCost}!`,
-                //     status: false,
-                //   });
-                // }
                 const paymentRecord = await table.TreatmentPaymentModel.create(
                   {
                     user_data: { id: config.doctor_user_id },

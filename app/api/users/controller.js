@@ -2,6 +2,7 @@
 
 import table from "../../db/models.js";
 import { sequelize } from "../../db/postgres.js";
+import { cleanupFiles } from "../../helpers/cleanup-files.js";
 import { credentialGenerator } from "../../helpers/credential-generator.js";
 import hash from "../../lib/encryption/index.js";
 import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
@@ -143,16 +144,39 @@ const updateStatus = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
+    const filesToDelete = [];
     const record = await table.UserModel.getByPk(req);
     if (record === 0) {
       return res.code(404).send({ status: false, message: "User not exists" });
     }
+    if (!!record.avatar) filesToDelete.push(record.avatar);
+    const role = record.role;
 
-    await table.UserModel.deleteById(req);
+    if (role === "patient") {
+      const patientRecord = await table.PatientModel.getByUserId(record.id);
+      if (patientRecord) {
+        const examinationRecord =
+          await table.ComprehensiveExaminationModel.getByPatientId(
+            0,
+            patientRecord.id
+          );
+        if (examinationRecord) {
+          filesToDelete.push(...examinationRecord.gallery);
+        }
+      }
+    }
 
+    if (filesToDelete.length) {
+      await cleanupFiles(filesToDelete);
+    }
+
+    await table.UserModel.deleteById(req, 0, { transaction });
+    await transaction.commit();
     return res.send({ status: true, data: record, message: "Users deleted." });
   } catch (error) {
+    await transaction.rollback();
     throw error;
   }
 };

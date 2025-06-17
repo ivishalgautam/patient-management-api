@@ -38,7 +38,7 @@ const init = async (sequelize) => {
         onDelete: "CASCADE",
       },
       affected_tooths: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
+        type: DataTypes.JSONB,
         allowNull: false,
       },
       total_cost: {
@@ -175,7 +175,7 @@ const getByTreatmentId = async (req, treatmentId) => {
     LEFT JOIN ${constants.models.PROCEDURE_TABLE} prd ON prd.id = srvc.procedure_id
     LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = tp.added_by
     ${whereClause}
-    ORDER BY tp.created_at
+    ORDER BY tp.created_at DESC
     LIMIT :limit OFFSET :offset
   `;
 

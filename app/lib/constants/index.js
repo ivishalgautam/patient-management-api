@@ -94,6 +94,7 @@ const constants = {
   static: {
     slotInterval: 10,
   },
+  toothColors: ["#0000FF", "#000000", "#FF0000", "#FFFF00"],
 };
 
 export default constants;

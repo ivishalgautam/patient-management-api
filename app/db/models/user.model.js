@@ -303,13 +303,14 @@ const updatePassword = async (req, user_id) => {
   );
 };
 
-const deleteById = async (req, user_id) => {
+const deleteById = async (req, user_id, { transaction }) => {
   return await UserModel.destroy({
     where: {
       id: req?.params?.id || user_id,
     },
     returning: true,
     raw: true,
+    transaction,
   });
 };
 

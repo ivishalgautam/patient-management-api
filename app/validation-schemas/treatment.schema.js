@@ -107,6 +107,18 @@ export const treatmentPlanSchema = z.object({
   notes: z.array(
     z.object({ note: z.string({ required_error: "Note is required." }) })
   ),
+  affected_tooths: z
+    .array(
+      z.object({
+        tooth: z.coerce
+          .string({ required_error: "Affected tooth is required." })
+          .min(1, { message: "Affected tooth is required." }),
+        color: z
+          .string({ required_error: "Disease type is required." })
+          .min(1, { message: "Disease type is required." }),
+      })
+    )
+    .min(1, { message: "Affected tooth is required." }),
 });
 
 export const treatmentPaymentSchema = z.object({

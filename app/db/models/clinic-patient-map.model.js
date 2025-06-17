@@ -60,10 +60,10 @@ const get = async (req, id) => {
   const whereConditions = [`cp.clinic_id = :clinicId`];
   const queryParams = { clinicId: req.params.id || id };
 
-  const paymentStatus = req.query.payment_status === "pending";
+  const paymentStatus = req.query?.payment_status || null;
   const q = req.query.q ? req.query.q : null;
 
-  if (paymentStatus) {
+  if (paymentStatus === "pending") {
     whereConditions.push(
       `COALESCE((
         SELECT SUM(pmnt.amount_paid)
@@ -75,6 +75,54 @@ const get = async (req, id) => {
         FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
         WHERE tp.patient_id = cp.patient_id
       ), 0)`
+    );
+  }
+
+  if (paymentStatus === "today_revenue") {
+    whereConditions.push(
+      `EXISTS (
+        SELECT 1
+        FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
+        WHERE tp.patient_id = cp.patient_id
+        AND DATE(tp.created_at) = CURRENT_DATE
+      )`
+    );
+  }
+
+  if (paymentStatus === "today_collection") {
+    whereConditions.push(
+      `EXISTS (
+        SELECT 1
+        FROM ${constants.models.PAYMENT_TABLE} pmnt
+        INNER JOIN ${constants.models.TREATMENT_TABLE} trmnt ON pmnt.treatment_id = trmnt.id
+        WHERE trmnt.patient_id = cp.patient_id
+        AND DATE(pmnt.created_at) = CURRENT_DATE
+      )`
+    );
+  }
+
+  if (paymentStatus === "month_revenue") {
+    whereConditions.push(
+      `EXISTS (
+      SELECT 1
+      FROM ${constants.models.TREATMENT_PLAN_TABLE} tp
+      WHERE tp.patient_id = cp.patient_id
+      AND EXTRACT(MONTH FROM tp.created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+      AND EXTRACT(YEAR FROM tp.created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+    )`
+    );
+  }
+
+  if (paymentStatus === "month_collection") {
+    whereConditions.push(
+      `EXISTS (
+      SELECT 1
+      FROM ${constants.models.PAYMENT_TABLE} pmnt
+      INNER JOIN ${constants.models.TREATMENT_TABLE} trmnt ON pmnt.treatment_id = trmnt.id
+      WHERE trmnt.patient_id = cp.patient_id
+      AND EXTRACT(MONTH FROM pmnt.created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+      AND EXTRACT(YEAR FROM pmnt.created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+    )`
     );
   }
 

@@ -95,18 +95,15 @@ export const getFile = async (req, res) => {
   return filePath;
 };
 
-export const deleteFile = (filepath) => {
-  if (!filepath) throw new Error(`Filepath is required, received: ${filepath}`);
+export const deleteFile = async (filePath) => {
+  console.log({ filePath });
+  const fullPath = path.resolve(filePath);
+
   try {
-    const currentFilePath = fileURLToPath(import.meta.url);
-    const currentDirPath = dirname(currentFilePath);
-    const publicPath = path.join(currentDirPath, "../../", filepath);
-    if (fs.existsSync(publicPath)) {
-      fs.unlinkSync(publicPath);
-    }
-    return;
-  } catch (error) {
-    console.error({ error });
-    throw new Error(error.message || "Error deleting file.");
+    await fs.promises.unlink(fullPath);
+    console.log(`File deleted: ${filePath}`);
+  } catch (err) {
+    console.error(`Failed to delete file: ${filePath}`, err);
+    // throw err;
   }
 };
