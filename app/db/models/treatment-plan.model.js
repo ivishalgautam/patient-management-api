@@ -37,10 +37,10 @@ const init = async (sequelize) => {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      affected_tooths: {
-        type: DataTypes.JSONB,
-        allowNull: false,
-      },
+      // affected_tooths: {
+      //   type: DataTypes.JSONB,
+      //   allowNull: false,
+      // },
       total_cost: {
         type: DataTypes.INTEGER,
         allowNull: false,
