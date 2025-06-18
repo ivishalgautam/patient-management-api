@@ -53,11 +53,11 @@ const init = async (sequelize) => {
           notEmpty: true,
         },
       },
-      // affected_tooths: {
-      //   type: DataTypes.JSONB,
-      //   allowNull: false,
-      //   defaultValue: [],
-      // },
+      affected_tooths: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: [],
+      },
       gallery: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: false,
