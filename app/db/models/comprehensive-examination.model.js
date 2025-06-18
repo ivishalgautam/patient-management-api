@@ -56,7 +56,6 @@ const init = async (sequelize) => {
       affected_tooths: {
         type: DataTypes.JSONB,
         allowNull: false,
-        defaultValue: [],
       },
       gallery: {
         type: DataTypes.ARRAY(DataTypes.STRING),
