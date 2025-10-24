@@ -24,6 +24,7 @@ const importPatients = async (req, res) => {
         const data = await handleExcelImport(part);
 
         const promises = data.map(async (user) => {
+          // console.log("fullname", user);
           const username = `ddss${user.patient_id}`;
           const password =
             String(user.fullname.substring(0, 4)).toLowerCase() +

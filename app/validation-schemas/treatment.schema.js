@@ -101,9 +101,7 @@ export const treatmentPlanSchema = z.object({
     .string({ required_error: "Treatment ID is required." })
     .uuid()
     .min(1, { message: "Treatment ID is required." }),
-  total_cost: z
-    .number({ required_error: "Total cost is required." })
-    .min(1, { message: "Total cost is required." }),
+  total_cost: z.number().optional().default(0),
   notes: z.array(
     z.object({ note: z.string({ required_error: "Note is required." }) })
   ),
