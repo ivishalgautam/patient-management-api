@@ -39,6 +39,10 @@ const init = async (sequelize) => {
           notEmpty: { msg: "Clinic address is required." },
         },
       },
+      max_patients_per_slot: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1,
+      },
     },
     {
       createdAt: "created_at",
@@ -55,6 +59,7 @@ const create = async (req, doctor_id, { transaction }) => {
       doctor_id: doctor_id,
       name: req.body.name,
       address: req.body.address,
+      max_patients_per_slot: req.body.max_patients_per_slot,
     },
     { transaction }
   );
@@ -155,6 +160,7 @@ const update = async (req, id) => {
     {
       name: req.body.name,
       address: req.body.address,
+      max_patients_per_slot: req.body.max_patients_per_slot,
     },
     {
       where: {

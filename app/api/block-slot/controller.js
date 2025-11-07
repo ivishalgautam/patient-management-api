@@ -111,14 +111,43 @@ const getById = async (req, res) => {
 
 const getByDateAndClinic = async (req, res) => {
   try {
-    const record = await table.BlockedSlotModel.getByDateAndClinic(req);
-    const booked = await table.BookingModel.getByDateAndClinic(req);
-    let bookedSlotArr = [];
-    if (booked.length) {
-      bookedSlotArr = booked.map(({ slot }) => slot);
+    const clinicId = req?.query?.clinic;
+    if (!clinicId) {
+      return res
+        .code(400)
+        .send({ status: false, message: "Clinic ID is required!" });
     }
 
-    res.send({ status: true, data: record ?? {}, booked: bookedSlotArr });
+    const clinicRecord = await table.ClinicModel.getById(0, clinicId);
+    if (!clinicRecord) {
+      return res
+        .code(NOT_FOUND)
+        .send({ status: false, message: "Clinic not found!" });
+    }
+
+    const [slotRecord, blockedSlots, bookedSlots] = await Promise.all([
+      table.SlotModel.getByClinicId(0, clinicId),
+      table.BlockedSlotModel.getByDateAndClinic(req),
+      table.BookingModel.getByDateAndClinic(req),
+    ]);
+
+    const { slots = [] } = slotRecord || {};
+    const maxPatientPerSlot = clinicRecord.max_patients_per_slot || 1;
+
+    const bookedCountMap = bookedSlots.reduce((acc, { slot }) => {
+      acc[slot] = (acc[slot] || 0) + 1;
+      return acc;
+    }, {});
+
+    const fullyBookedSlots = slots.filter(
+      (slot) => bookedCountMap[slot] >= maxPatientPerSlot
+    );
+
+    return res.send({
+      status: true,
+      data: blockedSlots ?? {},
+      booked: fullyBookedSlots,
+    });
   } catch (error) {
     throw error;
   }

@@ -11,11 +11,17 @@ const create = async (req, res) => {
     const validateData = bookingSchema.parse(req.body);
     const { role, id: userId } = req.user_data;
 
-    const isSlotBooked = await table.BookingModel.getByClinicDateAndSlot(req);
-    if (isSlotBooked) {
+    const clinicRecord = await table.ClinicModel.getById(0, req.body.clinic_id);
+    if (!clinicRecord) {
       return res
-        .code(400)
-        .send({ status: false, message: "Slot already booked." });
+        .code(NOT_FOUND)
+        .send({ status: false, message: "Clinic not found!" });
+    }
+
+    const bookedSlotsCount =
+      await table.BookingModel.getByClinicDateAndSlot(req);
+    if (bookedSlotsCount >= clinicRecord.max_patients_per_slot) {
+      return res.code(400).send({ status: false, message: "Slots full." });
     }
 
     const patientRecord =
@@ -29,16 +35,10 @@ const create = async (req, res) => {
     }
     req.body.patient_id = patientRecord.id;
 
-    const [clinicRecord, slotRecord] = await Promise.all([
-      table.ClinicModel.getById(0, req.body.clinic_id),
+    const [slotRecord] = await Promise.all([
       table.SlotModel.getByClinicId(0, req.body.clinic_id),
     ]);
 
-    if (!clinicRecord) {
-      return res
-        .code(404)
-        .send({ status: false, message: "Clinic does not exist." });
-    }
     req.body.doctor_id = clinicRecord.doctor_id;
 
     if (!slotRecord?.slots?.includes(validateData.slot)) {
@@ -58,9 +58,7 @@ const create = async (req, res) => {
       }
     }
 
-    // Log the error and send a response
-    console.error("Error during booking creation:", error);
-    res.code(500).send({ status: false, message: "Internal server error." });
+    throw error;
   }
 };
 

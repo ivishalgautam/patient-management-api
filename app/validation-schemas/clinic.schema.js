@@ -7,4 +7,5 @@ export const clinicSchema = z.object({
   address: z
     .string({ required_error: "Clinic address is required." })
     .min(1, { message: "Clinic address is required." }),
+  max_patients_per_slot: z.coerce.number().optional().default(1),
 });
