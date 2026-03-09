@@ -87,7 +87,6 @@ const create = async (req, res) => {
     );
 
     /* ---------------- ledger entries ---------------- */
-
     // if (amountPaid > 0) {
     //   await table.LedgerModel.create(
     //     {
@@ -110,6 +109,7 @@ const create = async (req, res) => {
         {
           body: {
             clinic_id: req.body.clinic_id,
+            service_id: req.body.service_id,
             patient_id: treatment.patient_id,
             reference_type: "adjustment",
             entry_type: "debit",
