@@ -340,7 +340,6 @@ const paymentsSummary = async (req, id) => {
   const { from = "", to = "" } = req.query;
   const year = req.query.year ? req.query.year : new Date().getFullYear();
   const queryParams = { year, clinicId: req?.params?.id || id };
-  console.log({ year });
   if (year) {
     queryParams.year = year;
   }
