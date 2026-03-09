@@ -27,9 +27,9 @@ const init = async (sequelize) => {
         onDelete: "CASCADE",
       },
       payment_type: {
-        type: DataTypes.ENUM("full", "installment"),
+        type: DataTypes.ENUM("full", "installment", "advance"),
         allowNull: false,
-        validate: { isIn: [["full", "installment"]] },
+        validate: { isIn: [["full", "installment", "advance"]] },
       },
       payment_method: {
         type: DataTypes.ENUM("upi", "cash", "other"),
@@ -57,6 +57,10 @@ const init = async (sequelize) => {
           isUUID: "4",
         },
       },
+      advance_used: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
     },
     {
       createdAt: "created_at",
@@ -77,6 +81,7 @@ const create = async (req, { transaction }) => {
       amount_paid: req.body.amount_paid,
       remarks: req.body.remarks,
       added_by: req.user_data.id,
+      advance_used: req.body.advance_used,
     },
     { transaction }
   );
@@ -254,18 +259,26 @@ const getByTreatmentId = async (req, treatment_id) => {
 
 const getRemainingPayment = async (req, treatment_id) => {
   let query = `
-  SELECT 
-    (COALESCE(tp.total_cost_sum, 0) - COALESCE(pymnt.amount_paid_sum, 0))::integer AS remaining_amount
-  FROM 
-    (SELECT SUM(tp.total_cost) AS total_cost_sum 
+SELECT 
+  (
+    COALESCE(tp.total_cost_sum, 0) 
+    - COALESCE(pymnt.total_payment_sum, 0)
+  )::integer AS remaining_amount
+FROM 
+  (
+    SELECT SUM(tp.total_cost) AS total_cost_sum 
     FROM ${constants.models.TREATMENT_PLAN_TABLE} tp 
     WHERE tp.treatment_id = :treatmentId
-    ) tp
-  FULL OUTER JOIN 
-    (SELECT SUM(pymnt.amount_paid) AS amount_paid_sum 
+  ) tp
+FULL OUTER JOIN 
+  (
+    SELECT 
+      SUM(pymnt.amount_paid + COALESCE(pymnt.advance_used,0)) 
+      AS total_payment_sum
     FROM ${constants.models.PAYMENT_TABLE} pymnt 
     WHERE pymnt.treatment_id = :treatmentId
-    ) pymnt ON true;
+  ) pymnt 
+ON true;
     `;
 
   const data = await TreatmentPaymentModel.sequelize.query(query, {

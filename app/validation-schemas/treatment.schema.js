@@ -124,7 +124,11 @@ export const treatmentPaymentSchema = z.object({
     .string({ required_error: "Treatment ID is required." })
     .uuid()
     .min(1, { message: "Treatment ID is required." }),
-  payment_type: z.enum(["full", "installment"], {
+  clinic_id: z
+    .string({ required_error: "Clinic ID is required." })
+    .uuid()
+    .min(1, { message: "Clinic ID is required." }),
+  payment_type: z.enum(["full", "installment", "advance"], {
     required_error: "Payment type is required.",
   }),
   payment_method: z.enum(["upi", "cash", "other"], {
@@ -134,6 +138,7 @@ export const treatmentPaymentSchema = z.object({
     .number({ required_error: "Amount paid is required." })
     .min(0, { message: "Amount paid is required." }),
   remarks: z.string().optional(),
+  advance_used: z.number().min(0).optional().default(0),
 });
 
 export const treatmentPrescriptionSchema = z.object({

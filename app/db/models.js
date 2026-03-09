@@ -25,6 +25,7 @@ import noteModel from "./models/note.model.js";
 import xrayModel from "./models/xray.model.js";
 import documentModel from "./models/document.model.js";
 import patientSequenceModel from "./models/patient-sequence.model.js";
+import ledgerModel from "./models/ledger.model.js";
 
 export default {
   UserModel: userModel,
@@ -53,4 +54,5 @@ export default {
   XrayModel: xrayModel,
   DocumentModel: documentModel,
   PatientSequenceModel: patientSequenceModel,
+  LedgerModel: ledgerModel,
 };

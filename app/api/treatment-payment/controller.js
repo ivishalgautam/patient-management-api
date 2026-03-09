@@ -8,16 +8,22 @@ const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
   const transaction = await sequelize.transaction();
+
   try {
     const validate = treatmentPaymentSchema.parse(req.body);
+
     const treatment = await table.TreatmentModel.getByPk(
       0,
       req.body.treatment_id
     );
-    if (!treatment)
-      return res
-        .code(404)
-        .send({ status: false, message: "Treatment not found." });
+
+    if (!treatment) {
+      await transaction.rollback();
+      return res.code(404).send({
+        status: false,
+        message: "Treatment not found.",
+      });
+    }
 
     const remainingCost =
       await table.TreatmentPlanModel.countRemainingCostByTreatmentId(
@@ -25,27 +31,102 @@ const create = async (req, res) => {
         { transaction }
       );
 
-    if (!remainingCost)
-      return res.status(409).send({
+    if (!remainingCost) {
+      await transaction.rollback();
+      return res.status(400).send({
         status: false,
-        message: "Don't have any remaining balance!",
-      });
-    const currPaid = req.body.amount_paid;
-    if (remainingCost < currPaid) {
-      return res.status(409).send({
-        message: `Remaining balance is ${remainingCost}!`,
-        status: false,
+        message: "No remaining balance!",
       });
     }
 
-    const data = await table.TreatmentPaymentModel.create(req, {
-      transaction,
-    });
+    const amountPaid = req.body.amount_paid || 0;
+    const advanceUsed = req.body.advance_used || 0;
+
+    const totalPayment = amountPaid + advanceUsed;
+
+    if (remainingCost < totalPayment) {
+      await transaction.rollback();
+      return res.status(400).send({
+        status: false,
+        message: `Remaining balance is ${remainingCost}`,
+      });
+    }
+
+    /* ---------------- check ledger balance ---------------- */
+
+    const ledgerBalance =
+      await table.LedgerModel.ledgerBalanceByClinicAndPatient(
+        0,
+        req.body.clinic_id,
+        treatment.patient_id
+      );
+
+    if (advanceUsed > ledgerBalance) {
+      await transaction.rollback();
+      return res.status(400).send({
+        status: false,
+        message: "Advance balance exceeded",
+      });
+    }
+
+    /* ---------------- create payment ---------------- */
+
+    const data = await table.TreatmentPaymentModel.create(
+      {
+        ...req,
+        body: {
+          treatment_id: req.body.treatment_id,
+          payment_type: req.body.payment_type,
+          payment_method: req.body.payment_method,
+          amount_paid: amountPaid,
+          advance_used: advanceUsed,
+          remarks: req.body.remarks,
+        },
+      },
+      { transaction }
+    );
+
+    /* ---------------- ledger entries ---------------- */
+
+    // if (amountPaid > 0) {
+    //   await table.LedgerModel.create(
+    //     {
+    //       body: {
+    //         clinic_id: req.body.clinic_id,
+    //         patient_id: treatment.patient_id,
+    //         reference_type: "treatment_payment",
+    //         entry_type: "credit",
+    //         amount: amountPaid,
+    //         description: "Treatment payment",
+    //       },
+    //       user_data: req.user_data,
+    //     },
+    //     transaction
+    //   );
+    // }
+
+    if (advanceUsed > 0) {
+      await table.LedgerModel.create(
+        {
+          body: {
+            clinic_id: req.body.clinic_id,
+            patient_id: treatment.patient_id,
+            reference_type: "adjustment",
+            entry_type: "debit",
+            amount: advanceUsed,
+            description: "Advance used for treatment",
+          },
+          user_data: req.user_data,
+        },
+        transaction
+      );
+    }
 
     await transaction.commit();
+
     res.send({
       status: true,
-      data: data,
+      data,
       message: "Treatment payment created.",
     });
   } catch (error) {

@@ -70,6 +70,7 @@ const constants = {
     CLINIC_STAFF_TABLE: "clinic_staff_mappings",
     COMPREHENSIVE_EXAMINATION_TABLE: "comprehensive_examinations",
     DOCUMENT_TABLE: "documents",
+    LEDGER_TABLE: "ledgers",
   },
   bcrypt: {
     SALT_ROUNDS: 10,

@@ -24,6 +24,7 @@ import doctorRoutes from "../../api/doctor/routes.js";
 import comprehensiveExaminationRoutes from "../../api/comprehensive-examination/routes.js";
 import xrayRoutes from "../../api/xray/routes.js";
 import documentRoutes from "../../api/document/routes.js";
+import ledgerRoutes from "../../api/ledger/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
@@ -63,4 +64,5 @@ export default async function routes(fastify, options) {
   });
   fastify.register(xrayRoutes, { prefix: "x-rays" });
   fastify.register(documentRoutes, { prefix: "documents" });
+  fastify.register(ledgerRoutes, { prefix: "ledgers" });
 }
