@@ -144,6 +144,7 @@ const get = async (req) => {
     LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = ld.created_by
     LEFT JOIN ${constants.models.SERVICE_TABLE} sr ON sr.id = ld.service_id
     ${whereClause}
+    ORDER BY ld.created_at DESC
     LIMIT :limit OFFSET :offset
   `;
 
