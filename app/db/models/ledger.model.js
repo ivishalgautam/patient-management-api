@@ -98,7 +98,7 @@ const init = async (sequelize) => {
 const create = async (req, transaction = null) => {
   return LedgerModel.create(
     {
-      service_id: treatment.service_id,
+      service_id: req.body.service_id,
       clinic_id: req.body.clinic_id,
       patient_id: req.body.patient_id,
       reference_type: req.body.reference_type,

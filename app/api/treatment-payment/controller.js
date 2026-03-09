@@ -109,7 +109,7 @@ const create = async (req, res) => {
         {
           body: {
             clinic_id: req.body.clinic_id,
-            service_id: req.body.service_id,
+            service_id: treatment.service_id,
             patient_id: treatment.patient_id,
             reference_type: "adjustment",
             entry_type: "debit",
