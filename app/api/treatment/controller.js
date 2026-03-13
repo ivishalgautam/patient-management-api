@@ -36,7 +36,7 @@ const create = async (req, res) => {
 
     const record = await table.ClinicPatientMapModel.getByClinicPatientId(
       patient.id,
-      clinic.id
+      clinic.id,
     );
     if (!record) {
       await table.ClinicPatientMapModel.create(patient.id, clinic.id, {
@@ -48,7 +48,7 @@ const create = async (req, res) => {
       await table.TreatmentModel.getByClinicPatientServiceId(
         req.body.patient_id,
         req.body.clinic_id,
-        req.body.service_id
+        req.body.service_id,
       );
 
     if (
@@ -62,7 +62,7 @@ const create = async (req, res) => {
           clinic_id: clinic.id,
           service_id: service.id,
         },
-        { transaction }
+        { transaction },
       );
     }
 
@@ -82,6 +82,15 @@ const updateById = async (req, res) => {
       return res
         .code(NOT_FOUND)
         .send({ status: false, message: "Treatment not found!" });
+    }
+
+    const remainingPayment =
+      await table.TreatmentPaymentModel.getRemainingPayment(0, record.id);
+    if (remainingPayment.remaining_amount > 0) {
+      return res.code(500).send({
+        status: false,
+        message: "The payment for this treatment is still pending.",
+      });
     }
 
     const data = await table.TreatmentModel.update(req, 0, { transaction });
@@ -169,7 +178,7 @@ const getPatientDetailsByPatientAndClinicId = async (req, res) => {
       status: true,
       data: await table.TreatmentModel.getPatientDetailsByPatientAndClinicId(
         patient.id,
-        clinic.id
+        clinic.id,
       ),
     });
   } catch (error) {
@@ -216,7 +225,7 @@ const getByPatientAndClinicId = async (req, res) => {
     const data = await table.TreatmentModel.getByPatientAndClinicId(
       req,
       req.params.patient_id,
-      req.params.clinic_id
+      req.params.clinic_id,
     );
 
     res.send({ status: true, data: data });

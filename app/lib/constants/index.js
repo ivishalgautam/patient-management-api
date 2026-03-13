@@ -66,6 +66,7 @@ const constants = {
     XRAY_TABLE: "xrays",
     INVESTIGATION_TABLE: "investigations",
     PAYMENT_TABLE: "treatment_payments",
+    TREATMENT_VISIT_TABLE: "treatment_visits",
     STAFF_TABLE: "staffs",
     CLINIC_STAFF_TABLE: "clinic_staff_mappings",
     COMPREHENSIVE_EXAMINATION_TABLE: "comprehensive_examinations",

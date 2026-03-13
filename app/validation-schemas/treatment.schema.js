@@ -103,7 +103,7 @@ export const treatmentPlanSchema = z.object({
     .min(1, { message: "Treatment ID is required." }),
   total_cost: z.number().optional().default(0),
   notes: z.array(
-    z.object({ note: z.string({ required_error: "Note is required." }) })
+    z.object({ note: z.string({ required_error: "Note is required." }) }),
   ),
   affected_tooths: z
     .array(
@@ -114,9 +114,10 @@ export const treatmentPlanSchema = z.object({
         color: z
           .string({ required_error: "Disease type is required." })
           .min(1, { message: "Disease type is required." }),
-      })
+      }),
     )
-    .min(1, { message: "Affected tooth is required." }),
+    .optional()
+    .default([]),
 });
 
 export const treatmentPaymentSchema = z.object({
@@ -139,6 +140,14 @@ export const treatmentPaymentSchema = z.object({
     .min(0, { message: "Amount paid is required." }),
   remarks: z.string().optional(),
   advance_used: z.number().min(0).optional().default(0),
+});
+
+export const treatmentVisitSchema = z.object({
+  treatment_id: z
+    .string({ required_error: "Treatment ID is required." })
+    .uuid(),
+
+  visit_notes: z.array(z.any()).min(1, { message: "Atleast 1 note required." }),
 });
 
 export const treatmentPrescriptionSchema = z.object({
@@ -169,7 +178,7 @@ export const treatmentPrescriptionSchema = z.object({
           .positive("Duration must be a positive number. Example: 7"),
         notes: z.string().optional().describe("Example: 'Take with food.'"),
       }),
-      "Data is required."
+      "Data is required.",
     )
     .min(1, { message: "Data is required." }),
 });

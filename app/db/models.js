@@ -26,6 +26,7 @@ import xrayModel from "./models/xray.model.js";
 import documentModel from "./models/document.model.js";
 import patientSequenceModel from "./models/patient-sequence.model.js";
 import ledgerModel from "./models/ledger.model.js";
+import treatmentVisitModel from "./models/treatment-visit.model.js";
 
 export default {
   UserModel: userModel,
@@ -55,4 +56,5 @@ export default {
   DocumentModel: documentModel,
   PatientSequenceModel: patientSequenceModel,
   LedgerModel: ledgerModel,
+  TreatmentVisitModel: treatmentVisitModel,
 };

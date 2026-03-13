@@ -54,7 +54,7 @@ const init = async (sequelize) => {
           "treatment_plan",
           "expense",
           "refund",
-          "adjustment"
+          "adjustment",
         ),
         allowNull: false,
       },
@@ -89,7 +89,7 @@ const init = async (sequelize) => {
       createdAt: "created_at",
       updatedAt: "updated_at",
       indexes: [{ fields: ["clinic_id"] }, { fields: ["patient_id"] }],
-    }
+    },
   );
 
   await LedgerModel.sync({ alter: true });
@@ -107,7 +107,7 @@ const create = async (req, transaction = null) => {
       description: req.body.description,
       created_by: req.user_data.id,
     },
-    { transaction }
+    { transaction },
   );
 };
 
@@ -209,7 +209,7 @@ const deleteById = async (req, id, transaction = null) => {
     {
       where: { id: req.params.id || id },
     },
-    { transaction }
+    { transaction },
   );
 };
 
