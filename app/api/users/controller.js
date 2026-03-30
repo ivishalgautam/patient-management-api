@@ -22,7 +22,7 @@ const create = async (req, res) => {
       const { username, password } = credentialGenerator(
         patientNumber,
         validateUserData.fullname,
-        validateUserData.mobile_number
+        validateUserData.mobile_number,
       );
       await table.PatientSequenceModel.update(patientNumber, { transaction });
       req.body.username = username;
@@ -55,7 +55,7 @@ const create = async (req, res) => {
           req.body.clinic_id,
           {
             transaction,
-          }
+          },
         );
       }
     }
@@ -131,7 +131,7 @@ const updateStatus = async (req, res) => {
     }
     const data = await table.UserModel.updateStatus(
       req.params.id,
-      req.body.is_active
+      req.body.is_active,
     );
 
     res.send({
@@ -160,7 +160,7 @@ const deleteById = async (req, res) => {
         const examinationRecord =
           await table.ComprehensiveExaminationModel.getByPatientId(
             0,
-            patientRecord.id
+            patientRecord.id,
           );
         if (examinationRecord) {
           filesToDelete.push(...examinationRecord.gallery);
@@ -231,7 +231,7 @@ const updatePassword = async (req, res) => {
 
     const verify_old_password = hash.verify(
       req.body.old_password,
-      record.password
+      record.password,
     );
 
     if (!verify_old_password) {

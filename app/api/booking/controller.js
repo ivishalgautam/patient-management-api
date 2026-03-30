@@ -1,13 +1,14 @@
 "use strict";
+import moment from "moment";
 import table from "../../db/models.js";
 import { sequelize } from "../../db/postgres.js";
+import { sendBookingConfirm, sendReviewMessage } from "../../utils/waffly.js";
 import { bookingSchema } from "../../validation-schemas/booking.schema.js";
 
 const create = async (req, res) => {
   let transaction;
   try {
     transaction = await sequelize.transaction();
-
     const validateData = bookingSchema.parse(req.body);
     const { role, id: userId } = req.user_data;
 
@@ -34,7 +35,7 @@ const create = async (req, res) => {
         .send({ status: false, message: "Patient not registered." });
     }
     req.body.patient_id = patientRecord.id;
-
+    console.log({ patientRecord });
     const [slotRecord] = await Promise.all([
       table.SlotModel.getByClinicId(0, req.body.clinic_id),
     ]);
@@ -45,7 +46,19 @@ const create = async (req, res) => {
       return res.code(404).send({ status: false, message: "Slot not found." });
     }
 
-    await table.BookingModel.create(req, { transaction });
+    const bookingRecord = await table.BookingModel.create(req, { transaction });
+    console.log({ bookingRecord });
+    // throw new Error("qwfhwqfh");
+
+    await sendBookingConfirm({
+      patient_phone: patientRecord.mobile_number,
+      patient_name: patientRecord.fullname,
+      service_name: "Dental service",
+      booked_slot: moment(`${bookingRecord.date} ${bookingRecord.slot}`).format(
+        "dddd DD MMMM h:mm A",
+      ),
+    });
+
     await transaction.commit();
 
     res.send({ status: true, message: "Successfully booked a slot." });
@@ -155,7 +168,7 @@ const updateStatus = async (req, res) => {
         await table.TreatmentModel.getByClinicPatientServiceId(
           bookingRecord.patient_id,
           bookingRecord.clinic_id,
-          service_id
+          service_id,
         );
       // return;
       if (
@@ -171,21 +184,21 @@ const updateStatus = async (req, res) => {
             appointment_id: bookingRecord.id,
             // cost: service.discounted_price,
           },
-          { transaction }
+          { transaction },
         );
       }
 
       const patientExistInClinic =
         await table.ClinicPatientMapModel.getByClinicPatientId(
           bookingRecord.patient_id,
-          bookingRecord.clinic_id
+          bookingRecord.clinic_id,
         );
 
       if (!patientExistInClinic) {
         await table.ClinicPatientMapModel.create(
           bookingRecord.patient_id,
           bookingRecord.clinic_id,
-          { transaction }
+          { transaction },
         );
       }
     }

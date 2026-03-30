@@ -27,6 +27,18 @@ const config = {
   doctor_id: process.env.DOCTOR_ID,
   doctor_user_id: process.env.DOCTOR_USER_ID,
   procedure_id: process.env.PROCEDURE_ID,
+
+  // waffly
+  waffly_license: process.env.WAFFLY_LICENSE,
+  waffly_api_key: process.env.WAFFLY_API_KEY,
+  waffly_template_booking_confirm: process.env.WAFFLY_TEMPLATE_BOOKING_CONFIRM,
+  waffly_template_24_hours_before_appointment:
+    process.env.WAFFLY_TEMPLATE_24_HOURS_BEFORE_APPOINTMENT,
+  waffly_template_2_hrs_before_appointment:
+    process.env.WAFFLY_TEMPLATE_2_HRS_BEFORE_APPOINTMENT,
+  waffly_template_1_hr_after_appointment:
+    process.env.WAFFLY_TEMPLATE_1_HR_AFTER_APPOINTMENT,
+  waffly_template_review_mesaage: process.env.WAFFLY_TEMPLATE_REVIEW_MESAAGE,
 };
 
 export default config;
