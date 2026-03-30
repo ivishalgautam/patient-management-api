@@ -69,11 +69,18 @@ const init = async (sequelize) => {
         defaultValue: "pending",
         validate: { isIn: [["pending", "canceled", "completed"]] },
       },
+      notification_24hr_sent: { type: DataTypes.BOOLEAN, defaultValue: false },
+      notification_2hr_sent: { type: DataTypes.BOOLEAN, defaultValue: false },
+      notification_1hr_after_sent: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      review_message_sent: { type: DataTypes.BOOLEAN, defaultValue: false },
     },
     {
       createdAt: "created_at",
       updatedAt: "updated_at",
-    }
+    },
   );
 
   await BookingModel.sync({ alter: true });
@@ -89,10 +96,14 @@ const create = async (req, { transaction }) => {
       date: req.body.date,
       slot: req.body.slot,
     },
-    { transaction }
+    { transaction },
   );
 
   return data.dataValues;
+};
+
+const findAll = async (args) => {
+  return await BookingModel.findAll(args);
 };
 
 const get = async (req) => {
@@ -104,7 +115,7 @@ const get = async (req) => {
   const status = req.query.status || null;
   if (q) {
     whereConditions.push(
-      `(drusr.fullname ILIKE :q OR ptusr.fullname ILIKE :q)`
+      `(drusr.fullname ILIKE :q OR ptusr.fullname ILIKE :q)`,
     );
     queryParams.q = `%${q}%`;
   }
@@ -210,7 +221,7 @@ const getBookingsByClinicId = async (req, id) => {
 
   if (q) {
     whereConditions.push(
-      `(drusr.fullname ILIKE :q OR ptusr.fullname ILIKE :q)`
+      `(drusr.fullname ILIKE :q OR ptusr.fullname ILIKE :q)`,
     );
     queryParams.q = `%${q}%`;
   }
@@ -319,6 +330,10 @@ const getByDoctorId = async (doctor_id) => {
   });
 };
 
+const updateOne = async (...args) => {
+  return await BookingModel.update(...args);
+};
+
 const update = async (req, id, { transaction }) => {
   const data = await BookingModel.update(
     {
@@ -337,7 +352,7 @@ const update = async (req, id, { transaction }) => {
       plain: true,
       raw: true,
       transaction,
-    }
+    },
   );
 
   return data[1];
@@ -354,7 +369,7 @@ const updateStatus = async (req, id) => {
       },
       returning: true,
       plain: true,
-    }
+    },
   );
 
   return data[1];
@@ -393,11 +408,13 @@ const count = async (clinicId, today = false) => {
 export default {
   init: init,
   create: create,
+  findAll: findAll,
   get: get,
   getById: getById,
   getBookingsByClinicId: getBookingsByClinicId,
   getByPk: getByPk,
   getByDoctorId: getByDoctorId,
+  updateOne: updateOne,
   update: update,
   updateStatus: updateStatus,
   deleteById: deleteById,

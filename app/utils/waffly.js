@@ -35,7 +35,7 @@ export async function sendBookingConfirm({
   try {
     const { data } = await axios.request(configOpt);
     console.log("Waffly 'booking_confirm' notification response: ", data);
-    console.log(data.ApiMessage.ErrorMessage.error);
+    console.log(data?.ApiMessage?.ErrorMessage?.error ?? "Something went wrog");
     return data;
   } catch (error) {
     console.log("Error sending 'booking_confirm' notification: ", error);
@@ -79,7 +79,7 @@ export async function send24HoursBeforeAppointment({
       data,
     );
 
-    console.log(data.ApiMessage.ErrorMessage.error);
+    console.log(data?.ApiMessage?.ErrorMessage?.error ?? "Something went wrog");
     return data;
   } catch (error) {
     console.log(

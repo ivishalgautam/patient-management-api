@@ -11,6 +11,7 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyMultipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import fastifyCron from "fastify-cron";
+import { ToadScheduler } from "toad-scheduler";
 
 // import internal modules
 import authRoutes from "./app/api/auth/routes.js";
@@ -23,12 +24,22 @@ import { ErrorHandler } from "./app/helpers/error-handler.js";
 import ejs from "ejs";
 import publcRoutes from "./app/routes/v1/public.js";
 import config from "./app/config/index.js";
+import { scheduleAppointmentCron } from "./app/scheduler/appointment-cron.js";
 
 /*
   Register External packages, routes, database connection
 */
 export default (app) => {
   app.setErrorHandler(ErrorHandler);
+  const scheduler = new ToadScheduler();
+
+  scheduleAppointmentCron(scheduler);
+
+  app.addHook("onClose", async () => {
+    scheduler.stop();
+    console.log("🛑 Appointment scheduler stopped");
+  });
+
   app.register(fastifyRateLimit, {
     max: Number(process.env.MAX_RATE_LIMIT), // Max requests per minute
     timeWindow: process.env.TIME_WINDOW,
@@ -81,7 +92,7 @@ export default (app) => {
               } else {
                 resolve(outputPath);
               }
-            }
+            },
           );
         });
       };

@@ -2,7 +2,7 @@
 import moment from "moment";
 import table from "../../db/models.js";
 import { sequelize } from "../../db/postgres.js";
-import { sendBookingConfirm, sendReviewMessage } from "../../utils/waffly.js";
+import { sendBookingConfirm } from "../../utils/waffly.js";
 import { bookingSchema } from "../../validation-schemas/booking.schema.js";
 
 const create = async (req, res) => {
@@ -47,8 +47,6 @@ const create = async (req, res) => {
     }
 
     const bookingRecord = await table.BookingModel.create(req, { transaction });
-    console.log({ bookingRecord });
-    // throw new Error("qwfhwqfh");
 
     await sendBookingConfirm({
       patient_phone: patientRecord.mobile_number,
