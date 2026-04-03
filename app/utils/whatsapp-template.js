@@ -31,7 +31,7 @@ const sendTemplate = async ({ phone, template, params, label }) => {
 export const send24HoursBeforeAppointment = (payload) =>
   sendTemplate({
     phone: payload.patient_phone,
-    template: config.waffly_template_24_hrs_before_appointment,
+    template: config.waffly_template_24_hours_before_appointment,
     label: "24 hour reminder",
     params: [
       formatName(payload.patient_name),
