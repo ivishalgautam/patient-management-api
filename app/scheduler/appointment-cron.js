@@ -1,8 +1,8 @@
 import { CronJob, AsyncTask } from "toad-scheduler";
 import { processAppointmentNotifications } from "../services/appointment-notification.service.js";
 
-const APPOINTMENT_CRON = "*/10 * * * * *";
-// const APPOINTMENT_CRON = "*/5 * * * * *";
+const APPOINTMENT_CRON = "*/5 * * * *";
+// const APPOINTMENT_CRON = "*/5 * * * *";
 // every 5 minutes
 
 export const scheduleAppointmentCron = (scheduler) => {
