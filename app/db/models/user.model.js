@@ -37,9 +37,9 @@ const init = async (sequelize) => {
         validate: {
           notEmpty: true,
         },
-        unique: {
-          msg: "Mobile number already in use!",
-        },
+        // unique: {
+        //   msg: "Mobile number already in use!",
+        // },
       },
       email: {
         type: DataTypes.STRING,
@@ -100,7 +100,7 @@ const init = async (sequelize) => {
     {
       createdAt: "created_at",
       updatedAt: "updated_at",
-    }
+    },
   );
 
   await UserModel.sync({ alter: true });
@@ -121,7 +121,7 @@ const create = async (req, { transaction }) => {
       dob: req.body?.dob,
       avatar: req.body?.avatar,
     },
-    { transaction }
+    { transaction },
   );
 
   delete data.dataValues.password;
@@ -153,7 +153,7 @@ const get = async (req) => {
 
   if (q) {
     whereConditions.push(
-      `(usr.fullname ILIKE :query OR usr.email ILIKE :query)`
+      `(usr.fullname ILIKE :query OR usr.email ILIKE :query)`,
     );
     queryParams.query = `%${q}%`;
   }
@@ -284,7 +284,7 @@ const update = async (req, id, { transaction }) => {
       raw: true,
       plain: true,
     },
-    { transaction }
+    { transaction },
   );
   return rows;
 };
@@ -299,7 +299,7 @@ const updatePassword = async (req, user_id) => {
       where: {
         id: req.params?.id || user_id,
       },
-    }
+    },
   );
 };
 
@@ -376,7 +376,7 @@ const updateStatus = async (id, status) => {
       },
       plain: true,
       raw: true,
-    }
+    },
   );
 
   return rows;

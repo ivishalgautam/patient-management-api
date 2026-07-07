@@ -1,11 +1,9 @@
 "use strict";
 import table from "../../db/models.js";
 import { handleExcelImport } from "../../utils/import-excel.js";
-import hash from "../../lib/encryption/index.js";
 import { sequelize } from "../../db/postgres.js";
 import config from "../../config/index.js";
 import slugify from "slugify";
-import constants from "../../lib/constants/index.js";
 
 const get = async (req, res) => {
   try {
@@ -24,12 +22,10 @@ const importPatients = async (req, res) => {
     for await (const part of parts) {
       if (part.file) {
         const data = await handleExcelImport(part);
-
         let currentPatient = null;
         for (const patient of data) {
           if (patient.patient_id) {
             if (currentPatient) patientData.push(currentPatient);
-
             currentPatient = {
               patient_id: patient.patient_id,
               fullname: patient.fullname,
@@ -70,15 +66,15 @@ const importPatients = async (req, res) => {
       }
     }
 
-    return object;
+    // return object;
 
     const promises = patientData.map(async (user) => {
-      console.log(
-        "patient_id",
-        user.patient_id,
-        "mobile_number",
-        user.mobile_number,
-      );
+      // console.log(
+      //   "patient_id",
+      //   user.patient_id,
+      //   "mobile_number",
+      //   user.mobile_number,
+      // );
       const username = `ddss${user.patient_id}`;
       const password =
         String(user.fullname.substring(0, 4)).toLowerCase() +
@@ -147,7 +143,7 @@ const importPatients = async (req, res) => {
                       //     constants.toothColors[Math.floor(Math.random() * 4)],
                       // },
                     ],
-                    total_cost: service.cost,
+                    total_cost: service.cost ?? 0,
                   },
                 },
                 { transaction },
@@ -200,7 +196,7 @@ const importPatients = async (req, res) => {
                   treatment_id: treatmentRecord.id,
                   patient_id: patientRecord.id,
                   affected_tooths: [],
-                  total_cost: service.cost,
+                  total_cost: service.cost ?? 0,
                 },
               },
               { transaction },
@@ -335,7 +331,7 @@ const importPatients = async (req, res) => {
                 treatment_id: treatmentRecord.id,
                 patient_id: newPatientRecord.id,
                 affected_tooths: [],
-                total_cost: service.cost,
+                total_cost: service.cost ?? 0,
               },
             },
             { transaction },
@@ -365,7 +361,9 @@ const importPatients = async (req, res) => {
     });
 
     const data = await Promise.all(promises);
-    // await transaction.commit();
+
+    // throw new Error("wefkhkbhbewjhf");
+    await transaction.commit();
 
     return { success: true };
   } catch (error) {

@@ -70,7 +70,7 @@ const init = async (sequelize) => {
     {
       createdAt: "created_at",
       updatedAt: "updated_at",
-    }
+    },
   );
 
   await TreatmentPlanModel.sync({ alter: true });
@@ -87,7 +87,7 @@ const create = async (req, { transaction }) => {
       notes: req.body.notes,
       added_by: req.user_data.id,
     },
-    { transaction }
+    { transaction },
   );
 };
 
@@ -130,7 +130,7 @@ const update = async (req, id, { transaction }) => {
       },
       raw: true,
       transaction,
-    }
+    },
   );
 };
 
@@ -145,7 +145,7 @@ const getByTreatmentId = async (req, treatmentId) => {
   const q = req.query.q ? req.query.q : null;
   if (q) {
     whereConditions.push(
-      `(prd.name ILIKE :query OR usr.fullname ILIKE :query)`
+      `(prd.name ILIKE :query OR usr.fullname ILIKE :query)`,
     );
     queryParams.query = `%${q}%`;
   }
@@ -213,7 +213,7 @@ const getByPatientId = async (req, patientId) => {
   const q = req.query.q ? req.query.q : null;
   if (q) {
     whereConditions.push(
-      `(prd.name ILIKE :query OR usr.fullname ILIKE :query)`
+      `(prd.name ILIKE :query OR usr.fullname ILIKE :query)`,
     );
     queryParams.query = `%${q}%`;
   }
@@ -285,7 +285,7 @@ const deleteById = async (req, id) => {
 
 const countRemainingCostByTreatmentId = async (
   treatment_id,
-  { transaction }
+  { transaction },
 ) => {
   const query = `
   SELECT 
