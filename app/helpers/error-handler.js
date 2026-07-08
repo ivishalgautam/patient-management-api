@@ -4,7 +4,6 @@ import { ZodError } from "zod";
 
 // Custom error handler function
 export const ErrorHandler = (error, request, reply) => {
-  console.log({ error });
   // Check if the error is a Zod validation error
   if (error instanceof ZodError) {
     // Return a 400 Bad Request with the validation error details

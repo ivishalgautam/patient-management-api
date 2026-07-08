@@ -19,6 +19,7 @@ const create = async (req, res) => {
     if (validateUserData.role === "patient") {
       const currPatientCount = await table.PatientSequenceModel.get();
       const patientNumber = currPatientCount.value + 1;
+
       const { username, password } = credentialGenerator(
         patientNumber,
         validateUserData.fullname,
@@ -77,6 +78,8 @@ const create = async (req, res) => {
         transaction,
       });
     }
+
+    // throw new Error("mhmvhj");
 
     await transaction.commit();
     return res.send({

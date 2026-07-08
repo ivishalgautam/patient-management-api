@@ -17,7 +17,7 @@ const init = async (sequelize) => {
         defaultValue: 0,
       },
     },
-    { createdAt: "created_at", updatedAt: "updated_at" }
+    { createdAt: "created_at", updatedAt: "updated_at" },
   );
 
   await PatientSequenceModel.sync({ alter: true });
@@ -32,7 +32,7 @@ const update = async (value, { transaction }) => {
     {
       value: value,
     },
-    { where: { id: "patient" }, returning: true, plain: true, transaction }
+    { where: { id: "patient" }, returning: true, plain: true, transaction },
   );
 
   return rows;

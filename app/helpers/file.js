@@ -82,7 +82,7 @@ export const getFile = async (req, res) => {
 
   if (mime === "docx") {
     res.type(
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     );
   }
 
@@ -96,7 +96,6 @@ export const getFile = async (req, res) => {
 };
 
 export const deleteFile = async (filePath) => {
-  console.log({ filePath });
   const fullPath = path.resolve(filePath);
 
   try {

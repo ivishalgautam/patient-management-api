@@ -26,7 +26,6 @@ const verifyUserCredentials = async (req, res) => {
         message: "User not active. Please contact administrator!",
       });
     }
-    console.log({ userData });
     let passwordIsValid = hash.verify(req.body.password, userData.password);
     if (!passwordIsValid) {
       return res
@@ -62,7 +61,7 @@ const createNewUser = async (req, res) => {
       const { username, password } = credentialGenerator(
         patientNumber,
         validateUserData.fullname,
-        validateUserData.mobile_number
+        validateUserData.mobile_number,
       );
       req.body.username = username;
       req.body.password = password;

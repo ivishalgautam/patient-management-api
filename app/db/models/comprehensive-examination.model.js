@@ -75,7 +75,7 @@ const init = async (sequelize) => {
     {
       createdAt: "created_at",
       updatedAt: "updated_at",
-    }
+    },
   );
 
   await ComprehensiveExaminationModel.sync({ alter: true });
@@ -93,7 +93,7 @@ const create = async (req, { transaction }) => {
       gallery: req.body.gallery,
       added_by: req.user_data.id,
     },
-    { transaction }
+    { transaction },
   );
 };
 
@@ -121,7 +121,7 @@ const update = async (req, id, { transaction }) => {
         id: req?.params?.id || id,
       },
       transaction,
-    }
+    },
   );
 
   return rows;
@@ -146,7 +146,6 @@ const getByPatientId = async (req, patient_id) => {
 };
 
 const get = async (patient_id) => {
-  console.log({ patient_id });
   let query = `
   SELECT
       ce.*

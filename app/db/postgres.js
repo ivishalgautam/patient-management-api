@@ -10,7 +10,7 @@ export const sequelize = new Sequelize(
     host: config.pg_host,
     dialect: config.pg_dialect,
     logging: false,
-  }
+  },
 );
 
 async function postgresConnection(fastify, options) {
@@ -26,7 +26,6 @@ async function postgresConnection(fastify, options) {
       resolve(`Migration sucessfully completed...`);
     }).then((data) => fastify.log.info(data));
   } catch (error) {
-    console.log(error);
     dbSuccess == false;
     process.exit(1);
   }

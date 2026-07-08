@@ -35,7 +35,6 @@ const create = async (req, res) => {
         .send({ status: false, message: "Patient not registered." });
     }
     req.body.patient_id = patientRecord.id;
-    console.log({ patientRecord });
     const [slotRecord] = await Promise.all([
       table.SlotModel.getByClinicId(0, req.body.clinic_id),
     ]);
