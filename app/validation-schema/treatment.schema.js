@@ -142,6 +142,14 @@ export const treatmentPaymentSchema = z.object({
   advance_used: z.number().min(0).optional().default(0),
 });
 
+// Editable fields of a recorded payment.
+export const treatmentPaymentUpdateSchema = z.object({
+  payment_type: z.enum(["full", "installment", "advance"]).optional(),
+  payment_method: z.enum(["upi", "cash", "other"]).optional(),
+  amount_paid: z.number().min(0).optional(),
+  remarks: z.string().optional(),
+});
+
 export const treatmentVisitSchema = z.object({
   treatment_id: z
     .string({ required_error: "Treatment ID is required." })

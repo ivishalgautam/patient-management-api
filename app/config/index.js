@@ -55,6 +55,7 @@ const envSchema = z.object({
   // queue = pg-boss jobs with retries (default); legacy = in-process timer.
   REMINDERS_ENGINE: z.enum(["queue", "legacy"]).optional().default("queue"),
   // Region for parsing phone numbers without a country code (lead dedupe).
+  CLINIC_TIMEZONE: z.string().optional().default("Asia/Kolkata"),
   DEFAULT_PHONE_REGION: z.string().length(2).optional().default("IN"),
   // Public dashboard URL (share links / embed snippets for lead forms).
   APP_URL: z.string().url().optional(),
@@ -156,6 +157,7 @@ const config = Object.freeze({
   permissions_enforce: env.PERMISSIONS_ENFORCE,
   reminders_engine: env.REMINDERS_ENGINE,
   default_phone_region: env.DEFAULT_PHONE_REGION.toUpperCase(),
+  clinic_timezone: env.CLINIC_TIMEZONE,
   app_url: (env.APP_URL ?? "http://localhost:3000").replace(/\/$/, ""),
   api_url: (env.API_URL ?? `http://localhost:${env.PORT}/v1`).replace(/\/$/, ""),
   form_token_secret: env.FORM_TOKEN_SECRET || `form-token:${env.JWT_SECRET}`,

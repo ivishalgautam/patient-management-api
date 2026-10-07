@@ -1,5 +1,6 @@
 "use strict";
 import { beginTransaction } from "../../db/transaction.js";
+import { assertClinicDeletable } from "../../lib/booking-rules.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { clinicSchema } from "../../validation-schema/clinic.schema.js";
@@ -84,6 +85,7 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Clinic not found!" });
 
+    await assertClinicDeletable(req.params.id, { transaction });
     await table.ClinicModel.deleteById(req, req.params.id, {
       transaction,
     });

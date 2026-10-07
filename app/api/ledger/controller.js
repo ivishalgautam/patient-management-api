@@ -1,5 +1,7 @@
 "use strict";
 import { beginTransaction } from "../../db/transaction.js";
+import { badRequest, conflict } from "../../lib/app-error.js";
+import { advanceBalance } from "../../lib/booking-rules.js";
 import table from "../../db/models.js";
 import { ledgerSchema } from "../../validation-schema/ledger.schema.js";
 
@@ -24,6 +26,12 @@ const create = async (req, res) => {
       return res
         .code(404)
         .send({ status: false, message: "Patient not found." });
+
+    // The advance balance can't go below zero.
+    if (validateData.entry_type === "debit") {
+      const balance = await advanceBalance(validateData.clinic_id, validateData.patient_id, { transaction });
+      if (validateData.amount > balance) throw badRequest(`Advance balance is ${balance}.`);
+    }
 
     const data = await table.LedgerModel.create(req, transaction);
 
@@ -77,6 +85,12 @@ const deleteById = async (req, res) => {
         .code(404)
         .send({ status: false, message: "ledger not found." });
 
+    if (ledger.entry_type === "credit") {
+      const balance = await advanceBalance(ledger.clinic_id, ledger.patient_id, { transaction });
+      if (balance - ledger.amount < 0) {
+        throw conflict(`Part of this advance has already been used (balance ${balance}). It can't be deleted.`);
+      }
+    }
     await table.LedgerModel.deleteById(req, 0, transaction);
     await transaction.commit();
 

@@ -3,6 +3,8 @@ import { beginTransaction } from "../../db/transaction.js";
 import table from "../../db/models.js";
 import { createBooking, notifyBookingConfirmed } from "./service.js";
 import { bookingSchema } from "../../validation-schema/booking.schema.js";
+import { badRequest } from "../../lib/app-error.js";
+import { assertBookable, assertBookingOpen, assertStatusChange } from "../../lib/booking-rules.js";
 
 const create = async (req, res) => {
   const data = bookingSchema.parse(req.body);
@@ -56,7 +58,25 @@ const updateById = async (req, res) => {
       return res
         .code(404)
         .send({ status: false, message: "Booking not found." });
-    // return console.log({ bookingRecord });
+    assertBookingOpen(bookingRecord);
+    if (req.body.status !== undefined && req.body.status !== bookingRecord.status) {
+      throw badRequest("Change the status with PUT /bookings/status/:id.");
+    }
+    if (req.body.patient_id !== undefined && req.body.patient_id !== bookingRecord.patient_id) {
+      throw badRequest("A booking can't be moved to another patient. Cancel it and book again.");
+    }
+
+    // Rescheduling: the new time must be bookable (this booking excluded
+    // from the capacity count). The doctor always follows the clinic.
+    const clinicId = req.body.clinic_id ?? bookingRecord.clinic_id;
+    const clinic = await table.ClinicModel.getById(0, clinicId);
+    if (!clinic) return res.code(404).send({ status: false, message: "Clinic not found." });
+    const date = req.body.date ?? bookingRecord.date;
+    const slot = req.body.slot ?? bookingRecord.slot;
+    if (clinicId !== bookingRecord.clinic_id || date !== bookingRecord.date || slot !== bookingRecord.slot) {
+      await assertBookable({ clinic, date, slot, excludeBookingId: bookingRecord.id }, { transaction });
+    }
+    req.body = { clinic_id: clinicId, doctor_id: clinic.doctor_id, date, slot };
 
     const data = await table.BookingModel.update(req, 0, { transaction });
     await transaction.commit();
@@ -83,17 +103,7 @@ const updateStatus = async (req, res) => {
         .code(404)
         .send({ status: false, message: "Booking not found." });
 
-    if (bookingRecord.status === "canceled")
-      return res.code(400).send({
-        status: false,
-        message: "Can't change booking canceled.",
-      });
-
-    if (bookingRecord.status === "completed")
-      return res.code(400).send({
-        status: false,
-        message: "Can't change booking completed.",
-      });
+    assertStatusChange(bookingRecord, status);
 
     const data = await table.BookingModel.update(req, 0, { transaction });
     if (data.status === "completed") {

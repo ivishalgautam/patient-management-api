@@ -3,7 +3,7 @@
 Revamp of the Dr. Dipti dental platform using the BW Task source as a reference (patterns adapted, not copied), plus the new Leads module and the Google Leads add-on.
 
 * **Repositories:** `server/` and `client/dashboard/` (separate git repos).
-* **Branch:** `revamp/leads-module` in both, tagged `revamp-phase3` … `revamp-phase6` after each phase, and `revamp-followups` after the follow-up items (§5). Security fixes were also made on `hotfix/security` (both repos) and merged into the revamp branch.
+* **Branch:** `revamp/leads-module` in both, tagged `revamp-phase3` … `revamp-phase6` after each phase, and `revamp-followups` after the follow-up items (§5) and `revamp-state-rules` after the business-state rules (§4a). Security fixes were also made on `hotfix/security` (both repos) and merged into the revamp branch.
 * **Reference project** (`bw-task-full-source`) was read-only and is unchanged.
 * **Not committed on purpose:** your earlier uncommitted change in `client/dashboard/src/components/forms/book-slot.js` is still uncommitted in the working tree.
 
@@ -15,12 +15,12 @@ Revamp of the Dr. Dipti dental platform using the BW Task source as a reference 
 |---|---|---|
 | Build passes | ✅ | `next build` compiles (dashboard); server boots via `buildApp` in every test run |
 | Lint passes | ✅ | `npm run lint` (server): 0 problems. `next lint` (dashboard): 0 errors, 4 warnings, all in files the revamp didn't touch |
-| Tests pass | ✅ | Server **387 tests / 20 files**, dashboard **7 tests / 4 files** |
+| Tests pass | ✅ | Server **400 tests / 21 files**, dashboard **7 tests / 4 files** |
 | Tests for pipelines, stages, forms, custom fields, ingestion (Facebook + Google), dedupe, permissions | ✅ | `test/leads/{config,leads,forms,integrations,conversion,google-addon,access}.test.js`, `test/platform/permissions.test.js` |
-| Migrations up/down on a fresh DB | ✅ | Empty DB: up (12) → down to 0 (12 reverted, only the migration-tracking table left) → up (12) |
-| Migrations up/down on a copy of existing data | ✅ | Fresh `pg_dump` of the local `drdipti` DB: baseline → up (11) → down to the first revamp migration (11 reverted) → up (11). Row counts unchanged at each step (503 users, 499 patients, 623 bookings, 1349 treatments) |
+| Migrations up/down on a fresh DB | ✅ | Empty DB: up (13) → down to 0 (13 reverted, only the migration-tracking table left) → up (13) |
+| Migrations up/down on a copy of existing data | ✅ | Fresh `pg_dump` of the local `drdipti` DB: baseline → up (12) → down to the first revamp migration (12 reverted) → up (12). Row counts unchanged at each step (503 users, 499 patients, 623 bookings, 1349 treatments) |
 | Existing dental features keep working | ✅ | `test/characterization` pins auth, users, patients, bookings, treatments, billing, uploads and imports. Response shapes are frozen. Changes in behaviour are only the listed bug fixes |
-| Every schema change has a reversible migration | ✅ | 11 migrations after the baseline, each with a tested `down` |
+| Every schema change has a reversible migration | ✅ | 12 migrations after the baseline, each with a tested `down` |
 | No hardcoded secrets; everything in `.env.example` | ✅ | Config is validated with zod. A script check confirms every config variable and every `process.env` read appears in `.env.example` (server and dashboard) |
 | Docs | ✅ | Both READMEs rewritten; `docs/leads-module.md`; this report |
 
@@ -86,10 +86,33 @@ READMEs for both repos, `docs/leads-module.md` (data model, API, Facebook and Go
 | 19 | Import shares one transaction concurrently | ✅ Rewritten as a sequential service |
 | 20 | Broken duplicate WhatsApp helper | ✅ Removed |
 | 22, 23, 29 | Dead routes / handlers (booking delete not routed, reset-password flow never armed, `GET /users/staff`) | ⏸ Left as they were: no client uses them, and there's no agreed behaviour to restore |
-| 24 | No state validation on clinic/slot/booking/payment updates | ◑ Ownership is enforced (tenancy); business-state rules (e.g. editing a completed booking) are not |
+| 24 | No state validation on clinic/slot/booking/payment updates | ✅ Business-state rules added (§4a); ownership was already enforced by tenancy |
 | 30 | Advance used doesn't reduce the remaining balance | ❓ **Needs your confirmation** of the intended billing rule; unchanged |
 
 ---
+
+## 4a. Business-state rules (#24)
+
+Rules live in `app/lib/booking-rules.js`; refusals use the usual error shape with a `code`. Tests: `test/platform/business-rules.test.js`. Only clearly invalid changes are refused: for example, completing an appointment before its date stays allowed, because patients do come in early.
+
+| Area | Rule | Answer |
+|---|---|---|
+| Booking (new or moved) | Date not in the past (in `CLINIC_TIMEZONE`, default Asia/Kolkata) | 400 `BOOKING_IN_PAST` |
+| | Clinic open that weekday (`days_off`) | 400 `CLINIC_DAY_OFF` |
+| | Time not blocked (whole-day or slot block) | 400 `SLOT_BLOCKED` |
+| | Time in the clinic's schedule; room left in the slot (unchanged rules, now also on reschedule, not counting the booking itself) | 404 / 400 "Slots full." |
+| Booking update (`PUT /bookings/:id`) | Completed or canceled appointments can't be edited | 400 (same messages as the status endpoint) |
+| | Status changes only through `PUT /bookings/status/:id`; the patient can't be swapped; the doctor follows the clinic | 400 |
+| Booking status | Only `pending`, `completed`, `canceled` (was a database error) | 400 |
+| Schedule (`PUT/DELETE /slots/:id`) | Can't drop a time or weekday, or delete the schedule, while upcoming pending appointments use it | 409 `BOOKINGS_AFFECTED` (lists them) |
+| Blocked time | Can't block a date or slot that has upcoming pending appointments; cancel or move them first | 409 `BOOKINGS_AFFECTED` |
+| Clinic delete | Refused once the clinic has any appointments, treatments or ledger entries. Migration `20261009000200` also stops the database cascading those deletes, which used to wipe a clinic's whole history | 409 `CLINIC_HAS_HISTORY` |
+| Payment create | Clinic must be the treatment's clinic (the advance was taken from whichever clinic was sent); whole rupees; not both zero | 400 |
+| Payment edit | Validated; the new amount must fit the balance (this payment's old amount given back first); the advance used can't be edited | 400 |
+| Payment delete | The advance it used is credited back to the patient's ledger ("Advance returned (payment deleted)") | — |
+| Ledger | A manual debit can't exceed the advance balance; an advance credit that has already been spent can't be deleted | 400 / 409 |
+
+Checked against the local data: no upcoming appointment sits outside its schedule or on blocked time, so no schedule edit is blocked on day one. 104 past appointments are still `pending`; they can still be completed or canceled, just not moved into the past. All dashboard screens that can hit these rules already show the server's message.
 
 ## 5. Deliberate deviations and things not done
 

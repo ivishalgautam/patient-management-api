@@ -3,7 +3,8 @@ import moment from "moment";
 import table from "../../db/models.js";
 import { one } from "../../db/sql.js";
 import { QUEUES, enqueue } from "../../jobs/queue.js";
-import { badRequest, notFound } from "../../lib/app-error.js";
+import { notFound } from "../../lib/app-error.js";
+import { assertBookable } from "../../lib/booking-rules.js";
 
 // Books a slot for a patient at a clinic. Patients book for themselves;
 // staff pass patient_id. Returns the created booking.
@@ -11,8 +12,8 @@ export async function createBooking({ clinicId, patientId, date, slot }, { user,
   const clinic = await table.ClinicModel.getById(0, clinicId);
   if (!clinic) throw notFound("Clinic not found!");
 
-  const booked = await table.BookingModel.getByClinicDateAndSlot(null, clinicId, slot, date);
-  if (booked >= clinic.max_patients_per_slot) throw badRequest("Slots full.");
+  // Date not past, clinic open, slot in schedule and not blocked, room left.
+  await assertBookable({ clinic, date, slot }, { transaction });
 
   // Read inside the caller's transaction: lead conversion books for a
   // patient it has just created and not yet committed.
@@ -24,9 +25,6 @@ export async function createBooking({ clinicId, patientId, date, slot }, { user,
     { transaction },
   );
   if (!patient?.id) throw notFound("Patient not registered.");
-
-  const slotTemplate = await table.SlotModel.getByClinicId(0, clinicId);
-  if (!slotTemplate?.slots?.includes(slot)) throw notFound("Slot not found.");
 
   const booking = await table.BookingModel.create(
     {

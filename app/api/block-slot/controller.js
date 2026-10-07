@@ -1,5 +1,6 @@
 "use strict";
 import { beginTransaction } from "../../db/transaction.js";
+import { assertNoAffectedBookings, futurePendingBookings } from "../../lib/booking-rules.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { createSlots } from "../../helpers/slot.js";
@@ -30,6 +31,13 @@ const create = async (req, res) => {
         message:
           "Slots does not exist for this clinic, Please create slots first.",
       });
+
+    // Blocking time that already has appointments would strand them.
+    const onThatDay = await futurePendingBookings(req.body.clinic_id, { date: req.body.date });
+    assertNoAffectedBookings(
+      req.body.type === "date" ? onThatDay : onThatDay.filter((b) => (req.body.slots ?? []).includes(b.slot)),
+      "that time would be blocked",
+    );
 
     const record = await table.BlockedSlotModel.getByDateAndClinic(
       0,

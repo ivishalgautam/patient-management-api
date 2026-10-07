@@ -1,5 +1,6 @@
 "use strict";
 import { beginTransaction } from "../../db/transaction.js";
+import { assertNoAffectedBookings, futurePendingBookings } from "../../lib/booking-rules.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import {
@@ -66,6 +67,13 @@ const updateById = async (req, res) => {
   const slots = createSlots(startTime, endTime, intervalInMinute);
   req.body.slots = slots;
 
+  // Upcoming appointments must still fit the new schedule.
+  const workingDays = [0, 1, 2, 3, 4, 5, 6].filter((d) => !(req.body.days_off ?? []).includes(d));
+  assertNoAffectedBookings(
+    await futurePendingBookings(record.clinic_id, { keepSlots: slots, keepDays: workingDays }),
+    "their time or day is no longer in the schedule",
+  );
+
   res.send({
     status: true,
     data: await table.SlotModel.update(req),
@@ -124,6 +132,7 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Slot not found!" });
 
+    assertNoAffectedBookings(await futurePendingBookings(record.clinic_id), "the clinic would have no schedule");
     await table.SlotModel.deleteById(req, req.params.id, { transaction });
 
     await transaction.commit();
