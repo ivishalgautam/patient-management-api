@@ -216,4 +216,21 @@ export const PERMISSION_MAP = {
   "PUT /v1/forms/:id": ["forms.manage"],
   "DELETE /v1/forms/:id": ["forms.manage"],
   "GET /v1/forms/:id/submissions": ["forms.manage"],
+
+  // lead integrations
+  "GET /v1/integrations/providers": ["integrations.manage"],
+  "GET /v1/integrations": ["integrations.manage"],
+  "POST /v1/integrations": ["integrations.manage"],
+  "GET /v1/integrations/facebook/oauth/start": ["integrations.manage"],
+  "GET /v1/integrations/facebook/oauth/pages": ["integrations.manage"],
+  "GET /v1/integrations/facebook/oauth/forms": ["integrations.manage"],
+  "POST /v1/integrations/facebook/oauth/finalize": ["integrations.manage"],
+  "GET /v1/integrations/:id": ["integrations.manage"],
+  "PUT /v1/integrations/:id": ["integrations.manage"],
+  "DELETE /v1/integrations/:id": ["integrations.manage"],
+  "POST /v1/integrations/:id/rotate-token": ["integrations.manage"],
+  "POST /v1/integrations/:id/sync": ["integrations.manage"],
+  "POST /v1/integrations/:id/check": ["integrations.manage"],
+  "GET /v1/integrations/:id/events": ["integrations.manage"],
+  "POST /v1/integrations/:id/events/:eventId/retry": ["integrations.manage"],
 };

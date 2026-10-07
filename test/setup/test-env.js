@@ -14,6 +14,12 @@ export function applyTestEnv() {
   process.env.JWT_REFRESH_SECRET = "test-jwt-refresh-secret";
   process.env.LEGACY_TOKEN_GRACE_UNTIL = "2999-01-01T00:00:00Z";
   process.env.PATIENT_PASSWORD_MODE = "random";
+  process.env.INTEGRATION_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
+  process.env.FACEBOOK_APP_ID = "test-app-id";
+  process.env.FACEBOOK_APP_SECRET = "test-app-secret";
+  process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN = "test-verify-token";
+  process.env.APP_URL = "http://dashboard.test";
+  process.env.API_URL = "http://api.test/v1";
   process.env.MAX_RATE_LIMIT = "100000";
   process.env.TIME_WINDOW = "1 minute";
   process.env.WAFFLY_LICENSE = "test-license";

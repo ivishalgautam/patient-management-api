@@ -246,6 +246,37 @@ export const TENANT_MAP = {
   ],
   "DELETE /v1/forms/:id": byId("form"),
   "GET /v1/forms/:id/submissions": byId("form"),
+
+  // lead integrations (service checks practice; OAuth sessions are also
+  // bound to the user who started them)
+  "GET /v1/integrations/providers": "list",
+  "GET /v1/integrations": "list",
+  "POST /v1/integrations": [
+    c("pipeline", "body.default_pipeline_id"),
+    c("pipeline_stage", "body.default_stage_id"),
+    c("clinic", "body.clinic_id"),
+  ],
+  "GET /v1/integrations/facebook/oauth/start": "list",
+  "GET /v1/integrations/facebook/oauth/pages": "list",
+  "GET /v1/integrations/facebook/oauth/forms": "list",
+  "POST /v1/integrations/facebook/oauth/finalize": [
+    c("pipeline", "body.default_pipeline_id"),
+    c("pipeline_stage", "body.default_stage_id"),
+    c("clinic", "body.clinic_id"),
+  ],
+  "GET /v1/integrations/:id": byId("integration"),
+  "PUT /v1/integrations/:id": [
+    c("integration", "params.id"),
+    c("pipeline", "body.default_pipeline_id"),
+    c("pipeline_stage", "body.default_stage_id"),
+    c("clinic", "body.clinic_id"),
+  ],
+  "DELETE /v1/integrations/:id": byId("integration"),
+  "POST /v1/integrations/:id/rotate-token": byId("integration"),
+  "POST /v1/integrations/:id/sync": byId("integration"),
+  "POST /v1/integrations/:id/check": byId("integration"),
+  "GET /v1/integrations/:id/events": byId("integration"),
+  "POST /v1/integrations/:id/events/:eventId/retry": byId("integration"),
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.
@@ -287,6 +318,7 @@ export const RESOURCES = {
   custom_field: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM custom_fields WHERE id = :id`,
   tag: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM tags WHERE id = :id`,
   lead: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM leads WHERE id = :id`,
+  integration: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM integrations WHERE id = :id`,
   form: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM forms WHERE id = :id`,
   lead_activity: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM lead_activities WHERE id = :id`,
 };

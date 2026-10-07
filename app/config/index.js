@@ -65,6 +65,15 @@ const envSchema = z.object({
   // Cloudflare Turnstile for public forms (off unless both are set).
   TURNSTILE_SITE_KEY: optional,
   TURNSTILE_SECRET_KEY: optional,
+  // Lead integrations. 32-byte base64 key for stored tokens
+  // (openssl rand -base64 32); required once an integration is connected.
+  INTEGRATION_ENCRYPTION_KEY: optional,
+  INTEGRATION_PAYLOAD_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(30),
+  FACEBOOK_APP_ID: optional,
+  FACEBOOK_APP_SECRET: optional,
+  FACEBOOK_WEBHOOK_VERIFY_TOKEN: optional,
+  FACEBOOK_GRAPH_API_VERSION: z.string().regex(/^v\d+\.\d+$/).optional().default("v23.0"),
+  FB_PULL_SYNC_CRON: z.string().optional().default("*/10 * * * *"),
   PATIENT_PASSWORD_MODE: z.enum(["random", "legacy"]).optional().default("random"),
 
   // Empty = allow any origin (pre-revamp behaviour); a warning is logged.
@@ -146,6 +155,18 @@ const config = Object.freeze({
   api_url: (env.API_URL ?? `http://localhost:${env.PORT}/v1`).replace(/\/$/, ""),
   form_token_secret: env.FORM_TOKEN_SECRET || `form-token:${env.JWT_SECRET}`,
   turnstile: { site_key: env.TURNSTILE_SITE_KEY, secret_key: env.TURNSTILE_SECRET_KEY },
+  integrations: {
+    encryption_key: env.INTEGRATION_ENCRYPTION_KEY,
+    payload_retention_days: env.INTEGRATION_PAYLOAD_RETENTION_DAYS,
+    oauth_state_secret: `oauth-state:${env.JWT_SECRET}`,
+  },
+  facebook: {
+    app_id: env.FACEBOOK_APP_ID,
+    app_secret: env.FACEBOOK_APP_SECRET,
+    webhook_verify_token: env.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
+    graph_version: env.FACEBOOK_GRAPH_API_VERSION,
+    pull_sync_cron: env.FB_PULL_SYNC_CRON,
+  },
 
   // http
   allowed_origins: env.ALLOWED_ORIGINS,

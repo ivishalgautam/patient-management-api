@@ -10,6 +10,10 @@ export const QUEUES = {
   WHATSAPP_SEND: "whatsapp.send",
   REMINDERS_RECONCILE: "reminders.reconcile",
   REMINDER_SEND: "reminders.send",
+  INTEGRATION_PROCESS: "integrations.process",
+  FB_PULL_SYNC: "integrations.fb-pull-sync",
+  FB_TOKEN_CHECK: "integrations.fb-token-check",
+  PAYLOAD_PURGE: "integrations.purge-payloads",
 };
 
 // Retry policy per queue.
@@ -17,6 +21,10 @@ const QUEUE_OPTIONS = {
   [QUEUES.WHATSAPP_SEND]: { retryLimit: 4, retryDelay: 30, retryBackoff: true },
   [QUEUES.REMINDERS_RECONCILE]: { retryLimit: 0 },
   [QUEUES.REMINDER_SEND]: { retryLimit: 4, retryDelay: 60, retryBackoff: true },
+  [QUEUES.INTEGRATION_PROCESS]: { retryLimit: 5, retryDelay: 30, retryBackoff: true },
+  [QUEUES.FB_PULL_SYNC]: { retryLimit: 0 },
+  [QUEUES.FB_TOKEN_CHECK]: { retryLimit: 1 },
+  [QUEUES.PAYLOAD_PURGE]: { retryLimit: 1 },
 };
 
 export function getBoss() {

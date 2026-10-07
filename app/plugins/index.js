@@ -6,6 +6,7 @@ import rateLimit from "./rate-limit.js";
 import security from "./security.js";
 import cors from "./cors.js";
 import cookie from "./cookie.js";
+import rawBody from "./raw-body.js";
 import staticFiles from "./static.js";
 import multipart from "./multipart.js";
 import scheduler from "./scheduler.js";
@@ -23,6 +24,7 @@ export default async function registerPlugins(
   app.setErrorHandler(ErrorHandler);
 
   await app.register(requestContext);
+  await app.register(rawBody);
   await app.register(rateLimit);
   await app.register(security);
   await app.register(cors);

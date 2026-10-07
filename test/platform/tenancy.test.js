@@ -15,6 +15,8 @@ const UNSCOPED = [
   /^GET \/v1\/(banners|procedures|services)$/,
   /^GET \/v1\/services\/getByProcedureId\/:id$/,
   /^\w+ \/v1\/public\//,
+  /^\w+ \/v1\/webhooks\//,
+  /^GET \/v1\/integrations\/facebook\/oauth\/callback$/,
 ];
 const MULTIPART = new Set([
   "POST /v1/documents",
@@ -175,6 +177,14 @@ beforeAll(async () => {
     ],
   });
   ids.form = formRes.json().data.id;
+  ids.integration = (
+    await asA.post("/v1/integrations", {
+      provider_key: "custom_webhook",
+      name: "Fixture hook",
+      default_pipeline_id: ids.pipeline,
+      default_stage_id: ids.pipeline_stage,
+    })
+  ).json().data.id;
   Object.assign(ids, {
     clinic: A.clinic.id,
     patient: A.patient.id,

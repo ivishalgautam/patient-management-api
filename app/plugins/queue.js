@@ -14,6 +14,9 @@ export default fp(async (app, { enableWorkers = false } = {}) => {
   for (const [name, handler] of Object.entries(HANDLERS)) {
     await boss.work(name, { pollingIntervalSeconds: config.isTest ? 0.5 : 2 }, handler);
   }
+  await boss.schedule(QUEUES.FB_PULL_SYNC, config.facebook.pull_sync_cron);
+  await boss.schedule(QUEUES.FB_TOKEN_CHECK, "0 3 * * *");
+  await boss.schedule(QUEUES.PAYLOAD_PURGE, "30 3 * * *");
   if (config.reminders_engine === "queue") {
     await boss.schedule(QUEUES.REMINDERS_RECONCILE, "*/5 * * * *");
   } else {

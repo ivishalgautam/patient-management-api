@@ -2,6 +2,12 @@
 import { QUEUES, enqueue } from "./queue.js";
 import { sendWhatsApp } from "../services/whatsapp/templates.js";
 import {
+  checkAllFacebookTokens,
+  processEvent,
+  pullFacebook,
+  purgeIntegrationPayloads,
+} from "./integration-handlers.js";
+import {
   findDueReminders,
   sendReminder,
 } from "../services/notifications/appointment-reminders.js";
@@ -23,6 +29,11 @@ export const HANDLERS = {
   }),
 
   [QUEUES.REMINDER_SEND]: each((data) => sendReminder(data)),
+
+  [QUEUES.INTEGRATION_PROCESS]: each((data) => processEvent(data)),
+  [QUEUES.FB_PULL_SYNC]: each((data) => pullFacebook(data ?? {})),
+  [QUEUES.FB_TOKEN_CHECK]: each(() => checkAllFacebookTokens()),
+  [QUEUES.PAYLOAD_PURGE]: each(() => purgeIntegrationPayloads()),
 };
 
 export default HANDLERS;
