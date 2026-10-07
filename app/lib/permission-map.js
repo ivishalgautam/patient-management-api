@@ -208,4 +208,12 @@ export const PERMISSION_MAP = {
   "POST /v1/leads/:id/activities": ["leads.edit"],
   "PUT /v1/lead-activities/:id": ["leads.edit"],
   "DELETE /v1/lead-activities/:id": ["leads.edit"],
+
+  // lead forms
+  "GET /v1/forms": ["forms.manage", "leads.view"],
+  "POST /v1/forms": ["forms.manage"],
+  "GET /v1/forms/:id": ["forms.manage", "leads.view"],
+  "PUT /v1/forms/:id": ["forms.manage"],
+  "DELETE /v1/forms/:id": ["forms.manage"],
+  "GET /v1/forms/:id/submissions": ["forms.manage"],
 };

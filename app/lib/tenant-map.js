@@ -227,6 +227,25 @@ export const TENANT_MAP = {
   "POST /v1/leads/:id/activities": byId("lead"),
   "PUT /v1/lead-activities/:id": byId("lead_activity"),
   "DELETE /v1/lead-activities/:id": byId("lead_activity"),
+
+  // lead forms
+  "GET /v1/forms": "list",
+  "POST /v1/forms": [
+    c("pipeline", "body.pipeline_id"),
+    c("pipeline_stage", "body.stage_id"),
+    c("clinic", "body.clinic_id"),
+    c("user", "body.fixed_owner_id"),
+  ],
+  "GET /v1/forms/:id": byId("form"),
+  "PUT /v1/forms/:id": [
+    c("form", "params.id"),
+    c("pipeline", "body.pipeline_id"),
+    c("pipeline_stage", "body.stage_id"),
+    c("clinic", "body.clinic_id"),
+    c("user", "body.fixed_owner_id"),
+  ],
+  "DELETE /v1/forms/:id": byId("form"),
+  "GET /v1/forms/:id/submissions": byId("form"),
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.
@@ -268,5 +287,6 @@ export const RESOURCES = {
   custom_field: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM custom_fields WHERE id = :id`,
   tag: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM tags WHERE id = :id`,
   lead: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM leads WHERE id = :id`,
+  form: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM forms WHERE id = :id`,
   lead_activity: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM lead_activities WHERE id = :id`,
 };

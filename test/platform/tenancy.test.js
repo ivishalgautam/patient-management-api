@@ -14,6 +14,7 @@ const UNSCOPED = [
   /^\w+ \/v1\/upload/,
   /^GET \/v1\/(banners|procedures|services)$/,
   /^GET \/v1\/services\/getByProcedureId\/:id$/,
+  /^\w+ \/v1\/public\//,
 ];
 const MULTIPART = new Set([
   "POST /v1/documents",
@@ -164,6 +165,16 @@ beforeAll(async () => {
   ids.lead_activity = (
     await asA.post(`/v1/leads/${ids.lead}/activities`, { type: "note", body: "x" })
   ).json().data.id;
+  const formRes = await asA.post("/v1/forms", {
+    name: "Fixture form",
+    pipeline_id: ids.pipeline,
+    stage_id: ids.pipeline_stage,
+    fields: [
+      { source: "core", core_key: "full_name" },
+      { source: "core", core_key: "phone" },
+    ],
+  });
+  ids.form = formRes.json().data.id;
   Object.assign(ids, {
     clinic: A.clinic.id,
     patient: A.patient.id,
