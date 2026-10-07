@@ -317,7 +317,7 @@ const getById = async (req, id) => {
     FROM ${constants.models.TREATMENT_TABLE} trmnt
     LEFT JOIN ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
     LEFT JOIN (
-      SELECT treatment_id, SUM(amount_paid) as total_paid 
+      SELECT treatment_id, SUM(amount_paid + COALESCE(advance_used, 0)) as total_paid 
       FROM ${constants.models.PAYMENT_TABLE} 
       GROUP BY treatment_id
     ) payment_summary ON trmnt.id = payment_summary.treatment_id
@@ -354,7 +354,7 @@ const getPatientDetailsByPatientAndClinicId = async (patientId, clinicId) => {
   LEFT JOIN 
     ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
   LEFT JOIN 
-    (SELECT treatment_id, SUM(amount_paid)::integer AS amount_paid_sum 
+    (SELECT treatment_id, SUM(amount_paid + COALESCE(advance_used, 0))::integer AS amount_paid_sum 
     FROM ${constants.models.PAYMENT_TABLE} 
     GROUP BY treatment_id) pmnt ON pmnt.treatment_id = trmnt.id
   LEFT JOIN 
@@ -395,7 +395,7 @@ const getPatientDetails = async (patientId) => {
   LEFT JOIN 
     ${constants.models.PATIENT_TABLE} pt ON pt.id = trmnt.patient_id
   LEFT JOIN 
-    (SELECT treatment_id, SUM(amount_paid)::integer AS amount_paid_sum 
+    (SELECT treatment_id, SUM(amount_paid + COALESCE(advance_used, 0))::integer AS amount_paid_sum 
     FROM ${constants.models.PAYMENT_TABLE} 
     GROUP BY treatment_id) pmnt ON pmnt.treatment_id = trmnt.id
   LEFT JOIN 

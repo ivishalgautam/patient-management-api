@@ -165,7 +165,7 @@ const updateById = async (req, res) => {
     // Same rule as recording a payment, with this payment's old amount
     // given back to the balance first.
     const remaining = await table.TreatmentPlanModel.countRemainingCostByTreatmentId(record.treatment_id, {});
-    const available = (remaining ?? 0) + (record.amount_paid ?? 0);
+    const available = (remaining ?? 0) + (record.amount_paid ?? 0) + (record.advance_used ?? 0);
     if (changes.amount_paid + (record.advance_used ?? 0) > available) {
       throw badRequest(`Remaining balance is ${available - (record.advance_used ?? 0)}`);
     }

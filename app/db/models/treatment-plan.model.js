@@ -297,7 +297,8 @@ const countRemainingCostByTreatmentId = async (
     ) tp
     FULL OUTER JOIN (
     SELECT 
-      SUM(pmnt.amount_paid) as amount_paid
+      -- paid toward the treatment: cash + advance applied (audit #30)
+      SUM(pmnt.amount_paid + COALESCE(pmnt.advance_used, 0)) as amount_paid
       FROM ${constants.models.PAYMENT_TABLE} pmnt
       WHERE pmnt.treatment_id = :treatmentId
     ) pmnt ON true

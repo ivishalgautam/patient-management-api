@@ -65,7 +65,7 @@ const get = async (req, id) => {
   if (paymentStatus === "pending") {
     whereConditions.push(
       `COALESCE((
-        SELECT SUM(pmnt.amount_paid)
+        SELECT SUM(pmnt.amount_paid + COALESCE(pmnt.advance_used, 0))
         FROM ${constants.models.PAYMENT_TABLE} pmnt
         INNER JOIN ${constants.models.TREATMENT_TABLE} trmnt ON pmnt.treatment_id = trmnt.id
         WHERE trmnt.patient_id = cp.patient_id
@@ -160,7 +160,7 @@ const get = async (req, id) => {
     LEFT JOIN (
       SELECT 
         trmnt.patient_id, 
-        SUM(pmnt.amount_paid)::integer AS total_amount_paid_sum
+        SUM(pmnt.amount_paid + COALESCE(pmnt.advance_used, 0))::integer AS total_amount_paid_sum
       FROM ${constants.models.PAYMENT_TABLE} pmnt
       INNER JOIN ${constants.models.TREATMENT_TABLE} trmnt ON pmnt.treatment_id = trmnt.id
       GROUP BY trmnt.patient_id

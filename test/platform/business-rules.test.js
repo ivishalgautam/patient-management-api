@@ -228,6 +228,20 @@ describe("payments and advances", () => {
 
     const withAdvance = ok(await pay({ advance_used: 2000 }));
     expect(await balance()).toBe(1000);
+
+    // #30: the advance applied counts as paid. Cost 10000 - cash 7000 - advance 2000.
+    const remaining = ok(await doctor.get(`/v1/treatment-payments/getRemainingPayment/${treatmentId}`));
+    expect(remaining.remaining_amount).toBe(1000);
+    expect(ok(await doctor.get(`/v1/treatments/${treatmentId}`)).balance).toBe(1000);
+    const summary = ok(await doctor.get(`/v1/treatments/getPatientDetailsByPatientAndClinicId/${patient.id}/${p.clinic.id}`));
+    expect(Number(summary.balance)).toBe(1000);
+    const tooMuch = await pay({ amount_paid: 1500 });
+    expect(tooMuch.statusCode).toBe(400);
+    expect(tooMuch.json().message).toBe("Remaining balance is 1000");
+    const listing = await doctor.get(`/v1/clinic-patients/getByClinicId/${p.clinic.id}?page=1&limit=50`);
+    const body = listing.json();
+    const rows = body.data.users;
+    expect(Number(rows.find((r) => r.patient_id === patient.id)?.total_amount_paid)).toBe(9000);
     // 2000 of this credit is spent, so deleting it would leave -2000.
     expect((await doctor.delete(`/v1/ledgers/${credit.id}`)).json().message).toMatch(/already been used \(balance 1000\)/);
 
