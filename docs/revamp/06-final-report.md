@@ -15,7 +15,7 @@ Revamp of the Dr. Dipti dental platform using the BW Task source as a reference 
 |---|---|---|
 | Build passes | ✅ | `next build` compiles (dashboard); server boots via `buildApp` in every test run |
 | Lint passes | ✅ | `npm run lint` (server): 0 problems. `next lint` (dashboard): 0 errors, 4 warnings, all in files the revamp didn't touch |
-| Tests pass | ✅ | Server **402 tests / 21 files**, dashboard **7 tests / 4 files** |
+| Tests pass | ✅ | Server **406 tests / 22 files**, dashboard **7 tests / 4 files** |
 | Tests for pipelines, stages, forms, custom fields, ingestion (Facebook + Google), dedupe, permissions | ✅ | `test/leads/{config,leads,forms,integrations,conversion,google-addon,access}.test.js`, `test/platform/permissions.test.js` |
 | Migrations up/down on a fresh DB | ✅ | Empty DB: up (13) → down to 0 (13 reverted, only the migration-tracking table left) → up (13) |
 | Migrations up/down on a copy of existing data | ✅ | Fresh `pg_dump` of the local `drdipti` DB: baseline → up (12) → down to the first revamp migration (12 reverted) → up (12). Row counts unchanged at each step (503 users, 499 patients, 623 bookings, 1349 treatments) |
@@ -87,7 +87,7 @@ READMEs for both repos, `docs/leads-module.md` (data model, API, Facebook and Go
 | 20 | Broken duplicate WhatsApp helper | ✅ Removed |
 | 22, 23, 29 | Dead routes / handlers (booking delete not routed, reset-password flow never armed, `GET /users/staff`) | ✅ Removed. `GET /users/staff` went in Phase 3 (e3572fc); the unrouted booking delete handler and the public `POST /auth/:token` reset endpoint (nothing ever set a reset token) were removed afterwards with their model helpers. Appointments are canceled through the status endpoint. The unused `reset_password_token` / `confirmation_token` columns stay and are still stripped from responses |
 | 24 | No state validation on clinic/slot/booking/payment updates | ✅ Business-state rules added (§4a); ownership was already enforced by tenancy |
-| 30 | Advance used doesn't reduce the remaining balance | ❓ **Needs your confirmation** of the intended billing rule; unchanged |
+| 30 | Advance used doesn't reduce the remaining balance | ✅ Fixed (8098d05). The payment form, `getRemainingPayment` and the payment check already treated cash + advance as paid; the server-side remaining balance, treatment balance, patient summaries and clinic patient list now do too. Locally this corrects 2 treatments (₹4,100 shown as owed though paid from advances); none go negative. Cash-collection reports still count cash received only |
 
 ---
 
@@ -140,16 +140,18 @@ Checked against the local data: no upcoming appointment sits outside its schedul
 1. **Hotfix first (recommended now):** merge `hotfix/security` into `master` in both repos and deploy. It's independent of the revamp.
 2. **Back up the production DB.**
 3. Server env: add the new variables from `.env.example`. Required: `INTEGRATION_ENCRYPTION_KEY` for integrations, `APP_URL` and `API_URL` (public URLs), `ALLOWED_ORIGINS`. Set `LEGACY_TOKEN_GRACE_UNTIL` to a date about two weeks out so signed-in users aren't logged out. Optional: Facebook, Turnstile and import limits.
-4. On the production DB, once: `npm run migrate:baseline`, then `npm run migrate:up`. Rehearse on a restored copy first: Q5 asked for a production copy, and these checks used the local DB instead.
-5. Dashboard env: `API_URL` **before** `next build` (it's baked into the proxy), plus `NEXT_PUBLIC_IMAGE_DOMAIN`.
-6. Facebook / Google: follow `docs/leads-module.md`.
-7. Rollback: redeploy the previous build. Revamp migrations can be reverted with `npm run migrate:down 20261007000100-add-users-token-version.js` (keeps the baseline and all data, as verified on the copy). Two emergency switches exist: `PERMISSIONS_ENFORCE=false` (log instead of block) and `REMINDERS_ENGINE=legacy`.
+4. Point the server at a **restored copy** of production and run `npm run preflight`. It is read-only and reports, among other things, anything that would make a migration abort (patients linked to two doctors, unlinked patients with several practices, duplicate doctor/patient/staff accounts), missing or weak settings, and appointments the new rules would block. Fix every FAIL.
+5. On that copy: `npm run migrate:baseline`, `npm run migrate:up`, `npm run preflight` again, then click through the dashboard. If all is well, repeat steps 4–5 on production.
+6. Dashboard env: `API_URL` **before** `next build` (it's baked into the proxy), plus `NEXT_PUBLIC_IMAGE_DOMAIN`.
+7. Facebook / Google: follow `docs/leads-module.md`.
+8. Rollback: redeploy the previous build. Revamp migrations can be reverted with `npm run migrate:down 20261007000100-add-users-token-version.js` (keeps the baseline and all data, as verified on the copy). Two emergency switches exist: `PERMISSIONS_ENFORCE=false` (log instead of block) and `REMINDERS_ENGINE=legacy`.
+
+**Rehearsal done locally** (fresh copy of the local `drdipti` database, which has never been migrated, like production): preflight passed with no FAIL (only a warning that `INTEGRATION_ENCRYPTION_KEY` isn't set locally, and notes that 3 unlinked patients go to the only practice and 104 past appointments are still pending) → baseline → 12 migrations → preflight "up to date" → the real app booted against it and 18 smoke checks passed (health, login, clinics, bookings, clinic patients, accounts, schedule, seeded pipeline, leads, roles, notifications, export, add-ons, failed jobs, removed route gives 404) → rolled back all 12 and re-applied them. Users, patients, bookings, treatments and payments counts were identical to the original database at every step. A production copy can still differ (more practices, data the local copy doesn't have), which is what step 4 is for.
 
 ---
 
 ## 7. Open questions for you
 
-1. **Billing (#30):** should an advance used on a payment reduce the treatment's remaining balance?
-2. **`backup.sql` history (#2):** rewrite git history and rotate the leaked credentials?
-3. **Self-registration with several practices:** registration now needs a `clinic_id` when more than one practice exists. Does the patient app send one?
-4. **Staff reminders by WhatsApp or email:** follow-up reminders are in-app only. If you want them on WhatsApp, a Wafly template for staff is needed first.
+1. **`backup.sql` history (#2):** rewrite git history and rotate the leaked credentials?
+2. **Self-registration with several practices:** registration now needs a `clinic_id` when more than one practice exists. Does the patient app send one?
+3. **Staff reminders by WhatsApp or email:** follow-up reminders are in-app only. If you want them on WhatsApp, a Wafly template for staff is needed first.

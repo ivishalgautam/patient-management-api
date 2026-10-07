@@ -28,13 +28,14 @@ Minimum `.env` for local development: `PG_*`, `JWT_SECRET`, `JWT_REFRESH_SECRET`
 | `npm run lint` | ESLint |
 | `npm run migrate:up` / `migrate:down [name\|0]` / `migrate:status` | Umzug migrations in `migrations/` (down is blocked in production) |
 | `npm run migrate:baseline` | **Existing databases only, once:** mark the baseline migration as applied without running it |
+| `npm run preflight` | Read-only deploy checks against the configured database and settings (exits 1 on a blocking problem) |
 | `npm run format` | Prettier |
 
 ## Database migrations
 
 The schema is managed by migrations only; the server never alters tables at boot and logs a warning when migrations are pending.
 
-* **Existing database (production, staging, local copies):** back it up, run `npm run migrate:baseline` once, then `npm run migrate:up`.
+* **Existing database (production, staging, local copies):** back it up, run `npm run preflight`, fix any FAIL, then `npm run migrate:baseline` once and `npm run migrate:up`.
 * **Fresh database:** `npm run migrate:up`.
 
 The baseline (`migrations/00000000000000-baseline.js` + `migrations/sql/`) is the pre-revamp schema taken from a production copy. The legacy `dental_notes` table is intentionally not part of it. Every later migration has a working `down`; `migrate:down <name>` rolls back down to **and including** that migration, so never target the baseline on a real database.

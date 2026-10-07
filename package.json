@@ -14,7 +14,8 @@
     "migrate:up": "node scripts/migrate.js up",
     "migrate:down": "node scripts/migrate.js down",
     "migrate:status": "node scripts/migrate.js status",
-    "migrate:baseline": "node scripts/migrate.js baseline"
+    "migrate:baseline": "node scripts/migrate.js baseline",
+    "preflight": "node scripts/preflight.js"
   },
   "dependencies": {
     "@fastify/cookie": "^9.4.0",
