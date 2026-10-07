@@ -188,4 +188,11 @@ describe("auth", () => {
     const payload = jwt.decode(token);
     expect(Object.keys(payload).sort()).toEqual(["exp", "iat", "role", "sub", "typ", "ver"]);
   });
+
+  it("accepts the access token from the dashboard's httpOnly cookie", async () => {
+    const doc = await createDoctor();
+    const token = await login(app, doc);
+    const res = await app.inject({ url: "/v1/users/me", cookies: { token } });
+    expect(res.statusCode).toBe(200);
+  });
 });

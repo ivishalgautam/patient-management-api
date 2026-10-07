@@ -56,9 +56,14 @@ const unauthorized = (res, message = "Invalid token or token expired") =>
 
 const verifyToken = async (req, res) => {
   const authHeader = req.headers["authorization"];
-  if (!authHeader) return unauthorized(res, "unauthorized!");
+  const cookieToken = req.cookies?.token;
+  if (!authHeader && !cookieToken) return unauthorized(res, "unauthorized!");
 
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  const token = authHeader
+    ? authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : authHeader
+    : cookieToken;
   if (!token) return unauthorized(res, "A token is required for authentication");
 
   let decoded;

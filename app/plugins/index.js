@@ -5,6 +5,7 @@ import requestContext from "./request-context.js";
 import rateLimit from "./rate-limit.js";
 import security from "./security.js";
 import cors from "./cors.js";
+import cookie from "./cookie.js";
 import staticFiles from "./static.js";
 import multipart from "./multipart.js";
 import scheduler from "./scheduler.js";
@@ -25,6 +26,7 @@ export default async function registerPlugins(
   await app.register(rateLimit);
   await app.register(security);
   await app.register(cors);
+  await app.register(cookie);
   await app.register(staticFiles);
   await app.register(multipart);
   await app.register(pg_database);
