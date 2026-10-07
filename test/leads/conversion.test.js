@@ -8,7 +8,6 @@ let app;
 let p;
 let doctor;
 let staff;
-let pipeline;
 
 beforeAll(async () => {
   app = await buildTestApp();
@@ -16,7 +15,6 @@ beforeAll(async () => {
   p = await setupPractice(app);
   doctor = api(app, p.doctor.token);
   staff = api(app, p.staff.token);
-  [pipeline] = (await doctor.get("/v1/pipelines")).json().data;
 });
 afterAll(() => app.close());
 
