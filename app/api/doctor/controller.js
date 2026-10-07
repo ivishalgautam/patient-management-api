@@ -4,26 +4,18 @@ import table from "../../db/models.js";
 const { NOT_FOUND } = constants.http.status;
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.DoctorModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Doctor not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.DoctorModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Doctor not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const get = async (req, res) => {
-  try {
-    res.send({ status: true, data: await table.DoctorModel.get(req) });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: await table.DoctorModel.get(req) });
 };
 
 export default {

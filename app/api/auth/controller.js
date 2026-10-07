@@ -17,38 +17,34 @@ const verifyUserCredentials = async (req, res) => {
   Object.assign(req.body, validateBody);
   const role = req.body.role;
 
-  try {
-    let userData = await table.UserModel.getByUsername(req);
-    if (!userData || (role && role !== userData.role)) {
-      return res.code(404).send({ status: false, message: "User not found!" });
-    }
-
-    if (!userData.is_active) {
-      return res.code(400).send({
-        status: false,
-        message: "User not active. Please contact administrator!",
-      });
-    }
-    let passwordIsValid = hash.verify(req.body.password, userData.password);
-    if (!passwordIsValid) {
-      return res
-        .code(400)
-        .send({ status: false, message: "Invalid credentials" });
-    }
-
-    const [jwtToken, expiresIn] = authToken.generateAccessToken(userData);
-    const refreshToken = authToken.generateRefreshToken(userData);
-
-    return res.send({
-      status: true,
-      token: jwtToken,
-      expire_time: Date.now() + expiresIn,
-      refresh_token: refreshToken,
-      user_data: authToken.sanitizeUser(userData),
-    });
-  } catch (error) {
-    throw error;
+  let userData = await table.UserModel.getByUsername(req);
+  if (!userData || (role && role !== userData.role)) {
+    return res.code(404).send({ status: false, message: "User not found!" });
   }
+
+  if (!userData.is_active) {
+    return res.code(400).send({
+      status: false,
+      message: "User not active. Please contact administrator!",
+    });
+  }
+  let passwordIsValid = hash.verify(req.body.password, userData.password);
+  if (!passwordIsValid) {
+    return res
+      .code(400)
+      .send({ status: false, message: "Invalid credentials" });
+  }
+
+  const [jwtToken, expiresIn] = authToken.generateAccessToken(userData);
+  const refreshToken = authToken.generateRefreshToken(userData);
+
+  return res.send({
+    status: true,
+    token: jwtToken,
+    expire_time: Date.now() + expiresIn,
+    refresh_token: refreshToken,
+    user_data: authToken.sanitizeUser(userData),
+  });
 };
 
 const createNewUser = async (req, res) => {
@@ -125,11 +121,7 @@ const createNewUser = async (req, res) => {
 };
 
 const verifyRefreshToken = async (req, res) => {
-  try {
-    return authToken.verifyRefreshToken(req, res);
-  } catch (error) {
-    throw error;
-  }
+  return authToken.verifyRefreshToken(req, res);
 };
 
 export default {

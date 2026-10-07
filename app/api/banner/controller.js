@@ -25,62 +25,46 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  try {
-    const record = await table.BannerModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Banner not found!" });
-    }
-
-    const data = await table.BannerModel.update(req);
-
-    res.send({ status: true, message: "Banner updated.", data });
-  } catch (error) {
-    throw error;
+  const record = await table.BannerModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Banner not found!" });
   }
+
+  const data = await table.BannerModel.update(req);
+
+  res.send({ status: true, message: "Banner updated.", data });
 };
 
 const getBySlug = async (req, res) => {
-  try {
-    const record = await table.BannerModel.getBySlug(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Banner not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.BannerModel.getBySlug(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.BannerModel.getBySlug(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Banner not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.BannerModel.getBySlug(req),
+  });
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.BannerModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Banner not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.BannerModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Banner not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.BannerModel.get(req);
-    res.send({ status: true, data: data, total: data?.[0]?.total });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.BannerModel.get(req);
+  res.send({ status: true, data: data, total: data?.[0]?.total });
 };
 
 const deleteById = async (req, res) => {

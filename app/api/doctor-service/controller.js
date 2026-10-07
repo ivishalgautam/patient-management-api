@@ -54,26 +54,18 @@ const create = async (req, res) => {
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.DoctorServiceMapModel.get(req);
+  const data = await table.DoctorServiceMapModel.get(req);
 
-    res.send({ status: true, data: data });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: data });
 };
 
 const getByServiceId = async (req, res) => {
-  try {
-    const service = await table.ServiceModel.getById(req);
-    if (!service) return res.code(404).send({ message: "Service not found!" });
+  const service = await table.ServiceModel.getById(req);
+  if (!service) return res.code(404).send({ message: "Service not found!" });
 
-    const data = await table.DoctorServiceMapModel.getByServiceId(req);
+  const data = await table.DoctorServiceMapModel.getByServiceId(req);
 
-    res.send({ status: true, data: data });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: data });
 };
 
 const deleteById = async (req, res) => {

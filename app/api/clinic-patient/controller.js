@@ -75,14 +75,10 @@ const create = async (req, res) => {
 };
 
 const getMyPatientsByClinicId = async (req, res) => {
-  try {
-    res.send({
-      status: true,
-      data: await table.ClinicPatientMapModel.get(req),
-    });
-  } catch (error) {
-    throw error;
-  }
+  res.send({
+    status: true,
+    data: await table.ClinicPatientMapModel.get(req),
+  });
 };
 
 const deleteById = async (req, res) => {

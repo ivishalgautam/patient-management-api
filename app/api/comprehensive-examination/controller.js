@@ -86,52 +86,40 @@ const createMultipart = async (req, res) => {
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.ComprehensiveExaminationModel.getById(req);
-    if (!record) {
-      return res.code(NOT_FOUND).send({
-        status: false,
-        message: "Comprehensive examination not found!",
-      });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.ComprehensiveExaminationModel.getById(req);
+  if (!record) {
+    return res.code(NOT_FOUND).send({
+      status: false,
+      message: "Comprehensive examination not found!",
+    });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const getByPatientId = async (req, res) => {
-  try {
-    const patient = await table.PatientModel.getById(req);
-    if (!patient)
-      return res
-        .code(404)
-        .send({ status: false, message: "Patient not found." });
+  const patient = await table.PatientModel.getById(req);
+  if (!patient)
+    return res
+      .code(404)
+      .send({ status: false, message: "Patient not found." });
 
-    const record =
-      await table.ComprehensiveExaminationModel.getByPatientId(req);
+  const record =
+    await table.ComprehensiveExaminationModel.getByPatientId(req);
 
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: record });
 };
 
 const get = async (req, res) => {
-  try {
-    const patient = await table.PatientModel.getByUserId(req.user_data.id);
-    if (!patient)
-      return res
-        .code(404)
-        .send({ status: false, message: "Patient not found." });
+  const patient = await table.PatientModel.getByUserId(req.user_data.id);
+  if (!patient)
+    return res
+      .code(404)
+      .send({ status: false, message: "Patient not found." });
 
-    const record = await table.ComprehensiveExaminationModel.get(patient.id);
+  const record = await table.ComprehensiveExaminationModel.get(patient.id);
 
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: record });
 };
 
 const deleteById = async (req, res) => {

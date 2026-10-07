@@ -22,42 +22,30 @@ const create = async (req, res) => {
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.BookingModel.get(req);
+  const data = await table.BookingModel.get(req);
 
-    res.send({ status: true, data: data });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: data });
 };
 
 const getByClinicId = async (req, res) => {
-  try {
-    const clinicRecord = await table.ClinicModel.getById(req);
-    if (!clinicRecord)
-      return res
-        .code(404)
-        .send({ status: false, message: "Clinic not found." });
+  const clinicRecord = await table.ClinicModel.getById(req);
+  if (!clinicRecord)
+    return res
+      .code(404)
+      .send({ status: false, message: "Clinic not found." });
 
-    const data = await table.BookingModel.getBookingsByClinicId(req);
+  const data = await table.BookingModel.getBookingsByClinicId(req);
 
-    res.send({ status: true, data: data });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: data });
 };
 
 const getByDateAndClinic = async (req, res) => {
-  try {
-    const record = await table.BookingModel.getByDateAndClinic(req);
-    if (!record) {
-      return res.send({ status: false, data: {} });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.BookingModel.getByDateAndClinic(req);
+  if (!record) {
+    return res.send({ status: false, data: {} });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const updateById = async (req, res) => {

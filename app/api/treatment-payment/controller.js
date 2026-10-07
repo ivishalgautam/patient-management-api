@@ -138,117 +138,89 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  try {
-    const record = await table.TreatmentPaymentModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment payment not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.TreatmentPaymentModel.update(req),
-      message: "Treatment payment updated.",
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.TreatmentPaymentModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Treatment payment not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.TreatmentPaymentModel.update(req),
+    message: "Treatment payment updated.",
+  });
 };
 
 const getBySlug = async (req, res) => {
-  try {
-    const record = await table.TreatmentPaymentModel.getBySlug(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment payment not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.TreatmentPaymentModel.getBySlug(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.TreatmentPaymentModel.getBySlug(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Treatment payment not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.TreatmentPaymentModel.getBySlug(req),
+  });
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.TreatmentPaymentModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment payment not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.TreatmentPaymentModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Treatment payment not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const getByTreatmentId = async (req, res) => {
-  try {
-    const treatment = await table.TreatmentModel.getByPk(req);
-    if (!treatment)
-      return res
-        .code(404)
-        .send({ status: false, message: "Treatment not found." });
+  const treatment = await table.TreatmentModel.getByPk(req);
+  if (!treatment)
+    return res
+      .code(404)
+      .send({ status: false, message: "Treatment not found." });
 
-    const record = await table.TreatmentPaymentModel.getByTreatmentId(req);
+  const record = await table.TreatmentPaymentModel.getByTreatmentId(req);
 
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: record });
 };
 
 const getByPatientId = async (req, res) => {
-  try {
-    const patient = await table.PatientModel.getById(req);
-    if (!patient)
-      return res
-        .code(404)
-        .send({ status: false, message: "Patient not found." });
+  const patient = await table.PatientModel.getById(req);
+  if (!patient)
+    return res
+      .code(404)
+      .send({ status: false, message: "Patient not found." });
 
-    const record = await table.TreatmentPaymentModel.getByPatientId(req);
+  const record = await table.TreatmentPaymentModel.getByPatientId(req);
 
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: record });
 };
 
 const getRemainingPayment = async (req, res) => {
-  try {
-    const treatment = await table.TreatmentModel.getByPk(req);
-    if (!treatment)
-      return res
-        .code(404)
-        .send({ status: false, message: "Treatment not found." });
+  const treatment = await table.TreatmentModel.getByPk(req);
+  if (!treatment)
+    return res
+      .code(404)
+      .send({ status: false, message: "Treatment not found." });
 
-    const record = await table.TreatmentPaymentModel.getRemainingPayment(req);
+  const record = await table.TreatmentPaymentModel.getRemainingPayment(req);
 
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: record });
 };
 
 const get = async (req, res) => {
-  try {
-    const patient = await table.PatientModel.getByUserId(req.user_data.id);
+  const patient = await table.PatientModel.getByUserId(req.user_data.id);
 
-    const data = await table.TreatmentPaymentModel.getByPatientId(
-      req,
-      patient.id
-    );
-    res.send({ status: true, data: data, total: data?.[0]?.total });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.TreatmentPaymentModel.getByPatientId(
+    req,
+    patient.id
+  );
+  res.send({ status: true, data: data, total: data?.[0]?.total });
 };
 
 const deleteById = async (req, res) => {
@@ -278,13 +250,9 @@ const deleteById = async (req, res) => {
 };
 
 const accounts = async (req, res) => {
-  try {
-    const data = await table.TreatmentPaymentModel.paymentsSummary(req);
+  const data = await table.TreatmentPaymentModel.paymentsSummary(req);
 
-    res.send(data);
-  } catch (error) {
-    throw error;
-  }
+  res.send(data);
 };
 
 export default {

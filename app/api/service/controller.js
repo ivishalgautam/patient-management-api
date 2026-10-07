@@ -39,88 +39,68 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  try {
-    let slug = "";
-    if (req.body.name) {
-      slug = slugify(req.body?.name, { lower: true });
-      req.body.slug = slug;
-    }
-
-    const record = await table.ServiceModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Service not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.ServiceModel.update(req),
-      message: "Service updated.",
-    });
-  } catch (error) {
-    throw error;
+  let slug = "";
+  if (req.body.name) {
+    slug = slugify(req.body?.name, { lower: true });
+    req.body.slug = slug;
   }
+
+  const record = await table.ServiceModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Service not found!" });
+  }
+
+  res.send({
+    status: true,
+    data: await table.ServiceModel.update(req),
+    message: "Service updated.",
+  });
 };
 
 const getBySlug = async (req, res) => {
-  try {
-    const record = await table.ServiceModel.getBySlug(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Service not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.ServiceModel.getBySlug(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.ServiceModel.getBySlug(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Service not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.ServiceModel.getBySlug(req),
+  });
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.ServiceModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Service not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.ServiceModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Service not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const getByProcedureId = async (req, res) => {
-  try {
-    const record = await table.ProcedureModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Procedure not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.ServiceModel.getByProcedureId(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.ProcedureModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Procedure not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.ServiceModel.getByProcedureId(req),
+  });
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.ServiceModel.get(req);
-    res.send({ status: true, data: data });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.ServiceModel.get(req);
+  res.send({ status: true, data: data });
 };
 
 const deleteById = async (req, res) => {

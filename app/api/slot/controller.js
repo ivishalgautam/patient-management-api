@@ -52,86 +52,66 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  try {
-    const validateData = updateSlotSchema.parse(req.body);
-    // Use the validated values (defaults, coercions) from here on.
-    Object.assign(req.body, validateData);
+  const validateData = updateSlotSchema.parse(req.body);
+  // Use the validated values (defaults, coercions) from here on.
+  Object.assign(req.body, validateData);
 
-    const record = await table.SlotModel.getById(req);
-    if (!record)
-      return res.code(404).send({ status: false, message: "Slot not found." });
+  const record = await table.SlotModel.getById(req);
+  if (!record)
+    return res.code(404).send({ status: false, message: "Slot not found." });
 
-    const startTime = req.body.start_time;
-    const endTime = req.body.end_time;
-    const intervalInMinute = req.body.interval_in_minute;
-    const slots = createSlots(startTime, endTime, intervalInMinute);
-    req.body.slots = slots;
+  const startTime = req.body.start_time;
+  const endTime = req.body.end_time;
+  const intervalInMinute = req.body.interval_in_minute;
+  const slots = createSlots(startTime, endTime, intervalInMinute);
+  req.body.slots = slots;
 
-    res.send({
-      status: true,
-      data: await table.SlotModel.update(req),
-      message: "Slot updated.",
-    });
-  } catch (error) {
-    throw error;
-  }
+  res.send({
+    status: true,
+    data: await table.SlotModel.update(req),
+    message: "Slot updated.",
+  });
 };
 
 const getBySlug = async (req, res) => {
-  try {
-    const record = await table.SlotModel.getBySlug(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Slot not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.SlotModel.getBySlug(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.SlotModel.getBySlug(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Slot not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.SlotModel.getBySlug(req),
+  });
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.SlotModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Slot not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.SlotModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Slot not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const getByClinicId = async (req, res) => {
-  try {
-    const record = await table.ClinicModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Clinic not found!" });
-    }
-
-    res.send({ status: true, data: await table.SlotModel.getByClinicId(req) });
-  } catch (error) {
-    throw error;
+  const record = await table.ClinicModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Clinic not found!" });
   }
+
+  res.send({ status: true, data: await table.SlotModel.getByClinicId(req) });
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.SlotModel.get(req);
-    res.send({ status: true, data: data, total: data?.[0]?.total });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.SlotModel.get(req);
+  res.send({ status: true, data: data, total: data?.[0]?.total });
 };
 
 const deleteById = async (req, res) => {

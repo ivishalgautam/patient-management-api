@@ -37,80 +37,60 @@ const create = async (req, res) => {
 
 const updateById = async (req, res) => {
   const transaction = await beginTransaction(req);
-  try {
-    const record = await table.InvestigationModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Investigation not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.InvestigationModel.update(req, 0, { transaction }),
-      message: "Investigation updated.",
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.InvestigationModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Investigation not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.InvestigationModel.update(req, 0, { transaction }),
+    message: "Investigation updated.",
+  });
 };
 
 const getBySlug = async (req, res) => {
-  try {
-    const record = await table.InvestigationModel.getBySlug(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Investigation not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.InvestigationModel.getBySlug(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.InvestigationModel.getBySlug(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Investigation not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.InvestigationModel.getBySlug(req),
+  });
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.InvestigationModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Investigation not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.InvestigationModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Investigation not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const getByTreatmentId = async (req, res) => {
-  try {
-    const treatment = await table.TreatmentModel.getByPk(req);
-    if (!treatment)
-      return res
-        .code(404)
-        .send({ status: false, message: "Treatment not found." });
+  const treatment = await table.TreatmentModel.getByPk(req);
+  if (!treatment)
+    return res
+      .code(404)
+      .send({ status: false, message: "Treatment not found." });
 
-    const record = await table.InvestigationModel.getByTreatmentId(req);
+  const record = await table.InvestigationModel.getByTreatmentId(req);
 
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: record });
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.InvestigationModel.get(req);
-    res.send({ status: true, data: data, total: data?.[0]?.total });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.InvestigationModel.get(req);
+  res.send({ status: true, data: data, total: data?.[0]?.total });
 };
 
 const deleteById = async (req, res) => {

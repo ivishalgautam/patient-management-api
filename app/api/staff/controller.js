@@ -32,27 +32,19 @@ const create = async (req, res) => {
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.StaffModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Staff not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.StaffModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Staff not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.StaffModel.get(req);
-    res.send({ status: true, data: data });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.StaffModel.get(req);
+  res.send({ status: true, data: data });
 };
 
 const deleteById = async (req, res) => {

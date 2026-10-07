@@ -11,10 +11,7 @@ export default [
       globals: { ...globals.node },
     },
     rules: {
-      "no-unused-vars": ["warn", { args: "none", ignoreRestSiblings: true }],
-      // Existing controllers wrap everything in try { } catch (e) { throw e }.
-      // Removed module by module in the service-layer refactor.
-      "no-useless-catch": "warn",
+      "no-unused-vars": ["error", { args: "none", ignoreRestSiblings: true }],
     },
   },
   {

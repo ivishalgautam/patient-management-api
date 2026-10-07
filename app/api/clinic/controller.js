@@ -32,62 +32,46 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  try {
-    const record = await table.ClinicModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Clinic not found!" });
-    }
-
-    const data = await table.ClinicModel.update(req);
-
-    res.send({ status: true, message: "Clinic updated.", data });
-  } catch (error) {
-    throw error;
+  const record = await table.ClinicModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Clinic not found!" });
   }
+
+  const data = await table.ClinicModel.update(req);
+
+  res.send({ status: true, message: "Clinic updated.", data });
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.ClinicModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Clinic not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.ClinicModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Clinic not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const getByDoctorId = async (req, res) => {
-  try {
-    const record = await table.DoctorModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Doctor not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.ClinicModel.getByDoctorId(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.DoctorModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Doctor not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.ClinicModel.getByDoctorId(req),
+  });
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.ClinicModel.get(req);
-    res.send({ status: true, data: data });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.ClinicModel.get(req);
+  res.send({ status: true, data: data });
 };
 
 const deleteById = async (req, res) => {

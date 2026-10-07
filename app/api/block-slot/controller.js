@@ -55,133 +55,109 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  try {
-    const validateData = blockSlotSchema.parse(req.body);
-    // Use the validated values (defaults, coercions) from here on.
-    Object.assign(req.body, validateData);
+  const validateData = blockSlotSchema.parse(req.body);
+  // Use the validated values (defaults, coercions) from here on.
+  Object.assign(req.body, validateData);
 
-    const record = await table.BlockedSlotModel.getById(req);
-    if (!record)
-      return res.code(404).send({ status: false, message: "Slot not found." });
+  const record = await table.BlockedSlotModel.getById(req);
+  if (!record)
+    return res.code(404).send({ status: false, message: "Slot not found." });
 
-    const startTime = req.body.start_time;
-    const endTime = req.body.end_time;
-    const intervalInMinute = req.body.interval_in_minute;
-    const slots = createSlots(startTime, endTime, intervalInMinute);
-    req.body.slots = slots;
+  const startTime = req.body.start_time;
+  const endTime = req.body.end_time;
+  const intervalInMinute = req.body.interval_in_minute;
+  const slots = createSlots(startTime, endTime, intervalInMinute);
+  req.body.slots = slots;
 
-    res.send({
-      status: true,
-      data: await table.BlockedSlotModel.update(req),
-      message: "Slot updated.",
-    });
-  } catch (error) {
-    throw error;
-  }
+  res.send({
+    status: true,
+    data: await table.BlockedSlotModel.update(req),
+    message: "Slot updated.",
+  });
 };
 
 const getBySlug = async (req, res) => {
-  try {
-    const record = await table.BlockedSlotModel.getBySlug(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Slot not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.BlockedSlotModel.getBySlug(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.BlockedSlotModel.getBySlug(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Slot not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.BlockedSlotModel.getBySlug(req),
+  });
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.BlockedSlotModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Slot not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.BlockedSlotModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Slot not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const getByDateAndClinic = async (req, res) => {
-  try {
-    const clinicId = req?.query?.clinic;
-    if (!clinicId) {
-      return res
-        .code(400)
-        .send({ status: false, message: "Clinic ID is required!" });
-    }
-
-    const clinicRecord = await table.ClinicModel.getById(0, clinicId);
-    if (!clinicRecord) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Clinic not found!" });
-    }
-
-    const [slotRecord, blockedSlots, bookedSlots] = await Promise.all([
-      table.SlotModel.getByClinicId(0, clinicId),
-      table.BlockedSlotModel.getByDateAndClinic(req),
-      table.BookingModel.getByDateAndClinic(req),
-    ]);
-
-    const { slots = [] } = slotRecord || {};
-    const maxPatientPerSlot = clinicRecord.max_patients_per_slot || 1;
-
-    const bookedCountMap = bookedSlots.reduce((acc, { slot }) => {
-      acc[slot] = (acc[slot] || 0) + 1;
-      return acc;
-    }, {});
-
-    const fullyBookedSlots = slots.filter(
-      (slot) => bookedCountMap[slot] >= maxPatientPerSlot
-    );
-
-    return res.send({
-      status: true,
-      data: blockedSlots ?? {},
-      booked: fullyBookedSlots,
-    });
-  } catch (error) {
-    throw error;
+  const clinicId = req?.query?.clinic;
+  if (!clinicId) {
+    return res
+      .code(400)
+      .send({ status: false, message: "Clinic ID is required!" });
   }
+
+  const clinicRecord = await table.ClinicModel.getById(0, clinicId);
+  if (!clinicRecord) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Clinic not found!" });
+  }
+
+  const [slotRecord, blockedSlots, bookedSlots] = await Promise.all([
+    table.SlotModel.getByClinicId(0, clinicId),
+    table.BlockedSlotModel.getByDateAndClinic(req),
+    table.BookingModel.getByDateAndClinic(req),
+  ]);
+
+  const { slots = [] } = slotRecord || {};
+  const maxPatientPerSlot = clinicRecord.max_patients_per_slot || 1;
+
+  const bookedCountMap = bookedSlots.reduce((acc, { slot }) => {
+    acc[slot] = (acc[slot] || 0) + 1;
+    return acc;
+  }, {});
+
+  const fullyBookedSlots = slots.filter(
+    (slot) => bookedCountMap[slot] >= maxPatientPerSlot
+  );
+
+  return res.send({
+    status: true,
+    data: blockedSlots ?? {},
+    booked: fullyBookedSlots,
+  });
 };
 
 const getByClinicId = async (req, res) => {
-  try {
-    const record = await table.ClinicModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Clinic not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.BlockedSlotModel.getSlotsByClinicId(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.ClinicModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Clinic not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.BlockedSlotModel.getSlotsByClinicId(req),
+  });
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.BlockedSlotModel.get(req);
-    res.send({ status: true, data: data, total: data?.[0]?.total });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.BlockedSlotModel.get(req);
+  res.send({ status: true, data: data, total: data?.[0]?.total });
 };
 
 const deleteById = async (req, res) => {

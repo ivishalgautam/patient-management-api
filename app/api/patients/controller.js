@@ -8,11 +8,7 @@ import { handleExcelImport } from "../../utils/import-excel.js";
 import config from "../../config/index.js";
 
 const get = async (req, res) => {
-  try {
-    res.send({ status: true, data: await table.PatientModel.get(req) });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: await table.PatientModel.get(req) });
 };
 
 // POST /patients/import (multipart: file, optional clinic_id).

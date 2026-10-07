@@ -41,86 +41,66 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  try {
-    let slug = "";
-    if (req.body.name) {
-      slug = slugify(req.body?.name, { lower: true });
-      req.body.slug = slug;
-    }
-
-    const record = await table.TreatmentHistoryModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment history not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.TreatmentHistoryModel.update(req),
-      message: "Treatment history updated.",
-    });
-  } catch (error) {
-    throw error;
+  let slug = "";
+  if (req.body.name) {
+    slug = slugify(req.body?.name, { lower: true });
+    req.body.slug = slug;
   }
+
+  const record = await table.TreatmentHistoryModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Treatment history not found!" });
+  }
+
+  res.send({
+    status: true,
+    data: await table.TreatmentHistoryModel.update(req),
+    message: "Treatment history updated.",
+  });
 };
 
 const getBySlug = async (req, res) => {
-  try {
-    const record = await table.TreatmentHistoryModel.getBySlug(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment history not found!" });
-    }
-
-    res.send({
-      status: true,
-      data: await table.TreatmentHistoryModel.getBySlug(req),
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.TreatmentHistoryModel.getBySlug(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Treatment history not found!" });
   }
+
+  res.send({
+    status: true,
+    data: await table.TreatmentHistoryModel.getBySlug(req),
+  });
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.TreatmentHistoryModel.getByPk(req);
-    if (!record) {
-      return res
-        .code(NOT_FOUND)
-        .send({ status: false, message: "Treatment history not found!" });
-    }
-
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.TreatmentHistoryModel.getByPk(req);
+  if (!record) {
+    return res
+      .code(NOT_FOUND)
+      .send({ status: false, message: "Treatment history not found!" });
   }
+
+  res.send({ status: true, data: record });
 };
 
 const getByTreatmentId = async (req, res) => {
-  try {
-    const treatment = await table.TreatmentModel.getByPk(req);
-    if (!treatment)
-      return res
-        .code(404)
-        .send({ status: false, message: "Treatment not found." });
+  const treatment = await table.TreatmentModel.getByPk(req);
+  if (!treatment)
+    return res
+      .code(404)
+      .send({ status: false, message: "Treatment not found." });
 
-    const record = await table.TreatmentHistoryModel.getByTreatmentId(req);
+  const record = await table.TreatmentHistoryModel.getByTreatmentId(req);
 
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: record });
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.TreatmentHistoryModel.get(req);
-    res.send({ status: true, data: data, total: data?.[0]?.total });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.TreatmentHistoryModel.get(req);
+  res.send({ status: true, data: data, total: data?.[0]?.total });
 };
 
 const deleteById = async (req, res) => {

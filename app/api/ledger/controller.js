@@ -40,39 +40,31 @@ const create = async (req, res) => {
 };
 
 const getByPatientId = async (req, res) => {
-  try {
-    const clinic = await table.ClinicModel.getById(0, req.params.clinic_id);
-    if (!clinic)
-      return res
-        .code(404)
-        .send({ status: false, message: "Clinic not found." });
+  const clinic = await table.ClinicModel.getById(0, req.params.clinic_id);
+  if (!clinic)
+    return res
+      .code(404)
+      .send({ status: false, message: "Clinic not found." });
 
-    const patient = await table.PatientModel.getById(0, req.params.patient_id);
-    if (!patient)
-      return res
-        .code(404)
-        .send({ status: false, message: "Patient not found." });
+  const patient = await table.PatientModel.getById(0, req.params.patient_id);
+  if (!patient)
+    return res
+      .code(404)
+      .send({ status: false, message: "Patient not found." });
 
-    const record = await table.LedgerModel.ledgerBalanceByClinicAndPatient(req);
+  const record = await table.LedgerModel.ledgerBalanceByClinicAndPatient(req);
 
-    res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: record });
 };
 
 const getById = async (req, res) => {
-  try {
-    const ledger = await table.LedgerModel.getById(req);
-    if (!ledger)
-      return res
-        .code(404)
-        .send({ status: false, message: "ledger not found." });
+  const ledger = await table.LedgerModel.getById(req);
+  if (!ledger)
+    return res
+      .code(404)
+      .send({ status: false, message: "ledger not found." });
 
-    res.send({ status: true, data: ledger });
-  } catch (error) {
-    throw error;
-  }
+  res.send({ status: true, data: ledger });
 };
 
 const deleteById = async (req, res) => {
@@ -96,12 +88,8 @@ const deleteById = async (req, res) => {
 };
 
 const get = async (req, res) => {
-  try {
-    const data = await table.LedgerModel.get(req);
-    res.send({ status: true, data: data });
-  } catch (error) {
-    throw error;
-  }
+  const data = await table.LedgerModel.get(req);
+  res.send({ status: true, data: data });
 };
 
 export default {

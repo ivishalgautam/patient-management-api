@@ -175,26 +175,22 @@ const update = async (req, res) => {
 };
 
 const updateStatus = async (req, res) => {
-  try {
-    const record = await table.UserModel.getByPk(req);
-    if (!record) {
-      return res.code(404).send({ status: false, message: "User not exists" });
-    }
-    const data = await table.UserModel.updateStatus(
-      req.params.id,
-      req.body.is_active,
-    );
-    if (!req.body.is_active) {
-      await table.UserModel.bumpTokenVersion(req.params.id);
-    }
-
-    res.send({
-      status: true,
-      message: data?.is_active ? "Customer Active." : "Customer Inactive.",
-    });
-  } catch (error) {
-    throw error;
+  const record = await table.UserModel.getByPk(req);
+  if (!record) {
+    return res.code(404).send({ status: false, message: "User not exists" });
   }
+  const data = await table.UserModel.updateStatus(
+    req.params.id,
+    req.body.is_active,
+  );
+  if (!req.body.is_active) {
+    await table.UserModel.bumpTokenVersion(req.params.id);
+  }
+
+  res.send({
+    status: true,
+    message: data?.is_active ? "Customer Active." : "Customer Inactive.",
+  });
 };
 
 const deleteById = async (req, res) => {
@@ -244,43 +240,31 @@ const deleteById = async (req, res) => {
 };
 
 const get = async (req, res) => {
-  try {
-    return res.send({ status: true, data: await table.UserModel.get(req) });
-  } catch (error) {
-    throw error;
-  }
+  return res.send({ status: true, data: await table.UserModel.get(req) });
 };
 
 const getById = async (req, res) => {
-  try {
-    const record = await table.UserModel.getById(req);
-    if (!record) {
-      return res.code(404).send({ status: false, message: "User not exists" });
-    }
-
-    delete record.password;
-    delete record.reset_password_token;
-    delete record.confirmation_token;
-
-    return res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.UserModel.getById(req);
+  if (!record) {
+    return res.code(404).send({ status: false, message: "User not exists" });
   }
+
+  delete record.password;
+  delete record.reset_password_token;
+  delete record.confirmation_token;
+
+  return res.send({ status: true, data: record });
 };
 
 const getPatientById = async (req, res) => {
-  try {
-    const record = await table.PatientModel.getById(req);
-    if (!record) {
-      return res
-        .code(404)
-        .send({ status: false, message: "Patient not exists" });
-    }
-
-    return res.send({ status: true, data: record });
-  } catch (error) {
-    throw error;
+  const record = await table.PatientModel.getById(req);
+  if (!record) {
+    return res
+      .code(404)
+      .send({ status: false, message: "Patient not exists" });
   }
+
+  return res.send({ status: true, data: record });
 };
 
 const updatePassword = async (req, res) => {
@@ -323,20 +307,16 @@ const updatePassword = async (req, res) => {
 };
 
 const checkUsername = async (req, res) => {
-  try {
-    const user = await table.UserModel.getByUsername(req);
-    if (user) {
-      return res.code(409).send({
-        status: false,
-        message: "username already exists try with different username",
-      });
-    }
-    return res.send({
-      status: true,
+  const user = await table.UserModel.getByUsername(req);
+  if (user) {
+    return res.code(409).send({
+      status: false,
+      message: "username already exists try with different username",
     });
-  } catch (error) {
-    throw error;
   }
+  return res.send({
+    status: true,
+  });
 };
 
 const getUser = async (req, res) => {
@@ -352,42 +332,30 @@ const getUser = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  try {
-    const token = await table.UserModel.getByResetToken(req);
-    if (!token) {
-      return res.code(401).send({ status: false, message: "invalid url" });
-    }
-
-    await table.UserModel.updatePassword(req, token.id);
-    return res.send({
-      status: true,
-      message: "Password reset successfully!",
-    });
-  } catch (error) {
-    throw error;
+  const token = await table.UserModel.getByResetToken(req);
+  if (!token) {
+    return res.code(401).send({ status: false, message: "invalid url" });
   }
+
+  await table.UserModel.updatePassword(req, token.id);
+  return res.send({
+    status: true,
+    message: "Password reset successfully!",
+  });
 };
 
 const getMyPatients = async (req, res) => {
-  try {
-    res.send({
-      status: true,
-      data: await table.DoctorPatientMapModel.get(req),
-    });
-  } catch (error) {
-    throw error;
-  }
+  res.send({
+    status: true,
+    data: await table.DoctorPatientMapModel.get(req),
+  });
 };
 
 const getMyStaff = async (req, res) => {
-  try {
-    res.send({
-      status: true,
-      data: await table.ClinicStaffMapModel.get(req),
-    });
-  } catch (error) {
-    throw error;
-  }
+  res.send({
+    status: true,
+    data: await table.ClinicStaffMapModel.get(req),
+  });
 };
 
 export default {
