@@ -1,6 +1,7 @@
 "use strict";
 import crypto from "crypto";
 import config from "../../config/index.js";
+import { AppError } from "../app-error.js";
 
 // AES-256-GCM for integration secrets and raw payloads (ported from the
 // reference app-store-encryption). Output: base64(iv | tag | ciphertext).
@@ -9,9 +10,9 @@ const ALGORITHM = "aes-256-gcm";
 function key() {
   const raw = config.integrations.encryption_key;
   if (!raw) {
-    throw new Error(
-      "INTEGRATION_ENCRYPTION_KEY is not set. Generate one with `openssl rand -base64 32`.",
-    );
+    throw new AppError(503, "Integrations aren't set up on the server yet (INTEGRATION_ENCRYPTION_KEY is missing).", {
+      code: "INTEGRATIONS_NOT_CONFIGURED",
+    });
   }
   const buf = Buffer.from(raw, "base64");
   if (buf.length !== 32) throw new Error("INTEGRATION_ENCRYPTION_KEY must decode to 32 bytes.");
@@ -32,6 +33,10 @@ export function decryptJson(encoded) {
   decipher.setAuthTag(buf.subarray(12, 28));
   return JSON.parse(Buffer.concat([decipher.update(buf.subarray(28)), decipher.final()]).toString("utf8"));
 }
+
+export const hasEncryptionKey = () => !!config.integrations.encryption_key;
+// Throws the 503 above when integrations can't store payloads/secrets.
+export const requireEncryptionKey = () => void key();
 
 export const generateWebhookToken = () => crypto.randomBytes(32).toString("base64url");
 

@@ -12,6 +12,7 @@ const REASONS = {
   415: "Unsupported Media Type",
   422: "Unprocessable Entity",
   429: "Too Many Requests",
+  503: "Service Unavailable",
 };
 
 // Single error → response mapping. Shape is unchanged from before the
@@ -63,6 +64,11 @@ export const ErrorHandler = (error, request, reply) => {
       ...(error.code && error.name === "AppError" ? { code: error.code } : {}),
       ...(error.details ? { details: error.details } : {}),
     });
+  }
+
+  // Deliberate "not available" errors (e.g. a feature not configured).
+  if (status === 503 && error.name === "AppError") {
+    return send(503, error.message, error.code ? { code: error.code } : {});
   }
 
   request.log.error({ err: error }, "unhandled error");

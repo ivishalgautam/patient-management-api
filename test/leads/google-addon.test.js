@@ -6,6 +6,7 @@ import { setupPractice, api, multipart } from "../setup/factories.js";
 import { sheetHttp } from "../../app/lib/leads/import-parse.js";
 import { processImport, purgeImportRows } from "../../app/api/lead-import/service.js";
 import { toNormalized } from "../../app/lib/integrations/providers/google-ads.js";
+import config from "../../app/config/index.js";
 
 let app;
 let A;
@@ -64,6 +65,27 @@ describe("practice add-ons", () => {
     expect(on.enabled).toBe(true);
     // Another practice is unaffected.
     expect(ok(await api(app, B.doctor.token).get("/v1/practice-features"))[0].enabled).toBe(false);
+  });
+});
+
+describe("server without an encryption key", () => {
+  it("shows providers as not configured and explains the refusal", async () => {
+    const key = config.integrations.encryption_key;
+    config.integrations.encryption_key = undefined;
+    try {
+      const providers = ok(await doctor.get("/v1/integrations/providers"));
+      expect(providers.every((p) => p.configured === false)).toBe(true);
+      const res = await doctor.post("/v1/integrations", {
+        provider_key: "custom_webhook",
+        name: "No key",
+        default_pipeline_id: pipeline.id,
+        default_stage_id: pipeline.stages[0].id,
+      });
+      expect(res.statusCode).toBe(503);
+      expect(res.json().message).toContain("INTEGRATION_ENCRYPTION_KEY");
+    } finally {
+      config.integrations.encryption_key = key;
+    }
   });
 });
 

@@ -3,7 +3,7 @@ import config from "../../config/index.js";
 import { select, one, exec } from "../../db/sql.js";
 import { badRequest, conflict, forbidden, notFound } from "../../lib/app-error.js";
 import { PROVIDERS, featureEnabled, getProvider } from "../../lib/integrations/registry.js";
-import { decryptJson, encryptJson, generateWebhookToken } from "../../lib/integrations/secrets.js";
+import { decryptJson, encryptJson, generateWebhookToken, hasEncryptionKey, requireEncryptionKey } from "../../lib/integrations/secrets.js";
 import { signState, verifyState } from "../../lib/integrations/oauth-state.js";
 import * as facebook from "../../lib/integrations/providers/facebook-leads.js";
 import { QUEUES, enqueue } from "../../jobs/queue.js";
@@ -42,7 +42,8 @@ export async function listProviders(ctx) {
     out.push({
       ...p,
       enabled: await featureEnabled(ctx.practiceId, p.feature),
-      configured: p.key === "facebook_leads" ? facebook.isConfigured() : true,
+      // Every provider stores encrypted payloads/secrets.
+      configured: hasEncryptionKey() && (p.key === "facebook_leads" ? facebook.isConfigured() : true),
     });
   }
   return out;
@@ -143,6 +144,7 @@ export async function disconnect(ctx, id) {
 
 // custom_webhook and (add-on) google_ads_lead_form
 export async function createWebhookIntegration(ctx, input) {
+  requireEncryptionKey();
   const provider = getProvider(input.provider_key);
   if (provider.kind !== "webhook") throw badRequest("This provider is not connected with a webhook.");
   if (!(await featureEnabled(ctx.practiceId, provider.feature, input.clinic_id))) {
@@ -212,6 +214,7 @@ export async function retryEvent(ctx, id, eventId) {
 
 export function startFacebookOAuth(ctx) {
   if (!facebook.isConfigured()) throw conflict("Facebook isn't configured on this server (FACEBOOK_APP_ID/SECRET).");
+  requireEncryptionKey();
   return { url: facebook.oauthUrl(signState({ practiceId: ctx.practiceId, userId: ctx.userId })) };
 }
 
