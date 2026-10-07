@@ -236,4 +236,17 @@ export const PERMISSION_MAP = {
   "POST /v1/integrations/:id/check": ["integrations.manage"],
   "GET /v1/integrations/:id/events": ["integrations.manage"],
   "POST /v1/integrations/:id/events/:eventId/retry": ["integrations.manage"],
+
+  // lead imports (Google leads add-on) and add-on switches
+  "GET /v1/lead-imports": ["leads.import"],
+  "POST /v1/lead-imports/upload": ["leads.import"],
+  "POST /v1/lead-imports/sheet": ["leads.import"],
+  "GET /v1/lead-imports/:id": ["leads.import"],
+  "GET /v1/lead-imports/:id/rows": ["leads.import"],
+  "POST /v1/lead-imports/:id/dry-run": ["leads.import"],
+  "POST /v1/lead-imports/:id/start": ["leads.import"],
+  "POST /v1/lead-imports/:id/cancel": ["leads.import"],
+  "GET /v1/lead-imports/:id/errors.csv": ["leads.import"],
+  "GET /v1/practice-features": ["integrations.manage", "leads.import"],
+  "PUT /v1/practice-features/:key": ["integrations.manage"],
 };

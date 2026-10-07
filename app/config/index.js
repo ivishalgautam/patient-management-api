@@ -69,6 +69,8 @@ const envSchema = z.object({
   // (openssl rand -base64 32); required once an integration is connected.
   INTEGRATION_ENCRYPTION_KEY: optional,
   INTEGRATION_PAYLOAD_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(30),
+  LEAD_IMPORT_MAX_ROWS: z.coerce.number().int().min(1).optional().default(5000),
+  LEAD_IMPORT_SHEET_MAX_MB: z.coerce.number().min(1).optional().default(10),
   FACEBOOK_APP_ID: optional,
   FACEBOOK_APP_SECRET: optional,
   FACEBOOK_WEBHOOK_VERIFY_TOKEN: optional,
@@ -158,6 +160,8 @@ const config = Object.freeze({
   integrations: {
     encryption_key: env.INTEGRATION_ENCRYPTION_KEY,
     payload_retention_days: env.INTEGRATION_PAYLOAD_RETENTION_DAYS,
+    import_max_rows: env.LEAD_IMPORT_MAX_ROWS,
+    import_sheet_max_bytes: Math.round(env.LEAD_IMPORT_SHEET_MAX_MB * 1024 * 1024),
     oauth_state_secret: `oauth-state:${env.JWT_SECRET}`,
   },
   facebook: {

@@ -17,6 +17,9 @@ export const integrationUpdate = z.object({
   dedupe_policy: z.enum(["merge", "create_flagged", "skip"]).optional(),
   paths: z.record(z.string(), z.string()).optional(),
   status: z.enum(["active", "disabled"]).optional(),
+  // Google Ads lead forms
+  google_key: z.string().min(8).max(200).optional(),
+  accept_test_leads: z.boolean().optional(),
 });
 
 export const webhookIntegrationCreate = z.object({

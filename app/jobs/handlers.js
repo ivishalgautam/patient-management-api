@@ -7,6 +7,7 @@ import {
   pullFacebook,
   purgeIntegrationPayloads,
 } from "./integration-handlers.js";
+import { processImport, purgeImportRows } from "../api/lead-import/service.js";
 import {
   findDueReminders,
   sendReminder,
@@ -33,7 +34,11 @@ export const HANDLERS = {
   [QUEUES.INTEGRATION_PROCESS]: each((data) => processEvent(data)),
   [QUEUES.FB_PULL_SYNC]: each((data) => pullFacebook(data ?? {})),
   [QUEUES.FB_TOKEN_CHECK]: each(() => checkAllFacebookTokens()),
-  [QUEUES.PAYLOAD_PURGE]: each(() => purgeIntegrationPayloads()),
+  [QUEUES.PAYLOAD_PURGE]: each(async () => {
+    await purgeIntegrationPayloads();
+    await purgeImportRows();
+  }),
+  [QUEUES.LEADS_IMPORT]: each((data) => processImport(data)),
 };
 
 export default HANDLERS;

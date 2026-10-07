@@ -40,6 +40,8 @@ import leadRoutes from "../../api/lead/routes.js";
 import leadActivityRoutes from "../../api/lead-activity/routes.js";
 import formRoutes from "../../api/form/routes.js";
 import integrationRoutes from "../../api/integration/routes.js";
+import leadImportRoutes from "../../api/lead-import/routes.js";
+import practiceFeatureRoutes from "../../api/practice-feature/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
@@ -96,4 +98,6 @@ export default async function routes(fastify, options) {
   fastify.register(leadActivityRoutes, { prefix: "lead-activities" });
   fastify.register(formRoutes, { prefix: "forms" });
   fastify.register(integrationRoutes, { prefix: "integrations" });
+  fastify.register(leadImportRoutes, { prefix: "lead-imports" });
+  fastify.register(practiceFeatureRoutes, { prefix: "practice-features" });
 }

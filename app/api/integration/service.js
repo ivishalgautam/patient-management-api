@@ -108,8 +108,8 @@ export async function updateIntegration(ctx, id, input) {
             default_stage_id = :stageId, clinic_id = :clinicId,
             field_mapping = coalesce(:mapping::jsonb, field_mapping),
             dedupe_policy = coalesce(:dedupe::enum_integrations_dedupe, dedupe_policy),
-            account_ref = CASE WHEN :paths::jsonb IS NULL THEN account_ref
-                               ELSE account_ref || jsonb_build_object('paths', :paths::jsonb) END,
+            account_ref = account_ref || :refPatch::jsonb,
+            secrets_encrypted = coalesce(:secrets, secrets_encrypted),
             status = coalesce(:status::enum_integrations_status, status), updated_at = now()
       WHERE id = :id`,
     {
@@ -120,7 +120,12 @@ export async function updateIntegration(ctx, id, input) {
       clinicId: merged.clinic_id ?? null,
       mapping: input.field_mapping ? JSON.stringify(input.field_mapping) : null,
       dedupe: input.dedupe_policy ?? null,
-      paths: input.paths ? JSON.stringify(input.paths) : null,
+      refPatch: JSON.stringify({
+        ...(input.paths ? { paths: input.paths } : {}),
+        ...(input.accept_test_leads !== undefined ? { accept_test_leads: input.accept_test_leads } : {}),
+      }),
+      // Google: change the shared key (both sides must match).
+      secrets: input.google_key && row.provider_key === "google_ads_lead_form" ? encryptJson({ google_key: input.google_key }) : null,
       status: input.status ?? null,
     },
   );

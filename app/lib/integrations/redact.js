@@ -8,9 +8,11 @@ const PHONE = /phone|mobile|whatsapp|contact_?number|tel/i;
 const EMAIL = /e-?mail/i;
 const NAME = /full_?name|first_?name|last_?name|^name$|user_?name/i;
 const FREE_TEXT = /message|notes?|comment|address|dob|birth/i;
+const SECRET = /_key$|^key$|token|secret|password/i;
 
 const maskValue = (key, value) => {
   if (value === null || value === undefined || typeof value === "object") return value;
+  if (SECRET.test(key)) return "[secret]";
   if (PHONE.test(key)) return maskPhone(value);
   if (EMAIL.test(key)) return maskEmail(value);
   if (NAME.test(key)) return String(value).slice(0, 1) + "***";

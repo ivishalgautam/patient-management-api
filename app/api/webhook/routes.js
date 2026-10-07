@@ -2,6 +2,7 @@
 import { select, one } from "../../db/sql.js";
 import { logEvent } from "../../lib/integrations/ingest.js";
 import * as facebook from "../../lib/integrations/providers/facebook-leads.js";
+import * as google from "../../lib/integrations/providers/google-ads.js";
 import { featureEnabled, getProvider } from "../../lib/integrations/registry.js";
 import { QUEUES, enqueue } from "../../jobs/queue.js";
 
@@ -74,8 +75,7 @@ export default async function routes(fastify) {
     if (!(await featureEnabled(integration.practice_id, provider.feature, integration.clinic_id))) {
       return reply.code(404).send();
     }
-    const { verifyGoogleKey } = await import("../../lib/integrations/providers/google-ads.js");
-    if (!verifyGoogleKey(integration, req.body)) {
+    if (!google.verifyGoogleKey(integration, req.body)) {
       await logEvent(integration, { direction: "inbound", status: "error", error: "google_key mismatch", keepRaw: false });
       return reply.code(403).send();
     }

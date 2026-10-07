@@ -284,6 +284,29 @@ export const TENANT_MAP = {
   "POST /v1/integrations/:id/check": byId("integration"),
   "GET /v1/integrations/:id/events": byId("integration"),
   "POST /v1/integrations/:id/events/:eventId/retry": byId("integration"),
+
+  // lead imports and add-on switches (Google leads add-on)
+  "GET /v1/lead-imports": "list",
+  "POST /v1/lead-imports/upload": "list",
+  "POST /v1/lead-imports/sheet": [c("clinic", "body.clinic_id")],
+  "GET /v1/lead-imports/:id": byId("lead_import"),
+  "GET /v1/lead-imports/:id/rows": byId("lead_import"),
+  "POST /v1/lead-imports/:id/dry-run": [
+    c("lead_import", "params.id"),
+    c("pipeline", "body.pipeline_id"),
+    c("pipeline_stage", "body.stage_id"),
+    c("clinic", "body.clinic_id"),
+  ],
+  "POST /v1/lead-imports/:id/start": [
+    c("lead_import", "params.id"),
+    c("pipeline", "body.pipeline_id"),
+    c("pipeline_stage", "body.stage_id"),
+    c("clinic", "body.clinic_id"),
+  ],
+  "POST /v1/lead-imports/:id/cancel": byId("lead_import"),
+  "GET /v1/lead-imports/:id/errors.csv": byId("lead_import"),
+  "GET /v1/practice-features": "list",
+  "PUT /v1/practice-features/:key": [c("clinic", "body.clinic_id")],
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.
@@ -326,6 +349,7 @@ export const RESOURCES = {
   tag: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM tags WHERE id = :id`,
   lead: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM leads WHERE id = :id`,
   integration: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM integrations WHERE id = :id`,
+  lead_import: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM lead_imports WHERE id = :id`,
   form: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM forms WHERE id = :id`,
   lead_activity: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM lead_activities WHERE id = :id`,
 };

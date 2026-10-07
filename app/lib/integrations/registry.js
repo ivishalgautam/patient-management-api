@@ -33,6 +33,15 @@ export const PROVIDERS = {
   },
 };
 
+// Optional add-ons a practice (or one clinic) can switch on.
+export const FEATURES = {
+  google_leads: {
+    key: "google_leads",
+    name: "Google leads",
+    description: "Google Ads lead form webhook and Google Sheets / CSV lead import.",
+  },
+};
+
 export function getProvider(key) {
   const provider = PROVIDERS[key];
   if (!provider) throw new Error(`Unknown integration provider "${key}"`);

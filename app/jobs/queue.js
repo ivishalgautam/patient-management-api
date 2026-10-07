@@ -14,6 +14,7 @@ export const QUEUES = {
   FB_PULL_SYNC: "integrations.fb-pull-sync",
   FB_TOKEN_CHECK: "integrations.fb-token-check",
   PAYLOAD_PURGE: "integrations.purge-payloads",
+  LEADS_IMPORT: "leads.import",
 };
 
 // Retry policy per queue.
@@ -25,6 +26,7 @@ const QUEUE_OPTIONS = {
   [QUEUES.FB_PULL_SYNC]: { retryLimit: 0 },
   [QUEUES.FB_TOKEN_CHECK]: { retryLimit: 1 },
   [QUEUES.PAYLOAD_PURGE]: { retryLimit: 1 },
+  [QUEUES.LEADS_IMPORT]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
 };
 
 export function getBoss() {

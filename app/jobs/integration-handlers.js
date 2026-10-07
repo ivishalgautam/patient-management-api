@@ -5,6 +5,7 @@ import { decryptJson } from "../lib/integrations/secrets.js";
 import { ingestNormalizedLead, logEvent, updateEvent } from "../lib/integrations/ingest.js";
 import * as facebook from "../lib/integrations/providers/facebook-leads.js";
 import * as customWebhook from "../lib/integrations/providers/custom-webhook.js";
+import * as google from "../lib/integrations/providers/google-ads.js";
 
 const loadIntegration = (id) => one(`SELECT * FROM integrations WHERE id = :id`, { id });
 const formName = (integration, formId) =>
@@ -52,8 +53,18 @@ export async function processEvent({ integrationId, eventId }) {
   }
 
   if (integration.provider_key === "google_ads_lead_form") {
-    const { toNormalized } = await import("../lib/integrations/providers/google-ads.js");
-    return ingestNormalizedLead(integration, toNormalized(payload), { eventId });
+    const normalized = google.toNormalized(payload);
+    // "Send test data" in Google Ads: proves the setup works without adding
+    // a fake lead, unless the practice asked to keep test leads.
+    if (normalized.isTest && !integration.account_ref?.accept_test_leads) {
+      await exec(`UPDATE integrations SET last_event_at = now(), updated_at = now() WHERE id = :id`, { id: integration.id });
+      return updateEvent(eventId, {
+        status: "ignored",
+        providerLeadId: normalized.providerLeadId,
+        error: "Test lead from Google Ads received. The connection works; test leads aren't added.",
+      });
+    }
+    return ingestNormalizedLead(integration, normalized, { eventId });
   }
 
   return updateEvent(eventId, { status: "ignored", error: `No processor for ${integration.provider_key}` });
