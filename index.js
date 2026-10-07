@@ -1,40 +1,24 @@
 import config from "./app/config/index.js";
-import server from "./server.js";
-import fastify from "fastify";
+import { buildApp } from "./app.js";
 
-const app = fastify({
-  logger: {
-    level: "debug",
-    transport: {
-      target: "@mgcrea/pino-pretty-compact",
-      options: {
-        translateTime: "HH:MM:ss Z",
-        ignore: "pid,hostname",
-        colorize: true,
-      },
-    },
-  },
-});
-
-// const app = fastify({ logger: true });
-
-try {
-  server(app);
-} catch (e) {
-  console.log({ error: e });
-  process.exit(1);
-}
-
-/**
- * Run the server!
- */
 const start = async () => {
+  const app = await buildApp({ enableCron: true });
   try {
-    await app.listen({ port: config.port }); // For fastify server
+    await app.listen({ port: config.port, host: config.host });
   } catch (e) {
     app.log.error(e);
     process.exit(1);
   }
+
+  for (const signal of ["SIGINT", "SIGTERM"]) {
+    process.on(signal, async () => {
+      await app.close();
+      process.exit(0);
+    });
+  }
 };
 
-start();
+start().catch((e) => {
+  console.error(e.message);
+  process.exit(1);
+});

@@ -1,9 +1,7 @@
-import fastify from "fastify";
-import server from "../../server.js";
+import { buildApp } from "../../app.js";
 
 export async function buildTestApp() {
-  const app = fastify({ logger: false });
-  server(app, { enableCron: false });
+  const app = await buildApp({ enableCron: false, logger: false });
   await app.ready();
   return app;
 }
