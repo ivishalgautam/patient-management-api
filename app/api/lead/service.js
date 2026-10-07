@@ -128,8 +128,11 @@ export async function findDuplicates(practiceId, { phone, email }, { excludeId, 
 
 export async function addActivity(practiceId, leadId, activity, { transaction } = {}) {
   const row = await one(
-    `INSERT INTO lead_activities (practice_id, lead_id, type, body, metadata, due_at, created_by)
-     VALUES (:practiceId, :leadId, :type, :body, :metadata::jsonb, :dueAt, :createdBy) RETURNING *`,
+    // clock_timestamp(): entries written in one transaction keep their order
+    // (now() is the same for the whole transaction).
+    `INSERT INTO lead_activities (practice_id, lead_id, type, body, metadata, due_at, created_by, created_at, updated_at)
+     VALUES (:practiceId, :leadId, :type, :body, :metadata::jsonb, :dueAt, :createdBy, clock_timestamp(), clock_timestamp())
+     RETURNING *`,
     {
       practiceId,
       leadId,
@@ -164,9 +167,10 @@ async function recordStageChange(practiceId, lead, toStage, userId, transaction)
   );
   const since = previous?.changed_at ?? lead.created_at;
   await exec(
-    `INSERT INTO lead_stage_history (practice_id, lead_id, from_stage_id, to_stage_id, changed_by, seconds_in_previous_stage)
+    `INSERT INTO lead_stage_history (practice_id, lead_id, from_stage_id, to_stage_id, changed_by, seconds_in_previous_stage, changed_at)
      VALUES (:practiceId, :leadId, :from, :to, :userId,
-             CASE WHEN :since::timestamptz IS NULL THEN NULL ELSE extract(epoch FROM now() - :since::timestamptz)::int END)`,
+             CASE WHEN :since::timestamptz IS NULL THEN NULL ELSE extract(epoch FROM clock_timestamp() - :since::timestamptz)::int END,
+             clock_timestamp())`,
     { practiceId, leadId: lead.id, from: lead.stage_id, to: toStage.id, userId: userId ?? null, since: since ?? null },
     { transaction },
   );
@@ -267,8 +271,8 @@ export async function createLead(ctx, input, options = {}) {
       }
     }
     await exec(
-      `INSERT INTO lead_stage_history (practice_id, lead_id, from_stage_id, to_stage_id, changed_by)
-       VALUES (:practiceId, :leadId, NULL, :stageId, :userId)`,
+      `INSERT INTO lead_stage_history (practice_id, lead_id, from_stage_id, to_stage_id, changed_by, changed_at)
+       VALUES (:practiceId, :leadId, NULL, :stageId, :userId, clock_timestamp())`,
       { practiceId: ctx.practiceId, leadId: lead.id, stageId: stage.id, userId: ctx.userId ?? null },
       { transaction },
     );
