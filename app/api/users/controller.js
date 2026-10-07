@@ -169,7 +169,7 @@ const deleteById = async (req, res) => {
     if (record === 0) {
       return res.code(404).send({ status: false, message: "User not exists" });
     }
-    if (!!record.avatar) filesToDelete.push(record.avatar);
+    if (record.avatar) filesToDelete.push(record.avatar);
     const role = record.role;
 
     if (role === "patient") {

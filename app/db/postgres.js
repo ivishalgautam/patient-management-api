@@ -8,25 +8,21 @@ export const sequelize = new Sequelize(
   config.pg_password,
   {
     host: config.pg_host,
+    port: config.pg_port,
     dialect: config.pg_dialect,
     logging: false,
   },
 );
 
 async function postgresConnection(fastify, options) {
-  let dbSuccess = null;
-
   try {
     await sequelize.authenticate();
-    dbSuccess = true;
     fastify.log.info(`Postgres Database connection OK!`);
-    fastify.log.info(`Initializing sequelize connection and models...`);
-    await new Promise((resolve) => {
-      migration.init(sequelize);
-      resolve(`Migration sucessfully completed...`);
-    }).then((data) => fastify.log.info(data));
+    // Models must be ready before the server accepts requests.
+    await migration.init(sequelize);
+    fastify.log.info(`Models initialized.`);
   } catch (error) {
-    dbSuccess == false;
+    fastify.log.error(error);
     process.exit(1);
   }
 }

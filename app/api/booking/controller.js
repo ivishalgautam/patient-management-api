@@ -14,8 +14,9 @@ const create = async (req, res) => {
 
     const clinicRecord = await table.ClinicModel.getById(0, req.body.clinic_id);
     if (!clinicRecord) {
+      await transaction.rollback();
       return res
-        .code(NOT_FOUND)
+        .code(404)
         .send({ status: false, message: "Clinic not found!" });
     }
 

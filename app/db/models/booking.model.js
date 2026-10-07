@@ -321,15 +321,6 @@ const getByPk = async (req, id) => {
   return await BookingModel.findByPk(req?.params?.id || id);
 };
 
-const getByDoctorId = async (doctor_id) => {
-  return await PatientModel.findOne({
-    where: {
-      doctor_id: doctor_id,
-    },
-    raw: true,
-  });
-};
-
 const updateOne = async (...args) => {
   return await BookingModel.update(...args);
 };
@@ -413,7 +404,6 @@ export default {
   getById: getById,
   getBookingsByClinicId: getBookingsByClinicId,
   getByPk: getByPk,
-  getByDoctorId: getByDoctorId,
   updateOne: updateOne,
   update: update,
   updateStatus: updateStatus,

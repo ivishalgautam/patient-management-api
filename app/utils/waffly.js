@@ -167,7 +167,6 @@ export async function send1HourAfterAppointment({
       "Waffly '1_hr_after_appointment' notification response: ",
       data,
     );
-    console.log(error.ApiMessage.ErrorMessage.error);
     return data;
   } catch (error) {
     console.log("Error sending '1_hr_after_appointment' notification: ", error);
@@ -205,7 +204,6 @@ export async function sendReviewMessage({
   try {
     const { data } = await axios.request(configOpt);
     console.log("Waffly 'review_mesaage' notification response: ", data);
-    console.log(error.ApiMessage.ErrorMessage.error);
     return data;
   } catch (error) {
     console.log("Error sending 'review_mesaage' notification: ", error);

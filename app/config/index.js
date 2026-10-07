@@ -13,7 +13,7 @@ const config = {
   pg_password: process.env.PG_PASSWORD,
   pg_host: process.env.PG_HOST,
   pg_dialect: process.env.DB_DIALECT,
-  pg_port: 5432,
+  pg_port: parseInt(process.env.PG_PORT || "5432", 10),
 
   // jwt secret key
   jwt_secret: process.env.JWT_SECRET,

@@ -28,11 +28,11 @@ import { scheduleAppointmentCron } from "./app/scheduler/appointment-cron.js";
 /*
   Register External packages, routes, database connection
 */
-export default (app) => {
+export default (app, { enableCron = true } = {}) => {
   app.setErrorHandler(ErrorHandler);
   const scheduler = new ToadScheduler();
 
-  scheduleAppointmentCron(scheduler);
+  if (enableCron) scheduleAppointmentCron(scheduler);
 
   app.addHook("onClose", async () => {
     scheduler.stop();

@@ -121,15 +121,6 @@ const getByPk = async (req, id) => {
   return await SlotModel.findByPk(req?.params?.id || id);
 };
 
-const getByDoctorId = async (doctor_id) => {
-  return await PatientModel.findOne({
-    where: {
-      doctor_id: doctor_id,
-    },
-    raw: true,
-  });
-};
-
 const update = async (req, id) => {
   const data = await SlotModel.update(
     {
@@ -171,7 +162,6 @@ export default {
   getById: getById,
   getByClinicId: getByClinicId,
   getByPk: getByPk,
-  getByDoctorId: getByDoctorId,
   update: update,
   deleteById: deleteById,
 };
