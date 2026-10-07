@@ -224,6 +224,12 @@ export const TENANT_MAP = {
   "POST /v1/leads/:id/move": [c("lead", "params.id"), c("pipeline_stage", "body.stage_id")],
   "POST /v1/leads/:id/assign": [c("lead", "params.id"), c("user", "body.owner_id")],
   "GET /v1/leads/:id/timeline": byId("lead"),
+  "GET /v1/leads/:id/convert/candidates": byId("lead"),
+  "POST /v1/leads/:id/convert": [
+    c("lead", "params.id"),
+    c("patient", "body.link_patient_id"),
+    c("clinic", "body.clinic_id"),
+  ],
   "POST /v1/leads/:id/activities": byId("lead"),
   "PUT /v1/lead-activities/:id": byId("lead_activity"),
   "DELETE /v1/lead-activities/:id": byId("lead_activity"),

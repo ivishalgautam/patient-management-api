@@ -88,3 +88,19 @@ export const duplicateQuery = z.object({
   phone: z.string().max(32).optional(),
   email: z.string().max(160).optional(),
 });
+
+export const convertInput = z.object({
+  link_patient_id: uuid.optional(),
+  clinic_id: uuid.optional(),
+  patient: z
+    .object({
+      fullname: z.string().trim().min(1).max(160).optional(),
+      mobile_number: z.string().regex(/^\d{6,15}$/, "Digits only").optional(),
+      country_code: z.string().regex(/^\d{1,4}$/).optional(),
+      email: z.string().email().optional(),
+      gender: z.enum(["male", "female", "other"]).optional(),
+    })
+    .optional(),
+  booking: z.object({ date: z.string().date(), slot: z.string().regex(/^\d{2}:\d{2}:\d{2}$/) }).optional(),
+  move_to_won: z.boolean().optional(),
+});

@@ -9,7 +9,9 @@ import {
   leadUpdate,
   listQuery,
   moveInput,
+  convertInput,
 } from "../../validation-schema/lead.schema.js";
+import { convertLead, conversionCandidates } from "./conversion.js";
 import { uuidParam } from "../../validation-schema/leads-config.schema.js";
 
 const id = (req) => uuidParam.parse(req.params).id;
@@ -46,6 +48,14 @@ export default async function routes(fastify) {
     await service.assignLead(req.ctx, id(req), assignInput.parse(req.body).owner_id);
     return reply.ok(await service.getLead(req.ctx, id(req)), { message: "Lead assigned." });
   });
+  fastify.get("/:id/convert/candidates", async (req, reply) =>
+    reply.ok(await conversionCandidates(req.ctx, id(req))),
+  );
+  fastify.post("/:id/convert", async (req, reply) =>
+    reply.ok(await convertLead(req.ctx, id(req), convertInput.parse(req.body ?? {})), {
+      message: "Lead converted to a patient.",
+    }),
+  );
   fastify.get("/:id/timeline", async (req, reply) => reply.ok(await service.timeline(req.ctx, id(req))));
   fastify.post("/:id/activities", async (req, reply) =>
     reply.code(201).ok(await service.createActivity(req.ctx, id(req), activityCreate.parse(req.body))),

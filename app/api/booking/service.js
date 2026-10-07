@@ -1,6 +1,7 @@
 "use strict";
 import moment from "moment";
 import table from "../../db/models.js";
+import { one } from "../../db/sql.js";
 import { QUEUES, enqueue } from "../../jobs/queue.js";
 import { badRequest, notFound } from "../../lib/app-error.js";
 
@@ -13,10 +14,15 @@ export async function createBooking({ clinicId, patientId, date, slot }, { user,
   const booked = await table.BookingModel.getByClinicDateAndSlot(null, clinicId, slot, date);
   if (booked >= clinic.max_patients_per_slot) throw badRequest("Slots full.");
 
-  const patient =
-    user.role === "patient"
-      ? await table.PatientModel.getByUserId(user.id)
-      : await table.PatientModel.getById(0, patientId);
+  // Read inside the caller's transaction: lead conversion books for a
+  // patient it has just created and not yet committed.
+  const patient = await one(
+    `SELECT pt.id, pt.user_id, u.fullname, CONCAT('+', u.country_code, ' ', u.mobile_number) AS mobile_number
+       FROM patients pt JOIN users u ON u.id = pt.user_id
+      WHERE ${user.role === "patient" ? "pt.user_id = :userId" : "pt.id = :patientId"}`,
+    { userId: user.id, patientId: patientId ?? null },
+    { transaction },
+  );
   if (!patient?.id) throw notFound("Patient not registered.");
 
   const slotTemplate = await table.SlotModel.getByClinicId(0, clinicId);

@@ -205,6 +205,8 @@ export const PERMISSION_MAP = {
   "POST /v1/leads/:id/move": ["leads.edit"],
   "POST /v1/leads/:id/assign": ["leads.assign", "leads.edit"],
   "GET /v1/leads/:id/timeline": ["leads.view"],
+  "GET /v1/leads/:id/convert/candidates": ["leads.convert"],
+  "POST /v1/leads/:id/convert": ["leads.convert"],
   "POST /v1/leads/:id/activities": ["leads.edit"],
   "PUT /v1/lead-activities/:id": ["leads.edit"],
   "DELETE /v1/lead-activities/:id": ["leads.edit"],
