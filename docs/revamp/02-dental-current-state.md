@@ -168,7 +168,7 @@ All PKs are `UUID DEFAULT uuidv4` (except `patient_sequences.id STRING`). All ta
 | **Config** | `app/config/index.js` (dotenv). No `.env.example`. No boot validation. `pg_port` hardcoded `5432`. Several modules read `process.env` directly (mailer, interakt, rate limit). Hardcoded clinic phone `8882850066` in 8 places. Mail subject "Onlineparts.shop" (copied from another project). Dashboard `next.config.mjs` hardcodes a public IP and a devtunnel host. |
 | **Logging** | Fastify logger at `debug` with pretty transport (even in production). `console.log` everywhere, including **every authenticated request body** (`routes/v1/index.js` preHandler: patient names, phones, medical notes, passwords on user create) and multipart field values. |
 | **DB access** | Raw SQL with named replacements (good: parameterised). Schema managed by `sync({ alter: true })` on **every boot**, model by model, with errors swallowed per model. `postgres.js` does not await model init, so the server can accept requests before tables are synced. |
-| **Transactions** | Opened in many controllers, but early `return`s skip `rollback()` (leaks pooled connections): booking.create, treatment.create, ledger.create, users.create, users.update, booking.updateById/updateStatus, treatment-payment.updateById… Some model functions accept `{ transaction }` but pass it in the wrong argument position (`UserModel.update`, `LedgerModel.create(req, transaction)`), so writes silently happen outside the transaction. |
+| **Transactions** | Opened in many controllers, but early `return`s skip `rollback()` (leaks pooled connections): booking.create, treatment.create, ledger.create, users.create, users.update, booking.updateById/updateStatus, treatment-payment.updateById… Some model functions accept `{ transaction }` but pass it in the wrong argument position (`UserModel.update`), so writes silently happen outside the transaction. |
 | **Files** | Stored on local disk under `public/{images,videos,docs}`; served via `GET /v1/upload?file_path=`. Two divergent implementations (`helpers/file.js`, `helpers/multer.js`) with different MIME allow-lists. Multipart limit 5 GB. |
 | **Background jobs** | One cron every 5 min scans **all** pending/completed bookings ever (unbounded) and sends WhatsApp messages inside 5-minute windows. If the process is down during a window, that message is never sent. Timezone is the implicit server-local TZ. Booking confirmation is sent synchronously **inside** the booking DB transaction. |
 | **CORS / headers** | `origin: "*"`; helmet defaults; global rate limit from env. |
@@ -193,7 +193,7 @@ All PKs are `UUID DEFAULT uuidv4` (except `patient_sequences.id STRING`). All ta
 ### 🟠 Functional bugs
 12. `POST /auth/register` with role `patient` always throws: `patientNumber` is used before its `const` declaration (TDZ).
 13. `POST /bookings` when the clinic is not found throws `ReferenceError: NOT_FOUND is not defined`.
-14. `PUT /users/:id` with `password` updates **the caller's** password (`req.user_data.id`), not the target user's.
+14. ~~`PUT /users/:id` with `password` updates the caller's password~~ — **not a bug** (corrected in Step 3.2): `updatePassword` prefers `req.params.id`, so the target user's password changes. Covered by a characterization test.
 15. `POST /users/:id/change-password` can never succeed: `UserModel.getByPk` deletes `password` before `bcrypt.compareSync(old, undefined)`, which throws.
 16. `DELETE /users/:id` on a missing user throws (null `dataValues`) instead of returning 404. The `record === 0` check is dead.
 17. Deleting a user **cascades into clinical/billing records**: every `added_by`/`created_by → users ON DELETE CASCADE` means removing a staff member deletes the treatments, plans, payments, x-rays, notes… they authored.
@@ -203,6 +203,12 @@ All PKs are `UUID DEFAULT uuidv4` (except `patient_sequences.id STRING`). All ta
 21. `GET /treatment-payments` (patient view) crashes if the caller has no patient row.
 22. Booking `deleteById` exists in the controller but is not routed, and its messages say "Service".
 23. Reset-password flow (`POST /auth/:token`) is dead: nothing ever sets `reset_password_token`.
+25. Upload filenames lose every letter `s`: the regex `/[\s'/]/g` in `helpers/multer.js` matches a literal `s` instead of whitespace (`scan.png` → `_can.png`).
+26. `POST /comprehensive-examinations` without `gallery` returns 500: the Zod default `[]` is discarded and the model reads raw `req.body`.
+27. **`POST /x-rays` always returns 500 (x-ray upload is broken in production)**: the route passes `multipartPreHandler` directly, so Fastify's `done` callback arrives as the options array.
+28. A fresh database cannot be created from the code: `treatments.appointment_id` references `bookings`, but `TreatmentModel` was synced before `BookingModel` (model order fixed in Step 3.2; replaced by migrations in 3.3).
+29. `GET /users/staff` always returns 500 (missing `:clinicId`); the dashboard doesn't call it (dead route).
+30. ⚠️ Billing (needs owner confirmation): advance used on a payment is debited from the ledger, but the treatment's remaining balance only subtracts `amount_paid`, so the advance portion never reduces what the patient owes.
 24. Clinic, slot, booking, and payment updates have no ownership or state validation (e.g. editing a completed booking through `PUT /bookings/:id`).
 
 ### 🟡 Dead / duplicated code

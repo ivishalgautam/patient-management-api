@@ -14,5 +14,10 @@ export const waflyGet = vi
 
 afterAll(async () => {
   const { sequelize } = await import("../../app/db/postgres.js");
-  await sequelize.close();
+  // Legacy controllers can leak open transactions (early return without
+  // rollback), which makes close() wait forever. Don't let that hang the run.
+  await Promise.race([
+    sequelize.close(),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ]);
 });
