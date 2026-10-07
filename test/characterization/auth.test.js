@@ -76,7 +76,23 @@ describe("auth", () => {
     expect(res.statusCode).toBe(401);
   });
 
+  it("needs clinic_id to self-register when several practices exist", async () => {
+    await createDoctor();
+    await createDoctor();
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      payload: { fullname: "No Clinic", country_code: "91", mobile_number: "9876500000", role: "patient" },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
   it("lets a patient self-register (hotfix: TDZ bug fixed)", async () => {
+    const doc = await createDoctor();
+    const clinic = await api(app, await login(app, doc)).post("/v1/clinics", {
+      name: "Reg Clinic",
+      address: "x",
+    });
     const res = await app.inject({
       method: "POST",
       url: "/v1/auth/register",
@@ -85,6 +101,7 @@ describe("auth", () => {
         country_code: "91",
         mobile_number: "9876543210",
         role: "patient",
+        clinic_id: clinic.json().data.id,
       },
     });
     expect(res.statusCode).toBe(200);

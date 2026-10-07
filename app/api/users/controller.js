@@ -6,6 +6,7 @@ import { cleanupFiles } from "../../helpers/cleanup-files.js";
 import { credentialGenerator } from "../../helpers/credential-generator.js";
 import hash from "../../lib/encryption/index.js";
 import authToken from "../../helpers/auth.js";
+import { resolvePracticeForPatient } from "../../lib/practice.js";
 import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
 import { patientSchema } from "../../validation-schemas/patient.schema.js";
 import { userSchema } from "../../validation-schemas/user.schema.js";
@@ -58,8 +59,13 @@ const create = async (req, res) => {
     }
 
     if (data.role === "patient") {
+      const practiceId = await resolvePracticeForPatient({
+        practiceId: req.user_data.practice_id,
+        clinicId: req.body.clinic_id,
+      });
       const patient = await table.PatientModel.create(req, data.id, {
         transaction,
+        practiceId,
       });
 
       if (role === "doctor") {

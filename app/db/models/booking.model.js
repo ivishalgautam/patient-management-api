@@ -1,4 +1,5 @@
 "use strict";
+import { practiceScope } from "../../helpers/scope.js";
 import moment from "moment";
 import constants from "../../lib/constants/index.js";
 import { DataTypes, Deferrable, Op, QueryTypes } from "sequelize";
@@ -109,6 +110,11 @@ const get = async (req) => {
   const { role, id } = req.user_data;
   const whereConditions = [];
   const queryParams = {};
+  const scope = practiceScope(req);
+  if (scope) {
+    whereConditions.push(scope.condition("bk"));
+    Object.assign(queryParams, scope.params);
+  }
   const q = req.query.q || null;
   const recent = req.query.recent == 1;
   const status = req.query.status || null;

@@ -74,6 +74,13 @@ const verifyToken = async (req, res) => {
 
   req.user_data = sanitizeUser(user);
   req.decoded = decoded;
+  // Who is calling and which practice (tenant) they act for.
+  req.ctx = {
+    userId: user.id,
+    role: user.role,
+    practiceId: user.practice_id ?? null,
+    isPlatformAdmin: user.role === "admin",
+  };
 };
 
 // POST /auth/refresh { refresh_token } -> new access token and a rotated

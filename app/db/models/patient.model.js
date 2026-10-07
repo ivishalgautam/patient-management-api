@@ -1,4 +1,5 @@
 "use strict";
+import { practiceScope } from "../../helpers/scope.js";
 import constants from "../../lib/constants/index.js";
 import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
@@ -50,6 +51,10 @@ const init = async (sequelize) => {
         allowNull: true,
         defaultValue: "",
       },
+      practice_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
     },
     {
       createdAt: "created_at",
@@ -59,10 +64,11 @@ const init = async (sequelize) => {
 
 };
 
-const create = async (req, user_id, { transaction }) => {
+const create = async (req, user_id, { transaction, practiceId }) => {
   const data = await PatientModel.create(
     {
       user_id: user_id,
+      practice_id: practiceId,
       blood_group: req.body.blood_group,
       marital_status: req.body.marital_status,
       height_in_cm: req.body.height_in_cm,
@@ -85,6 +91,11 @@ const bulkCreate = async (patientData, { transaction }) => {
 const get = async (req) => {
   const whereConditions = [];
   const queryParams = {};
+  const scope = practiceScope(req);
+  if (scope) {
+    whereConditions.push(scope.condition("pt"));
+    Object.assign(queryParams, scope.params);
+  }
   const q = req.query.q ? req.query.q : null;
 
   if (q) {

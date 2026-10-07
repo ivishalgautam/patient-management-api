@@ -5,6 +5,7 @@ import { sequelize } from "../../db/postgres.js";
 import config from "../../config/index.js";
 import slugify from "slugify";
 import { patientPassword } from "../../helpers/credential-generator.js";
+import { resolvePracticeForPatient } from "../../lib/practice.js";
 
 const get = async (req, res) => {
   try {
@@ -68,6 +69,12 @@ const importPatients = async (req, res) => {
     }
 
     // return object;
+
+    // Imported patients belong to the practice of the import clinic.
+    const practiceId = await resolvePracticeForPatient({
+      practiceId: req.user_data.practice_id,
+      clinicId: config.clinic_id,
+    });
 
     const promises = patientData.map(async (user) => {
       // console.log(
@@ -224,7 +231,7 @@ const importPatients = async (req, res) => {
           const patientRecord = await table.PatientModel.create(
             { body: {} },
             userRecord.id,
-            { transaction },
+            { transaction, practiceId },
           );
           await table.ClinicPatientMapModel.create(
             patientRecord.id,
@@ -293,7 +300,7 @@ const importPatients = async (req, res) => {
         const newPatientRecord = await table.PatientModel.create(
           { body: {} },
           newUserRecord.id,
-          { transaction },
+          { transaction, practiceId },
         );
         const newClinicPatientMapRecord =
           await table.ClinicPatientMapModel.create(

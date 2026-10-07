@@ -92,7 +92,7 @@ describe("clinical records", () => {
     expect(res.statusCode).toBe(200);
   });
 
-  it.fails("#27 uploads an x-ray for a treatment (today always 500)", async () => {
+  it("#27 fixed: uploads an x-ray for a treatment", async () => {
     const res = await upload("/v1/x-rays", {
       treatment_id: treatmentId,
       title: "OPG",

@@ -9,6 +9,7 @@ import { patientSchema } from "../../validation-schemas/patient.schema.js";
 import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
 import { loginSchema } from "../../validation-schemas/login.schema.js";
 import { credentialGenerator } from "../../helpers/credential-generator.js";
+import { resolvePracticeForPatient } from "../../lib/practice.js";
 
 const verifyUserCredentials = async (req, res) => {
   const validateBody = loginSchema.parse(req.body);
@@ -84,7 +85,11 @@ const createNewUser = async (req, res) => {
 
     if (data.role === "patient") {
       const validatePatientData = patientSchema.parse(req.body);
-      await table.PatientModel.create(req, data.id, { transaction });
+      const practiceId = await resolvePracticeForPatient({
+        clinicId: req.body.clinic_id,
+        transaction,
+      });
+      await table.PatientModel.create(req, data.id, { transaction, practiceId });
     }
 
     if (data.role === "doctor") {

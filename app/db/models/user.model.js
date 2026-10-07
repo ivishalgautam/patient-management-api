@@ -1,4 +1,5 @@
 "use strict";
+import { practiceScope } from "../../helpers/scope.js";
 import constants from "../../lib/constants/index.js";
 import hash from "../../lib/encryption/index.js";
 import { DataTypes, QueryTypes } from "sequelize";
@@ -101,6 +102,12 @@ const init = async (sequelize) => {
         allowNull: false,
         defaultValue: 0,
       },
+      // Filled by DB triggers from the doctor/staff/patient row; null for
+      // platform admins.
+      practice_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
     },
     {
       createdAt: "created_at",
@@ -152,6 +159,11 @@ const bulkCreate = async (userData, { transaction }) => {
 const get = async (req) => {
   const whereConditions = ["usr.role != 'admin'"];
   const queryParams = {};
+  const scope = practiceScope(req);
+  if (scope) {
+    whereConditions.push(scope.condition("usr"));
+    Object.assign(queryParams, scope.params);
+  }
   const q = req.query.q ? req.query.q : null;
   const roles = req.query.role ? req.query.role.split(".") : null;
 

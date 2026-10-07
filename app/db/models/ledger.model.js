@@ -1,4 +1,5 @@
 "use strict";
+import { practiceScope } from "../../helpers/scope.js";
 
 import constants from "../../lib/constants/index.js";
 import { DataTypes, Deferrable, QueryTypes } from "sequelize";
@@ -113,6 +114,11 @@ const create = async (req, transaction = null) => {
 const get = async (req) => {
   const whereConditions = [];
   const queryParams = {};
+  const scope = practiceScope(req);
+  if (scope) {
+    whereConditions.push(scope.condition("ld"));
+    Object.assign(queryParams, scope.params);
+  }
 
   const clinicId = req?.query?.clinic_id || null;
   const patientId = req?.query?.patient_id || null;
