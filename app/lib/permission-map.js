@@ -199,7 +199,7 @@ export const PERMISSION_MAP = {
   "GET /v1/leads/duplicates": ["leads.view"],
   "GET /v1/leads/export": ["leads.export"],
   // WhatsApp Cloud API module
-  "GET /v1/whatsapp/settings": ["whatsapp.manage"],
+  "GET /v1/whatsapp/settings": ["whatsapp.use", "whatsapp.manage"],
   "PUT /v1/whatsapp/settings": ["whatsapp.manage"],
   "DELETE /v1/whatsapp/settings": ["whatsapp.manage"],
   "GET /v1/whatsapp/templates": ["whatsapp.use", "whatsapp.manage"],

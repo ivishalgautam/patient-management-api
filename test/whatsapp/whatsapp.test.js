@@ -121,6 +121,10 @@ describe("settings", () => {
     expect(settings.account).toMatchObject({ display_phone_number: "+91 98100 00000", verified_name: "Smile Dental", has_access_token: true });
     expect(settings.webhook_url).toBe("http://api.test/v1/webhooks/whatsapp");
     expect(JSON.stringify(settings)).not.toContain("good-token");
+    // Staff read it (to know a number is connected) but never see the token.
+    const seen = ok(await staff.get("/v1/whatsapp/settings"));
+    expect(seen.account.has_access_token).toBe(true);
+    expect(JSON.stringify(seen)).not.toContain("good-token");
     const [row] = await query(`SELECT access_token_encrypted FROM whatsapp_accounts`);
     expect(row.access_token_encrypted).not.toContain("good-token");
     // Saving again without a token keeps the stored one.
