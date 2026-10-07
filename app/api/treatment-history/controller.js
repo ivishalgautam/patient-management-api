@@ -3,8 +3,8 @@ import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import slugify from "slugify";
-import { deleteFile } from "../../helpers/file.js";
-import { treatmentHistorySchema } from "../../validation-schemas/treatment.schema.js";
+import { deleteFile } from "../../utils/file-storage.js";
+import { treatmentHistorySchema } from "../../validation-schema/treatment.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
 

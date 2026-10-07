@@ -2,15 +2,15 @@
 
 import { beginTransaction } from "../../db/transaction.js";
 import table from "../../db/models.js";
-import { cleanupFiles } from "../../helpers/cleanup-files.js";
+import { cleanupFiles } from "../../utils/file-storage.js";
 import { credentialGenerator } from "../../helpers/credential-generator.js";
 import hash from "../../lib/encryption/index.js";
 import authToken from "../../helpers/auth.js";
 import { resolvePracticeForPatient } from "../../lib/practice.js";
 import { can } from "../../lib/permissions.js";
 import { PERMISSION_KEYS } from "../../lib/constants/permissions.js";
-import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
-import { userSchema } from "../../validation-schemas/user.schema.js";
+import { doctorSchema } from "../../validation-schema/doctor.schema.js";
+import { userSchema } from "../../validation-schema/user.schema.js";
 
 // Editing or deleting another user: patients need the patient permission,
 // staff/doctors need users.manage. Your own account is always editable.
@@ -345,12 +345,6 @@ const getMyPatients = async (req, res) => {
   });
 };
 
-const getMyStaff = async (req, res) => {
-  res.send({
-    status: true,
-    data: await table.ClinicStaffMapModel.get(req),
-  });
-};
 
 export default {
   create: create,
@@ -364,6 +358,5 @@ export default {
   resetPassword: resetPassword,
   updateStatus: updateStatus,
   getMyPatients: getMyPatients,
-  getMyStaff: getMyStaff,
   getPatientById: getPatientById,
 };

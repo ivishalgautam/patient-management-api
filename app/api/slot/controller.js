@@ -5,7 +5,7 @@ import table from "../../db/models.js";
 import {
   createSlotSchema,
   updateSlotSchema,
-} from "../../validation-schemas/slot.schema.js";
+} from "../../validation-schema/slot.schema.js";
 import { createSlots } from "../../helpers/slot.js";
 
 const { NOT_FOUND } = constants.http.status;

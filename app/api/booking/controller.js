@@ -2,7 +2,7 @@
 import { beginTransaction } from "../../db/transaction.js";
 import table from "../../db/models.js";
 import { createBooking, notifyBookingConfirmed } from "./service.js";
-import { bookingSchema } from "../../validation-schemas/booking.schema.js";
+import { bookingSchema } from "../../validation-schema/booking.schema.js";
 
 const create = async (req, res) => {
   const data = bookingSchema.parse(req.body);

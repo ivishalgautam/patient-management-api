@@ -4,7 +4,7 @@ import {
   uploadFiles,
   getFile,
   resolvePublicPath,
-} from "../../helpers/file.js";
+} from "../../utils/file-storage.js";
 
 const upload = async (req, res) => {
   let { path } = await uploadFiles(req);

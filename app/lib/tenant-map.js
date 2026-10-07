@@ -46,7 +46,6 @@ export const TENANT_MAP = {
   "POST /v1/users": [c("clinic", "body.clinic_id"), c("doctor", "body.doctor_id")],
   "GET /v1/users/me": "global",
   "GET /v1/users/patients": "list",
-  "GET /v1/users/staff": "list",
   "GET /v1/users/:id": byId("user"),
   "PUT /v1/users/:id": byId("user"),
   "DELETE /v1/users/:id": byId("user"),

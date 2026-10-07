@@ -4,10 +4,10 @@ import { beginTransaction } from "../../db/transaction.js";
 import hash from "../../lib/encryption/index.js";
 import table from "../../db/models.js";
 import authToken from "../../helpers/auth.js";
-import { userSchema } from "../../validation-schemas/user.schema.js";
-import { patientSchema } from "../../validation-schemas/patient.schema.js";
-import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
-import { loginSchema } from "../../validation-schemas/login.schema.js";
+import { userSchema } from "../../validation-schema/user.schema.js";
+import { patientSchema } from "../../validation-schema/patient.schema.js";
+import { doctorSchema } from "../../validation-schema/doctor.schema.js";
+import { loginSchema } from "../../validation-schema/login.schema.js";
 import { credentialGenerator } from "../../helpers/credential-generator.js";
 import { resolvePracticeForPatient } from "../../lib/practice.js";
 

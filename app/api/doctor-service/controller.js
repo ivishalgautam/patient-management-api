@@ -1,7 +1,7 @@
 "use strict";
 import { beginTransaction } from "../../db/transaction.js";
 import table from "../../db/models.js";
-import { doctorServiceSchema } from "../../validation-schemas/doctor-service.schema.js";
+import { doctorServiceSchema } from "../../validation-schema/doctor-service.schema.js";
 
 const create = async (req, res) => {
   const transaction = await beginTransaction(req);

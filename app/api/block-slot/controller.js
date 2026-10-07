@@ -3,7 +3,7 @@ import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { createSlots } from "../../helpers/slot.js";
-import { blockSlotSchema } from "../../validation-schemas/block-slot.schema.js";
+import { blockSlotSchema } from "../../validation-schema/block-slot.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
 

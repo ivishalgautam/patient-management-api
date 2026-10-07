@@ -1,6 +1,6 @@
 "use strict";
 import { ZodError } from "zod";
-import { cleanupFiles } from "../helpers/cleanup-files.js";
+import { cleanupFiles } from "./file-storage.js";
 
 const REASONS = {
   400: "Bad Request",

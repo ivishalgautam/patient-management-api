@@ -174,10 +174,6 @@ describe("known defects", () => {
     expect(rows).toHaveLength(1);
   });
 
-  it.fails("dead route GET /users/staff responds without a server error", async () => {
-    const res = await api(app, p.doctor.token).get("/v1/users/staff");
-    expect(res.statusCode).toBeLessThan(500);
-  });
 
   it("#21 fixed: GET /treatment-payments is patient self-service (403 for staff roles)", async () => {
     const res = await api(app, p.doctor.token).get(`/v1/treatment-payments`);

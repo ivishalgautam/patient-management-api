@@ -5,9 +5,9 @@ import table from "../../db/models.js";
 import {
   documentDoctorSchema,
   documentPatientSchema,
-} from "../../validation-schemas/treatment.schema.js";
+} from "../../validation-schema/treatment.schema.js";
 import { getItemsToDelete } from "../../helpers/filter.js";
-import { cleanupFiles } from "../../helpers/cleanup-files.js";
+import { cleanupFiles } from "../../utils/file-storage.js";
 
 const { NOT_FOUND } = constants.http.status;
 

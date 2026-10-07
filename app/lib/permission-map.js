@@ -39,7 +39,6 @@ export const PERMISSION_MAP = {
   "GET /v1/users": ["users.view"],
   "POST /v1/users": ["users.manage", "patients.create"],
   "GET /v1/users/patients": ["patients.view"],
-  "GET /v1/users/staff": ["users.view"],
   "GET /v1/users/:id": ["users.view", "patients.view", SELF],
   "PUT /v1/users/:id": ["users.manage", "patients.edit", SELF],
   "DELETE /v1/users/:id": ["users.manage", "patients.delete"],

@@ -1,7 +1,6 @@
 "use strict";
 
 import controller from "./controller.js";
-import { requireRole } from "../../lib/middlewares/require-role.js";
 
 export default async function routes(fastify, options) {
   fastify.post("/", {}, controller.create);
@@ -9,7 +8,7 @@ export default async function routes(fastify, options) {
   fastify.put("/:id", {}, controller.update);
   fastify.put(
     "/status/:id",
-    { preHandler: requireRole("admin", "doctor") },
+    {},
     controller.updateStatus,
   );
   fastify.get("/me", {}, controller.getUser);
@@ -17,11 +16,10 @@ export default async function routes(fastify, options) {
   fastify.get("/:id", {}, controller.getById);
   fastify.get("/:id/patient-details", {}, controller.getPatientById);
   fastify.get("/patients", {}, controller.getMyPatients);
-  fastify.get("/staff", {}, controller.getMyStaff);
 
   fastify.delete(
     "/:id",
-    { preHandler: requireRole("admin", "doctor") },
+    {},
     controller.deleteById,
   );
 }

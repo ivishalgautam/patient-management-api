@@ -20,7 +20,7 @@ import investigationRoutes from "../../api/investigation/routes.js";
 import treatmentPaymentRoutes from "../../api/treatment-payment/routes.js";
 import patientRoutes, {
   patientImportRoutes,
-} from "../../api/patients/routes.js";
+} from "../../api/patient/routes.js";
 import { serviceImportRoutes } from "../../api/service/routes.js";
 import reportRoutes from "../../api/report/routes.js";
 import staffRoutes from "../../api/staff/routes.js";

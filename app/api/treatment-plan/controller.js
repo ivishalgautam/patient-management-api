@@ -2,7 +2,7 @@
 import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import { treatmentPlanSchema } from "../../validation-schemas/treatment.schema.js";
+import { treatmentPlanSchema } from "../../validation-schema/treatment.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
 

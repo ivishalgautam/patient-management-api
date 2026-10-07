@@ -2,8 +2,8 @@
 import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import { comprehensiveExaminationSchema } from "../../validation-schemas/comprehensive-examination.schema.js";
-import { cleanupFiles } from "../../helpers/cleanup-files.js";
+import { comprehensiveExaminationSchema } from "../../validation-schema/comprehensive-examination.schema.js";
+import { cleanupFiles } from "../../utils/file-storage.js";
 import { getItemsToDelete } from "../../helpers/filter.js";
 
 const { NOT_FOUND } = constants.http.status;

@@ -3,8 +3,8 @@ import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import slugify from "slugify";
-import { deleteFile } from "../../helpers/file.js";
-import { serviceSchema } from "../../validation-schemas/service.schema.js";
+import { deleteFile } from "../../utils/file-storage.js";
+import { serviceSchema } from "../../validation-schema/service.schema.js";
 import { handleExcelImport } from "../../utils/import-excel.js";
 import config from "../../config/index.js";
 

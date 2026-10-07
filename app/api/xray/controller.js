@@ -2,8 +2,8 @@
 import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import { xraySchema } from "../../validation-schemas/treatment.schema.js";
-import { cleanupFiles } from "../../helpers/cleanup-files.js";
+import { xraySchema } from "../../validation-schema/treatment.schema.js";
+import { cleanupFiles } from "../../utils/file-storage.js";
 
 const { NOT_FOUND } = constants.http.status;
 

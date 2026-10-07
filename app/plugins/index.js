@@ -7,14 +7,13 @@ import security from "./security.js";
 import cors from "./cors.js";
 import staticFiles from "./static.js";
 import multipart from "./multipart.js";
-import view from "./view.js";
 import scheduler from "./scheduler.js";
 import queue from "./queue.js";
 import healthRoutes from "./health.js";
 import routes from "../routes/v1/index.js";
 import publicRoutes from "../routes/v1/public.js";
 import authRoutes from "../api/auth/routes.js";
-import uploadFileRoutes from "../api/upload_files/routes.js";
+import uploadFileRoutes from "../api/upload-file/routes.js";
 
 export default async function registerPlugins(
   app,
@@ -28,7 +27,6 @@ export default async function registerPlugins(
   await app.register(cors);
   await app.register(staticFiles);
   await app.register(multipart);
-  await app.register(view);
   await app.register(pg_database);
   await app.register(scheduler, { enableCron });
   await app.register(queue, { enableWorkers });
