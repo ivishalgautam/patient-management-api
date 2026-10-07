@@ -32,6 +32,10 @@ import documentRoutes from "../../api/document/routes.js";
 import ledgerRoutes from "../../api/ledger/routes.js";
 import visitRoutes from "../../api/treatment-visit/routes.js";
 import jobRoutes from "../../api/job/routes.js";
+import pipelineRoutes from "../../api/pipeline/routes.js";
+import pipelineStageRoutes from "../../api/pipeline-stage/routes.js";
+import customFieldRoutes from "../../api/custom-field/routes.js";
+import tagRoutes from "../../api/tag/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
@@ -78,4 +82,10 @@ export default async function routes(fastify, options) {
   fastify.register(ledgerRoutes, { prefix: "ledgers" });
   fastify.register(visitRoutes, { prefix: "treatment-visits" });
   fastify.register(jobRoutes, { prefix: "jobs" });
+
+  // leads module
+  fastify.register(pipelineRoutes, { prefix: "pipelines" });
+  fastify.register(pipelineStageRoutes, { prefix: "pipeline-stages" });
+  fastify.register(customFieldRoutes, { prefix: "custom-fields" });
+  fastify.register(tagRoutes, { prefix: "tags" });
 }

@@ -153,6 +153,13 @@ beforeAll(async () => {
       { d: A.doctor.doctor.id, s: A.service.id },
     )
   ).id;
+  // Leads configuration rows (defaults are created on first read).
+  const pipelinesRes = await asA.get("/v1/pipelines");
+  const [pipeline] = pipelinesRes.json().data;
+  ids.pipeline = pipeline.id;
+  ids.pipeline_stage = pipeline.stages[0].id;
+  ids.custom_field = (await asA.get("/v1/custom-fields")).json().data[0].id;
+  ids.tag = (await asA.post("/v1/tags", { name: "Fixture" })).json().data.id;
   Object.assign(ids, {
     clinic: A.clinic.id,
     patient: A.patient.id,

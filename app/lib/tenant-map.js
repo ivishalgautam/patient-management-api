@@ -183,6 +183,29 @@ export const TENANT_MAP = {
   // background jobs (controller filters by practiceId in the job data)
   "GET /v1/jobs/failed": "list",
   "POST /v1/jobs/:id/retry": "list",
+
+  // leads: configuration (services also filter by practice)
+  "GET /v1/pipelines": "list",
+  "POST /v1/pipelines": [c("clinic", "body.clinic_id")],
+  "GET /v1/pipelines/:id": byId("pipeline"),
+  "PUT /v1/pipelines/:id": [c("pipeline", "params.id"), c("clinic", "body.clinic_id")],
+  "DELETE /v1/pipelines/:id": byId("pipeline"),
+  "POST /v1/pipelines/:id/default": byId("pipeline"),
+  "POST /v1/pipelines/:id/archive": byId("pipeline"),
+  "POST /v1/pipelines/:id/unarchive": byId("pipeline"),
+  "PUT /v1/pipelines/:id/members": byId("pipeline"),
+  "POST /v1/pipelines/:id/stages": byId("pipeline"),
+  "PUT /v1/pipelines/:id/stages/reorder": byId("pipeline"),
+  "PUT /v1/pipeline-stages/:id": byId("pipeline_stage"),
+  "DELETE /v1/pipeline-stages/:id": byId("pipeline_stage"),
+  "GET /v1/custom-fields": "list",
+  "POST /v1/custom-fields": "list",
+  "PUT /v1/custom-fields/:id": byId("custom_field"),
+  "POST /v1/custom-fields/:id/archive": byId("custom_field"),
+  "POST /v1/custom-fields/:id/unarchive": byId("custom_field"),
+  "GET /v1/tags": "list",
+  "POST /v1/tags": "list",
+  "DELETE /v1/tags/:id": byId("tag"),
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.
@@ -219,4 +242,8 @@ export const RESOURCES = {
   treatment_history: viaTreatment("treatment_histories"),
   investigation: viaTreatment("investigations"),
   xray: viaTreatment("xrays"),
+  pipeline: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM pipelines WHERE id = :id`,
+  pipeline_stage: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM pipeline_stages WHERE id = :id`,
+  custom_field: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM custom_fields WHERE id = :id`,
+  tag: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM tags WHERE id = :id`,
 };

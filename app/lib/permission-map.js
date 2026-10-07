@@ -169,4 +169,27 @@ export const PERMISSION_MAP = {
   // background jobs
   "GET /v1/jobs/failed": ["jobs.manage"],
   "POST /v1/jobs/:id/retry": ["jobs.manage"],
+
+  // leads: configuration
+  "GET /v1/pipelines": ["leads.view", "pipelines.manage"],
+  "POST /v1/pipelines": ["pipelines.manage"],
+  "GET /v1/pipelines/:id": ["leads.view", "pipelines.manage"],
+  "PUT /v1/pipelines/:id": ["pipelines.manage"],
+  "DELETE /v1/pipelines/:id": ["pipelines.manage"],
+  "POST /v1/pipelines/:id/default": ["pipelines.manage"],
+  "POST /v1/pipelines/:id/archive": ["pipelines.manage"],
+  "POST /v1/pipelines/:id/unarchive": ["pipelines.manage"],
+  "PUT /v1/pipelines/:id/members": ["pipelines.manage"],
+  "POST /v1/pipelines/:id/stages": ["pipelines.manage"],
+  "PUT /v1/pipelines/:id/stages/reorder": ["pipelines.manage"],
+  "PUT /v1/pipeline-stages/:id": ["pipelines.manage"],
+  "DELETE /v1/pipeline-stages/:id": ["pipelines.manage"],
+  "GET /v1/custom-fields": ["leads.view", "custom_fields.manage", "forms.manage"],
+  "POST /v1/custom-fields": ["custom_fields.manage"],
+  "PUT /v1/custom-fields/:id": ["custom_fields.manage"],
+  "POST /v1/custom-fields/:id/archive": ["custom_fields.manage"],
+  "POST /v1/custom-fields/:id/unarchive": ["custom_fields.manage"],
+  "GET /v1/tags": ["leads.view"],
+  "POST /v1/tags": ["leads.edit"],
+  "DELETE /v1/tags/:id": ["leads.edit"],
 };
