@@ -185,6 +185,26 @@ beforeAll(async () => {
       default_stage_id: ids.pipeline_stage,
     })
   ).json().data.id;
+  // WhatsApp records (no Meta account needed for access checks).
+  const practiceOf = `(SELECT practice_id FROM clinics WHERE id = :c)`;
+  ids.whatsapp_template = (
+    await one(
+      `INSERT INTO whatsapp_templates (practice_id, name, category, status, components)
+       VALUES (${practiceOf}, 'fixture_tpl', 'UTILITY', 'APPROVED', '[{"type":"BODY","text":"hi"}]') RETURNING id`,
+      { c: A.clinic.id },
+    )
+  ).id;
+  ids.whatsapp_conversation = (
+    await one(`INSERT INTO whatsapp_conversations (practice_id, phone) VALUES (${practiceOf}, '919800000001') RETURNING id`, {
+      c: A.clinic.id,
+    })
+  ).id;
+  ids.whatsapp_campaign = (
+    await one(
+      `INSERT INTO whatsapp_campaigns (practice_id, name, template_id) VALUES (${practiceOf}, 'Fixture', :t) RETURNING id`,
+      { c: A.clinic.id, t: ids.whatsapp_template },
+    )
+  ).id;
   Object.assign(ids, {
     clinic: A.clinic.id,
     patient: A.patient.id,

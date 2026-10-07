@@ -4,6 +4,7 @@ import { servicePublicRoutes } from "../../api/service/routes.js";
 import { publicFormRoutes } from "../../api/form/routes.js";
 import { integrationPublicRoutes } from "../../api/integration/routes.js";
 import webhookRoutes from "../../api/webhook/routes.js";
+import { whatsappWebhookRoutes } from "../../api/whatsapp/routes.js";
 
 export default async function publcRoutes(fastify, opt) {
   fastify.register(bannerPublicRoutes, { prefix: "banners" });
@@ -12,4 +13,5 @@ export default async function publcRoutes(fastify, opt) {
   fastify.register(publicFormRoutes, { prefix: "public/forms" });
   fastify.register(integrationPublicRoutes, { prefix: "integrations" });
   fastify.register(webhookRoutes, { prefix: "webhooks" });
+  fastify.register(whatsappWebhookRoutes, { prefix: "webhooks/whatsapp" });
 }

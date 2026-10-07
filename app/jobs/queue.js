@@ -16,6 +16,7 @@ export const QUEUES = {
   PAYLOAD_PURGE: "integrations.purge-payloads",
   LEADS_IMPORT: "leads.import",
   LEADS_FOLLOW_UP_REMINDERS: "leads.follow-up-reminders",
+  WHATSAPP_CAMPAIGN: "whatsapp-cloud.campaign",
 };
 
 // Retry policy per queue.
@@ -29,6 +30,7 @@ const QUEUE_OPTIONS = {
   [QUEUES.PAYLOAD_PURGE]: { retryLimit: 1 },
   [QUEUES.LEADS_IMPORT]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
   [QUEUES.LEADS_FOLLOW_UP_REMINDERS]: { retryLimit: 0 },
+  [QUEUES.WHATSAPP_CAMPAIGN]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
 };
 
 export function getBoss() {

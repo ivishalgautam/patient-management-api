@@ -18,11 +18,13 @@ export const pipelineCreate = z.object({
   name: z.string().trim().min(1).max(120),
   clinic_id: z.string().uuid().nullable().optional(),
   stages: z.array(stageInput).min(1).max(30).optional(),
+  lost_reasons: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
 });
 
 export const pipelineUpdate = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   clinic_id: z.string().uuid().nullable().optional(),
+  lost_reasons: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
 });
 
 export const reorderInput = z.object({ stage_ids: z.array(z.string().uuid()).min(1) });

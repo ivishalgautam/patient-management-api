@@ -44,6 +44,7 @@ import leadImportRoutes from "../../api/lead-import/routes.js";
 import practiceFeatureRoutes from "../../api/practice-feature/routes.js";
 import roleRoutes from "../../api/role/routes.js";
 import notificationRoutes from "../../api/notification/routes.js";
+import whatsappRoutes from "../../api/whatsapp/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
@@ -104,4 +105,5 @@ export default async function routes(fastify, options) {
   fastify.register(practiceFeatureRoutes, { prefix: "practice-features" });
   fastify.register(roleRoutes, { prefix: "roles" });
   fastify.register(notificationRoutes, { prefix: "notifications" });
+  fastify.register(whatsappRoutes, { prefix: "whatsapp" });
 }

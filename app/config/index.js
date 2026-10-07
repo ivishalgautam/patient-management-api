@@ -78,6 +78,10 @@ const envSchema = z.object({
   FACEBOOK_APP_ID: optional,
   FACEBOOK_APP_SECRET: optional,
   FACEBOOK_WEBHOOK_VERIFY_TOKEN: optional,
+  WHATSAPP_APP_SECRET: optional,
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: optional,
+  WHATSAPP_GRAPH_API_VERSION: z.string().regex(/^v\d+\.\d+$/).optional().default("v23.0"),
+  WHATSAPP_CAMPAIGN_SEND_INTERVAL_MS: z.coerce.number().int().min(0).optional().default(300),
   FACEBOOK_GRAPH_API_VERSION: z.string().regex(/^v\d+\.\d+$/).optional().default("v23.0"),
   FB_PULL_SYNC_CRON: z.string().optional().default("*/10 * * * *"),
   PATIENT_PASSWORD_MODE: z.enum(["random", "legacy"]).optional().default("random"),
@@ -173,6 +177,13 @@ const config = Object.freeze({
     import_max_rows: env.LEAD_IMPORT_MAX_ROWS,
     import_sheet_max_bytes: Math.round(env.LEAD_IMPORT_SHEET_MAX_MB * 1024 * 1024),
     oauth_state_secret: `oauth-state:${env.JWT_SECRET}`,
+  },
+  // WhatsApp Cloud API (per-practice numbers live in whatsapp_accounts).
+  whatsapp_cloud: {
+    app_secret: env.WHATSAPP_APP_SECRET || env.FACEBOOK_APP_SECRET,
+    webhook_verify_token: env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
+    graph_version: env.WHATSAPP_GRAPH_API_VERSION,
+    campaign_send_interval_ms: env.WHATSAPP_CAMPAIGN_SEND_INTERVAL_MS,
   },
   facebook: {
     app_id: env.FACEBOOK_APP_ID,

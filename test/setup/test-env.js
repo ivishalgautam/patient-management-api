@@ -17,6 +17,9 @@ export function applyTestEnv() {
   process.env.INTEGRATION_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
   process.env.FACEBOOK_APP_ID = "test-app-id";
   process.env.FACEBOOK_APP_SECRET = "test-app-secret";
+  process.env.WHATSAPP_APP_SECRET = "test-wa-secret";
+  process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN = "test-wa-verify";
+  process.env.WHATSAPP_CAMPAIGN_SEND_INTERVAL_MS = "0";
   process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN = "test-verify-token";
   process.env.APP_URL = "http://dashboard.test";
   process.env.API_URL = "http://api.test/v1";

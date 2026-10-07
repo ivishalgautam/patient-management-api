@@ -183,3 +183,17 @@ describe("permissions", () => {
     expect((await staff.post("/v1/custom-fields", { label: "Nope", field_type: "text" })).statusCode).toBe(403);
   });
 });
+
+describe("pipeline lost reasons", () => {
+  it("come with every pipeline and can be edited", async () => {
+    const [first] = (await doctor.get("/v1/pipelines")).json().data;
+    expect(first.lost_reasons).toContain("Too expensive");
+    expect(typeof first.lead_count).toBe("number");
+    const res = await doctor.put(`/v1/pipelines/${first.id}`, { lost_reasons: ["Too far away", "Too expensive"] });
+    expect(res.statusCode).toBe(200);
+    const [after] = (await doctor.get("/v1/pipelines")).json().data;
+    expect(after.lost_reasons).toEqual(["Too far away", "Too expensive"]);
+    const created = (await doctor.post("/v1/pipelines", { name: "Reasons default" })).json().data;
+    expect(created.lost_reasons.length).toBeGreaterThan(3);
+  });
+});

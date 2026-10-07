@@ -7,7 +7,8 @@ import { DEFAULT_PIPELINE, ensureLeadDefaults } from "../../lib/leads/defaults.j
 export async function listPipelines(ctx, { includeArchived = false } = {}) {
   await ensureLeadDefaults(ctx.practiceId);
   const pipelines = await select(
-    `SELECT id, name, clinic_id, is_default, archived_at, created_at
+    `SELECT id, name, clinic_id, is_default, archived_at, created_at, lost_reasons,
+            (SELECT count(*)::int FROM leads l WHERE l.pipeline_id = pipelines.id AND l.deleted_at IS NULL) AS lead_count
        FROM pipelines
       WHERE practice_id = :practiceId ${includeArchived ? "" : "AND archived_at IS NULL"}
       ORDER BY is_default DESC, created_at`,
@@ -81,15 +82,33 @@ async function insertStage(ctx, pipelineId, stage, position, transaction) {
   );
 }
 
+// Offered when a lead is marked lost (BW pipeline exit reasons).
+export const DEFAULT_LOST_REASONS = [
+  "Not interested",
+  "Too expensive",
+  "Chose another clinic",
+  "Not reachable",
+  "Postponed treatment",
+  "Wrong number / false enquiry",
+  "Duplicate",
+];
+
 export async function createPipeline(ctx, input) {
   return withTransaction(async (transaction) => {
     await assertClinic(ctx, input.clinic_id, transaction);
     const stages = input.stages ?? DEFAULT_PIPELINE.stages;
     for (const s of stages) await assertRequiredFields(ctx, s.required_fields, transaction);
     const pipeline = await one(
-      `INSERT INTO pipelines (practice_id, clinic_id, name, created_by)
-       VALUES (:practiceId, :clinicId, :name, :userId) RETURNING *`,
-      { practiceId: ctx.practiceId, clinicId: input.clinic_id ?? null, name: input.name, userId: ctx.userId },
+      `INSERT INTO pipelines (practice_id, clinic_id, name, created_by, lost_reasons)
+       VALUES (:practiceId, :clinicId, :name, :userId, coalesce(:reasons::jsonb, :defaultReasons::jsonb)) RETURNING *`,
+      {
+        practiceId: ctx.practiceId,
+        clinicId: input.clinic_id ?? null,
+        name: input.name,
+        userId: ctx.userId,
+        reasons: input.lost_reasons ? JSON.stringify(input.lost_reasons) : null,
+        defaultReasons: JSON.stringify(DEFAULT_LOST_REASONS),
+      },
       { transaction },
     );
     for (const [i, s] of stages.entries()) await insertStage(ctx, pipeline.id, s, i, transaction);
@@ -103,12 +122,14 @@ export async function updatePipeline(ctx, id, input) {
     `UPDATE pipelines SET
         name = coalesce(:name, name),
         clinic_id = CASE WHEN :setClinic THEN :clinicId::uuid ELSE clinic_id END,
+        lost_reasons = coalesce(:reasons::jsonb, lost_reasons),
         updated_by = :userId, updated_at = now()
       WHERE id = :id AND practice_id = :practiceId RETURNING *`,
     {
       id,
       practiceId: ctx.practiceId,
       name: input.name ?? null,
+      reasons: input.lost_reasons ? JSON.stringify(input.lost_reasons) : null,
       setClinic: "clinic_id" in input,
       clinicId: input.clinic_id ?? null,
       userId: ctx.userId,

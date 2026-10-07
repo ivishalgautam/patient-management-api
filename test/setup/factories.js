@@ -72,6 +72,7 @@ export function api(app, token) {
     get: call("GET"),
     post: call("POST"),
     put: call("PUT"),
+    patch: call("PATCH"),
     delete: call("DELETE"),
   };
 }

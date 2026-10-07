@@ -39,6 +39,8 @@ export const PERMISSIONS = {
   "forms.manage": "Build lead forms",
   "custom_fields.manage": "Manage custom fields",
   "integrations.manage": "Connect and manage lead integrations",
+  "whatsapp.use": "Use the WhatsApp inbox and message leads",
+  "whatsapp.manage": "WhatsApp settings, templates and campaigns",
   // Patients: their own records only (tenant guard enforces ownership).
   "self.records": "Patient self-service: own bookings, treatments, payments, documents",
 };
@@ -60,6 +62,7 @@ export const PERMISSION_GROUPS = [
   ["Clinical", "treatments."],
   ["Billing & reports", ["billing.", "reports."]],
   ["Leads", ["leads.", "pipelines.", "forms.", "custom_fields.", "integrations."]],
+  ["WhatsApp", "whatsapp."],
   ["Administration", ["roles.", "jobs.", "catalogue.", "self."]],
 ];
 
@@ -83,6 +86,7 @@ export const SYSTEM_ROLE_PERMISSIONS = {
     "leads.create",
     "leads.edit",
     "leads.convert",
+    "whatsapp.use",
   ],
   patient: ["self.records"],
 };
