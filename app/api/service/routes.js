@@ -1,6 +1,7 @@
 "use strict";
 
 import controller from "./controller.js";
+import { requireRole } from "../../lib/middlewares/require-role.js";
 
 export default async function routes(fastify, opt) {
   fastify.post("/", {}, controller.create);
@@ -13,5 +14,12 @@ export default async function routes(fastify, opt) {
 export async function servicePublicRoutes(fastify, opts) {
   fastify.get("/", {}, controller.get);
   fastify.get("/getByProcedureId/:id", {}, controller.getByProcedureId);
-  fastify.post("/import", {}, controller.importServices);
+}
+
+export async function serviceImportRoutes(fastify, opts) {
+  fastify.post(
+    "/import",
+    { preHandler: requireRole("admin", "doctor") },
+    controller.importServices,
+  );
 }

@@ -26,7 +26,7 @@ const verifyToken = async (req, res) => {
   const authHeader = req.headers["authorization"];
 
   if (!authHeader) {
-    res.code(401).send({ message: "unauthorized!" });
+    return res.code(401).send({ message: "unauthorized!" });
   }
 
   const token = authHeader.split(" ")[1];
@@ -38,6 +38,9 @@ const verifyToken = async (req, res) => {
   try {
     const decoded = jwt.verify(token, config.jwt_secret);
     const userData = await table.UserModel.getByUsername(req, decoded);
+    if (!userData || !userData.is_active) {
+      return res.code(401).send({ message: "Invalid token or token expired" });
+    }
 
     req.user_data = userData;
     req.decoded = decoded;

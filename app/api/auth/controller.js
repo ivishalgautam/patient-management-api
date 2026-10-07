@@ -53,11 +53,20 @@ const createNewUser = async (req, res) => {
 
   try {
     const validateUserData = userSchema.parse(req.body);
+    // Public self-registration may only create patients.
+    if (validateUserData.role !== "patient") {
+      await transaction.rollback();
+      return res.code(403).send({
+        status: false,
+        message: "Only patients can self-register.",
+      });
+    }
+
     if (validateUserData.role === "patient") {
       const currPatientCount = await table.PatientSequenceModel.get();
+      const patientNumber = currPatientCount.value + 1;
       await table.PatientSequenceModel.update(patientNumber, { transaction });
 
-      const patientNumber = currPatientCount.value + 1;
       const { username, password } = credentialGenerator(
         patientNumber,
         validateUserData.fullname,

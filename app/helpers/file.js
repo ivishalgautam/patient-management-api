@@ -1,11 +1,8 @@
 import path from "path";
 import fs from "fs";
 import pump from "pump";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
 
 import constants from "../lib/constants/index.js";
-import { ErrorHandler } from "./error-handler.js";
 const { imageMime, videoMime, docsMime } = constants.mime;
 
 function bytesToMB(bytes) {
@@ -46,23 +43,27 @@ export const uploadFiles = async (req, isFileUpload = false) => {
   return { path, body };
 };
 
+// Uploaded files live under <cwd>/public. Any path that resolves outside
+// that folder (e.g. "../../.env") is rejected.
+const PUBLIC_ROOT = path.resolve("public");
+
+export const resolvePublicPath = (filePath) => {
+  if (!filePath || typeof filePath !== "string") return null;
+  const resolved = path.resolve(filePath);
+  const relative = path.relative(PUBLIC_ROOT, resolved);
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+    return null;
+  }
+  return resolved;
+};
+
 export const getFile = async (req, res) => {
-  if (!req.query || !req.query.file_path) {
-    return ErrorHandler({
-      code: 404,
-      message: "file_path is required parameter",
-    });
+  const publicPath = resolvePublicPath(req.query?.file_path);
+  if (!publicPath || !fs.existsSync(publicPath)) {
+    return res.code(404).send({ status: false, message: "File not found." });
   }
 
-  const currentFilePath = fileURLToPath(import.meta.url);
-  const currentDirPath = dirname(currentFilePath);
-  const publicPath = path.join(currentDirPath, "../../", req.query.file_path);
-
-  if (!fs.existsSync(publicPath)) {
-    return ErrorHandler({ code: 500, message: "file not found" });
-  }
-
-  let mime = req.query.file_path.split(".").pop();
+  let mime = req.query.file_path.split(".").pop().toLowerCase();
   if (["jpeg", "jpg", "png", "gif", "webp"].includes(mime)) {
     if (mime === "jpg") {
       res.type(`image/jpeg`);
@@ -90,19 +91,21 @@ export const getFile = async (req, res) => {
     res.type("application/msword");
   }
 
-  const filePath = fs.readFileSync(publicPath);
-
-  return filePath;
+  return fs.readFileSync(publicPath);
 };
 
 export const deleteFile = async (filePath) => {
-  const fullPath = path.resolve(filePath);
+  const fullPath = resolvePublicPath(filePath);
+  if (!fullPath) {
+    console.error(`Refusing to delete file outside public/: ${filePath}`);
+    return false;
+  }
 
   try {
     await fs.promises.unlink(fullPath);
-    console.log(`File deleted: ${filePath}`);
+    return true;
   } catch (err) {
-    console.error(`Failed to delete file: ${filePath}`, err);
-    // throw err;
+    console.error(`Failed to delete file: ${filePath}`, err.message);
+    return false;
   }
 };
