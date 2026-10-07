@@ -1,4 +1,5 @@
 import { sequelize } from "../../app/db/postgres.js";
+import { seedSystemRoles } from "../../app/lib/seed-system-roles.js";
 
 // Empties every table so each test file starts from a known state.
 export async function resetDb() {
@@ -14,6 +15,7 @@ export async function resetDb() {
     `INSERT INTO patient_sequences (id, value, created_at, updated_at)
      VALUES ('patient', 0, now(), now()) ON CONFLICT (id) DO NOTHING`,
   );
+  await seedSystemRoles(sequelize);
 }
 
 export const query = (sql, replacements = {}) =>

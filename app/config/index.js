@@ -45,6 +45,12 @@ const envSchema = z.object({
   // Tokens issued before the revamp (full user object in the payload) are
   // accepted until this ISO date. Empty = not accepted.
   LEGACY_TOKEN_GRACE_UNTIL: z.string().optional().default(""),
+  // false = log permission denials instead of blocking (rollback switch).
+  PERMISSIONS_ENFORCE: z
+    .enum(["true", "false"])
+    .optional()
+    .default("true")
+    .transform((v) => v === "true"),
   PATIENT_PASSWORD_MODE: z.enum(["random", "legacy"]).optional().default("random"),
 
   // Empty = allow any origin (pre-revamp behaviour); a warning is logged.
@@ -118,6 +124,7 @@ const config = Object.freeze({
     ? new Date(env.LEGACY_TOKEN_GRACE_UNTIL)
     : null,
   patient_password_mode: env.PATIENT_PASSWORD_MODE,
+  permissions_enforce: env.PERMISSIONS_ENFORCE,
 
   // http
   allowed_origins: env.ALLOWED_ORIGINS,

@@ -108,6 +108,10 @@ const init = async (sequelize) => {
         type: DataTypes.UUID,
         allowNull: true,
       },
+      role_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
     },
     {
       createdAt: "created_at",

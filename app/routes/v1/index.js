@@ -1,5 +1,6 @@
 import jwtVerify from "../../helpers/auth.js";
 import { tenantGuard } from "../../middlewares/tenant-guard.js";
+import { permissionGuard } from "../../middlewares/permission-guard.js";
 import userRoutes from "../../api/users/routes.js";
 import procedureRoutes from "../../api/procedure/routes.js";
 import serviceRoutes from "../../api/service/routes.js";
@@ -33,10 +34,10 @@ import visitRoutes from "../../api/treatment-visit/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
-  // Practice scoping runs last, after route preHandlers (e.g. multipart
+  // Permission check, then practice scoping, run last, after route preHandlers (e.g. multipart
   // parsing) so body ids can be checked too. See lib/tenant-map.js.
   fastify.addHook("onRoute", (route) => {
-    route.preHandler = [].concat(route.preHandler ?? [], tenantGuard);
+    route.preHandler = [].concat(route.preHandler ?? [], permissionGuard, tenantGuard);
   });
   // fastify.addHook("onSend", async (request, reply, payload) => {
   //   console.log({ response: payload }, "Response payload");

@@ -7,9 +7,17 @@ import { credentialGenerator } from "../../helpers/credential-generator.js";
 import hash from "../../lib/encryption/index.js";
 import authToken from "../../helpers/auth.js";
 import { resolvePracticeForPatient } from "../../lib/practice.js";
+import { can } from "../../lib/permissions.js";
+import { PERMISSION_KEYS } from "../../lib/constants/permissions.js";
 import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
 import { patientSchema } from "../../validation-schemas/patient.schema.js";
 import { userSchema } from "../../validation-schemas/user.schema.js";
+
+// Editing or deleting another user: patients need the patient permission,
+// staff/doctors need users.manage. Your own account is always editable.
+const mayManageUser = (ctx, target, patientPermission) =>
+  target.id === ctx.userId ||
+  can(ctx, target.role === "patient" ? patientPermission : "users.manage");
 
 // Which roles each caller role may create.
 const CREATABLE_ROLES = {
@@ -22,7 +30,8 @@ const CREATABLE_ROLES = {
 const create = async (req, res) => {
   const { role } = req.user_data;
   const validateUserData = userSchema.parse(req.body);
-  if (!CREATABLE_ROLES[role]?.includes(validateUserData.role)) {
+  const needed = validateUserData.role === "patient" ? "patients.create" : "users.manage";
+  if (!CREATABLE_ROLES[role]?.includes(validateUserData.role) || !can(req.ctx, needed)) {
     return res.code(403).send({
       status: false,
       message: "You don't have permission to create this type of user.",
@@ -122,9 +131,17 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const record = await table.UserModel.getByPk(req);
+    const record = await table.UserModel.findAuthUserById(req.params.id);
     if (!record) {
+      await transaction.rollback();
       return res.code(404).send({ status: false, message: "User not exists" });
+    }
+    if (!mayManageUser(req.ctx, record, "patients.edit")) {
+      await transaction.rollback();
+      return res.code(403).send({
+        status: false,
+        message: "You don't have permission to edit this user.",
+      });
     }
 
     const user = await table.UserModel.update(req, 0, { transaction });
@@ -184,6 +201,13 @@ const deleteById = async (req, res) => {
     if (!record) {
       await transaction.rollback();
       return res.code(404).send({ status: false, message: "User not exists" });
+    }
+    if (record.id === req.ctx.userId || !mayManageUser(req.ctx, record, "patients.delete")) {
+      await transaction.rollback();
+      return res.code(403).send({
+        status: false,
+        message: "You don't have permission to delete this user.",
+      });
     }
     if (record.avatar) filesToDelete.push(record.avatar);
     const role = record.role;
@@ -317,7 +341,10 @@ const getUser = async (req, res) => {
     return res.code(401).send({ status: false, message: "invalid token" });
   }
 
-  return res.send(authToken.sanitizeUser(req.user_data));
+  return res.send({
+    ...authToken.sanitizeUser(req.user_data),
+    permissions: req.ctx.isPlatformAdmin ? PERMISSION_KEYS : req.ctx.permissions,
+  });
 };
 
 const resetPassword = async (req, res) => {

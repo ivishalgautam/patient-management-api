@@ -179,8 +179,8 @@ describe("known defects", () => {
     expect(res.statusCode).toBeLessThan(500);
   });
 
-  it.fails("#21 GET /treatment-payments does not crash for a non-patient", async () => {
+  it("#21 fixed: GET /treatment-payments is patient self-service (403 for staff roles)", async () => {
     const res = await api(app, p.doctor.token).get(`/v1/treatment-payments`);
-    expect(res.statusCode).toBeLessThan(500);
+    expect(res.statusCode).toBe(403);
   });
 });
