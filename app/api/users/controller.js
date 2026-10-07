@@ -10,7 +10,6 @@ import { resolvePracticeForPatient } from "../../lib/practice.js";
 import { can } from "../../lib/permissions.js";
 import { PERMISSION_KEYS } from "../../lib/constants/permissions.js";
 import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
-import { patientSchema } from "../../validation-schemas/patient.schema.js";
 import { userSchema } from "../../validation-schemas/user.schema.js";
 
 // Editing or deleting another user: patients need the patient permission,
@@ -150,12 +149,12 @@ const update = async (req, res) => {
 
     const user = await table.UserModel.update(req, 0, { transaction });
     if (user.role === "doctor") {
-      const doctor = await table.DoctorModel.updateByUserId(req, user.id, {
+      await table.DoctorModel.updateByUserId(req, user.id, {
         transaction,
       });
     }
     if (user.role === "patient") {
-      const patient = await table.PatientModel.updateByUserId(req, user.id, {
+      await table.PatientModel.updateByUserId(req, user.id, {
         transaction,
       });
     }

@@ -105,7 +105,7 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Treatment visit not found!" });
 
-    const isTreatmentDeleted = await table.TreatmentVisitModel.deleteById(
+    await table.TreatmentVisitModel.deleteById(
       req,
       0,
       {

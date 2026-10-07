@@ -1,6 +1,6 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
-import sequelizeFwk, { Op, QueryTypes } from "sequelize";
+import sequelizeFwk, { QueryTypes } from "sequelize";
 const { DataTypes } = sequelizeFwk;
 
 let BannerModel = null;
@@ -101,7 +101,7 @@ const get = async (req) => {
 };
 
 const update = async (req, id) => {
-  const [rowCount, rows] = await BannerModel.update(
+  const [, rows] = await BannerModel.update(
     {
       url: req.body.url,
       is_featured: req.body.is_featured,

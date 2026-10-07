@@ -100,4 +100,12 @@ describe("clinical records", () => {
     expect(res.statusCode).toBe(200);
     created.push(...res.json().data.files);
   });
+
+  it("updates an x-ray's title (was always 500)", async () => {
+    const [{ id }] = await query(`SELECT id FROM xrays WHERE treatment_id = :t LIMIT 1`, { t: treatmentId });
+    const res = await api(app, p.doctor.token).put(`/v1/x-rays/${id}`, { title: "OPG 2", files: ["public/images/x.png"] });
+    expect(res.statusCode, res.body).toBe(200);
+    const [row] = await query(`SELECT title FROM xrays WHERE id = :id`, { id });
+    expect(row.title).toBe("OPG 2");
+  });
 });

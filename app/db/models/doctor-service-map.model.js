@@ -1,6 +1,6 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
-import { DataTypes, Deferrable, Op, QueryTypes } from "sequelize";
+import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
 let DoctorServiceMapModel = null;
 

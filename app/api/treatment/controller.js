@@ -2,9 +2,6 @@
 import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import slugify from "slugify";
-import { deleteFile } from "../../helpers/file.js";
-import { clinicPatientSchema } from "../../validation-schemas/clinic-patient.schema.js";
 import { treatmentSchema } from "../../validation-schemas/treatment.schema.js";
 
 const { NOT_FOUND } = constants.http.status;

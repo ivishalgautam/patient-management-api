@@ -2,7 +2,6 @@
 import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import { deleteFile } from "../../helpers/file.js";
 import { treatmentPrescriptionSchema } from "../../validation-schemas/treatment.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
@@ -107,8 +106,7 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Treatment prescription not found!" });
 
-    const isTreatmentDeleted =
-      await table.TreatmentPrescriptionModel.deleteById(req, 0, {
+    await table.TreatmentPrescriptionModel.deleteById(req, 0, {
         transaction,
       });
 

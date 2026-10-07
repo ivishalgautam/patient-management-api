@@ -1,7 +1,7 @@
 "use strict";
 import moment from "moment";
 import constants from "../../lib/constants/index.js";
-import { DataTypes, Deferrable, Op, QueryTypes } from "sequelize";
+import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
 let TreatmentPaymentModel = null;
 

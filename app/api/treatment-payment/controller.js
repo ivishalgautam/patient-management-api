@@ -233,7 +233,7 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Treatment payment not found!" });
 
-    const isTreatmentDeleted = await table.TreatmentPaymentModel.deleteById(
+    await table.TreatmentPaymentModel.deleteById(
       req,
       0,
       {

@@ -2,7 +2,6 @@
 import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import { deleteFile } from "../../helpers/file.js";
 import {
   documentDoctorSchema,
   documentPatientSchema,

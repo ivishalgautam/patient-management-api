@@ -1,5 +1,4 @@
 import { z } from "zod";
-import constants from "../lib/constants/index.js";
 
 export const bookingSchema = z.object({
   clinic_id: z.string({ required_error: "Clinic ID is required." }).uuid(),

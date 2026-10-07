@@ -294,7 +294,7 @@ const getByUsername = async (req, record = undefined) => {
 };
 
 const update = async (req, id, { transaction }) => {
-  const [rowCount, rows] = await UserModel.update(
+  const [, rows] = await UserModel.update(
     {
       username: req.body.username,
       fullname: req.body?.fullname,
@@ -395,7 +395,7 @@ const getByUserIds = async (user_ids) => {
 };
 
 const updateStatus = async (id, status) => {
-  const [rowCount, rows] = await UserModel.update(
+  const [, rows] = await UserModel.update(
     {
       is_active: status,
     },

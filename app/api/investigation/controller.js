@@ -103,7 +103,7 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Investigation not found!" });
 
-    const isTreatmentDeleted = await table.InvestigationModel.deleteById(
+    await table.InvestigationModel.deleteById(
       req,
       req.params.id,
       { transaction }

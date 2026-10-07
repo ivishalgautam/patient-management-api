@@ -23,7 +23,7 @@ const init = async (sequelize) => {
 };
 
 const update = async (value, { transaction }) => {
-  const [rowCount, rows] = await PatientSequenceModel.update(
+  const [, rows] = await PatientSequenceModel.update(
     {
       value: value,
     },

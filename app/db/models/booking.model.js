@@ -219,7 +219,6 @@ const getBookingsByClinicId = async (req, id) => {
 
   const q = req.query.q || null;
   const recent = req.query.recent == 1;
-  const today = req.query.today == 1;
   const status = req.query.status || null;
   const startDate = req.query.start_date || null;
   const endDate = req.query.end_date || null;

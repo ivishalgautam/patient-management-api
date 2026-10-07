@@ -121,7 +121,7 @@ const get = async (req) => {
 };
 
 const update = async (req, id) => {
-  const [rowCount, rows] = await ProcedureModel.update(
+  const [, rows] = await ProcedureModel.update(
     {
       name: req.body.name,
       slug: req.body.slug,

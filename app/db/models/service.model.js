@@ -214,7 +214,7 @@ const getByProcedureId = async (req, procedure_id) => {
 };
 
 const update = async (req, id) => {
-  const [rowCount, rows] = await ServiceModel.update(
+  const [, rows] = await ServiceModel.update(
     {
       name: req.body.name,
       image: req.body.image,

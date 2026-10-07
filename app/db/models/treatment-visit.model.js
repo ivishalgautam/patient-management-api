@@ -2,7 +2,7 @@
 import { practiceScope } from "../../helpers/scope.js";
 import moment from "moment";
 import constants from "../../lib/constants/index.js";
-import { DataTypes, Deferrable, Op, QueryTypes } from "sequelize";
+import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
 let TreatmentVisitModel = null;
 
@@ -173,7 +173,6 @@ const getByPatientId = async (req, patientId) => {
   const whereConditions = [`trmnt.patient_id = :patientId`];
   const queryParams = { patientId: req?.params?.id || patientId };
   const q = req.query.q ? req.query.q : null;
-  const method = req.query.method ? req.query.method.split(".") : null;
 
   if (q) {
     whereConditions.push(

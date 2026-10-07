@@ -3,7 +3,6 @@ import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { dentalNoteSchema } from "../../validation-schemas/treatment.schema.js";
-import { z } from "zod";
 
 const { NOT_FOUND } = constants.http.status;
 
@@ -101,7 +100,7 @@ const deleteById = async (req, res) => {
         .code(NOT_FOUND)
         .send({ status: false, message: "Note not found!" });
 
-    const isTreatmentDeleted = await table.NoteModel.deleteById(
+    await table.NoteModel.deleteById(
       req,
       req.params.id,
       { transaction }

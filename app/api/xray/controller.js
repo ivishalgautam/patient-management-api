@@ -3,7 +3,6 @@ import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { xraySchema } from "../../validation-schemas/treatment.schema.js";
-import { deleteFile } from "../../helpers/file.js";
 import { cleanupFiles } from "../../helpers/cleanup-files.js";
 
 const { NOT_FOUND } = constants.http.status;
@@ -39,8 +38,8 @@ const create = async (req, res) => {
   }
 };
 
+// Previously always 500: it read record.filePaths (no such column).
 const updateById = async (req, res) => {
-  const transaction = await beginTransaction(req);
   const record = await table.XrayModel.getByPk(req);
   if (!record) {
     return res
@@ -48,17 +47,9 @@ const updateById = async (req, res) => {
       .send({ status: false, message: "Xray not found!" });
   }
 
-  // Handle document deletion
-  const existingDocuments = record.filePaths;
-  const documentsToDelete = existingDocuments.filter(
-    (doc) => !req.body.filePaths?.includes(doc)
-  );
-
-  // console.log({ existingDocuments, documentsToDelete });
-
   res.send({
     status: true,
-    data: await table.XrayModel.update(req, 0, { transaction }),
+    data: await table.XrayModel.update(req, 0, { transaction: null }),
     message: "Xray updated.",
   });
 };

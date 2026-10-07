@@ -106,10 +106,6 @@ const getSlotsByClinicId = async (req, id) => {
   const limit = req.query?.limit ? Number(req.query.limit) : null;
   const offset = (page - 1) * limit;
 
-  const whereQuery = {
-    clinic_id: req?.params?.id || id,
-  };
-
   const type = req.query?.type;
   if (type) {
     whereConditions.push(`bslt.type = :type`);

@@ -5,10 +5,6 @@ import pump from "pump";
 import constants from "../lib/constants/index.js";
 const { imageMime, videoMime, docsMime } = constants.mime;
 
-function bytesToMB(bytes) {
-  const MB = bytes / 1024;
-  return MB.toFixed(5); // Returns the result rounded to 5 decimal places
-}
 
 export const uploadFiles = async (req, isFileUpload = false) => {
   const path = [];
