@@ -192,4 +192,20 @@ export const PERMISSION_MAP = {
   "GET /v1/tags": ["leads.view"],
   "POST /v1/tags": ["leads.edit"],
   "DELETE /v1/tags/:id": ["leads.edit"],
+
+  // leads (bulk/assign make finer checks in the service)
+  "GET /v1/leads": ["leads.view"],
+  "POST /v1/leads": ["leads.create"],
+  "GET /v1/leads/duplicates": ["leads.view"],
+  "GET /v1/leads/follow-ups/due": ["leads.view"],
+  "POST /v1/leads/bulk": ["leads.edit", "leads.assign", "leads.delete"],
+  "GET /v1/leads/:id": ["leads.view"],
+  "PUT /v1/leads/:id": ["leads.edit"],
+  "DELETE /v1/leads/:id": ["leads.delete"],
+  "POST /v1/leads/:id/move": ["leads.edit"],
+  "POST /v1/leads/:id/assign": ["leads.assign", "leads.edit"],
+  "GET /v1/leads/:id/timeline": ["leads.view"],
+  "POST /v1/leads/:id/activities": ["leads.edit"],
+  "PUT /v1/lead-activities/:id": ["leads.edit"],
+  "DELETE /v1/lead-activities/:id": ["leads.edit"],
 };

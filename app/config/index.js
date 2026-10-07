@@ -54,6 +54,8 @@ const envSchema = z.object({
     .transform((v) => v === "true"),
   // queue = pg-boss jobs with retries (default); legacy = in-process timer.
   REMINDERS_ENGINE: z.enum(["queue", "legacy"]).optional().default("queue"),
+  // Region for parsing phone numbers without a country code (lead dedupe).
+  DEFAULT_PHONE_REGION: z.string().length(2).optional().default("IN"),
   PATIENT_PASSWORD_MODE: z.enum(["random", "legacy"]).optional().default("random"),
 
   // Empty = allow any origin (pre-revamp behaviour); a warning is logged.
@@ -130,6 +132,7 @@ const config = Object.freeze({
   patient_password_mode: env.PATIENT_PASSWORD_MODE,
   permissions_enforce: env.PERMISSIONS_ENFORCE,
   reminders_engine: env.REMINDERS_ENGINE,
+  default_phone_region: env.DEFAULT_PHONE_REGION.toUpperCase(),
 
   // http
   allowed_origins: env.ALLOWED_ORIGINS,

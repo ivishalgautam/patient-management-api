@@ -160,6 +160,10 @@ beforeAll(async () => {
   ids.pipeline_stage = pipeline.stages[0].id;
   ids.custom_field = (await asA.get("/v1/custom-fields")).json().data[0].id;
   ids.tag = (await asA.post("/v1/tags", { name: "Fixture" })).json().data.id;
+  ids.lead = (await asA.post("/v1/leads", { full_name: "Fixture Lead", phone: "9800000001" })).json().data.id;
+  ids.lead_activity = (
+    await asA.post(`/v1/leads/${ids.lead}/activities`, { type: "note", body: "x" })
+  ).json().data.id;
   Object.assign(ids, {
     clinic: A.clinic.id,
     patient: A.patient.id,

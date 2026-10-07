@@ -206,6 +206,27 @@ export const TENANT_MAP = {
   "GET /v1/tags": "list",
   "POST /v1/tags": "list",
   "DELETE /v1/tags/:id": byId("tag"),
+
+  // leads (the service also enforces practice and owner visibility)
+  "GET /v1/leads": "list",
+  "POST /v1/leads": [
+    c("clinic", "body.clinic_id"),
+    c("pipeline", "body.pipeline_id"),
+    c("pipeline_stage", "body.stage_id"),
+    c("user", "body.owner_id"),
+  ],
+  "GET /v1/leads/duplicates": "list",
+  "GET /v1/leads/follow-ups/due": "list",
+  "POST /v1/leads/bulk": "list",
+  "GET /v1/leads/:id": byId("lead"),
+  "PUT /v1/leads/:id": [c("lead", "params.id"), c("clinic", "body.clinic_id")],
+  "DELETE /v1/leads/:id": byId("lead"),
+  "POST /v1/leads/:id/move": [c("lead", "params.id"), c("pipeline_stage", "body.stage_id")],
+  "POST /v1/leads/:id/assign": [c("lead", "params.id"), c("user", "body.owner_id")],
+  "GET /v1/leads/:id/timeline": byId("lead"),
+  "POST /v1/leads/:id/activities": byId("lead"),
+  "PUT /v1/lead-activities/:id": byId("lead_activity"),
+  "DELETE /v1/lead-activities/:id": byId("lead_activity"),
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.
@@ -246,4 +267,6 @@ export const RESOURCES = {
   pipeline_stage: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM pipeline_stages WHERE id = :id`,
   custom_field: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM custom_fields WHERE id = :id`,
   tag: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM tags WHERE id = :id`,
+  lead: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM leads WHERE id = :id`,
+  lead_activity: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM lead_activities WHERE id = :id`,
 };
