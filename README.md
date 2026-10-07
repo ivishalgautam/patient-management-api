@@ -63,13 +63,13 @@ docs/                  revamp docs and the Leads module guide
 
 * **Auth:** JWT access token + refresh token (`ACCESS_TOKEN_TTL`, `REFRESH_TOKEN_TTL`), accepted as a Bearer header or the dashboard's httpOnly session cookie. Changing a password, deactivating or deleting a user revokes their existing tokens.
 * **Tenancy:** every authenticated route is listed in `app/lib/tenant-map.js`; ids in params/body must belong to the caller's practice (404 otherwise). Unlisted routes are refused.
-* **Permissions:** `app/lib/permission-map.js` maps each route to the permissions that allow it; roles hold permissions (`roles`, `role_permissions`). Tests fail if a route is missing from either map.
+* **Permissions:** `app/lib/permission-map.js` maps each route to the permissions that allow it; roles hold permissions (`roles`, `role_permissions`). Built-in roles come from `app/lib/constants/permissions.js`; practices add their own roles in the dashboard. Tests fail if a route is missing from either map.
 * **Errors:** services throw `AppError`; one handler answers `{ status: false, error, message }`. 500s never include internals, only a `request_id` that matches the logs.
 * **Logging:** pino with request ids; auth headers, cookies, passwords and tokens are redacted and request bodies are never logged.
 
 ## Background jobs
 
-Jobs run on [pg-boss](https://github.com/timgit/pg-boss) in the `pgboss` schema of the same database (no extra infrastructure). Queues: WhatsApp messages, appointment reminders (`REMINDERS_ENGINE=queue`, the default), integration deliveries, Facebook sync and token checks, payload purge and lead imports. Each has its own retry policy; jobs that fail after all retries appear in the dashboard under **Settings → Failed jobs** with a retry button (`GET /v1/jobs/failed`, `POST /v1/jobs/:id/retry`).
+Jobs run on [pg-boss](https://github.com/timgit/pg-boss) in the `pgboss` schema of the same database (no extra infrastructure). Queues: WhatsApp messages, appointment reminders (`REMINDERS_ENGINE=queue`, the default), integration deliveries, Facebook sync and token checks, payload purge, lead imports and lead follow-up reminders. Each has its own retry policy; jobs that fail after all retries appear in the dashboard under **Settings → Failed jobs** with a retry button (`GET /v1/jobs/failed`, `POST /v1/jobs/:id/retry`).
 
 ## Health
 
@@ -85,7 +85,7 @@ Uses a real PostgreSQL database named by `TEST_PG_DATABASE` (must contain "test"
 
 * `test/characterization` — existing dental behaviour pinned before the restructure (auth, patients, bookings, treatments, billing, uploads, imports);
 * `test/platform` — tenancy, permissions, cross-cutting concerns, DB hardening, jobs;
-* `test/leads` — pipelines, custom fields, leads, forms, integrations, conversion, Google add-on.
+* `test/leads` — pipelines, custom fields, leads, forms, integrations, conversion, Google add-on, roles/visibility/export/reminders.
 
 ## Docs
 

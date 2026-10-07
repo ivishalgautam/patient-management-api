@@ -25,8 +25,10 @@ Everything is scoped to the **practice** (the doctor's account). A pipeline, for
 | `integration_lead_refs` | Provider lead id → lead, so re-deliveries are recognised. |
 | `oauth_sessions` | Short-lived Facebook connect hand-off (bound to practice + user). |
 | `lead_imports` / `lead_import_rows` | Spreadsheet imports and their staged rows with a per-row outcome. Raw row data is cleared after the retention period. |
+| `user_notifications` | In-app notifications (follow-up reminders), per user. Read ones are deleted after 90 days. |
+| `roles` / `role_permissions` | Built-in roles (shared) and practice roles (`base_role = staff`). Users keep `users.role`; `users.role_id` picks the role whose permissions apply. |
 
-Migrations: `20261008000100` (core), `000200` (default pipeline, stages, sources and an "Interested in" field per practice), `000300` (integrations), `000400` (lead imports). All are reversible (`npm run migrate:down <name>`).
+Migrations: `20261008000100` (core), `000200` (default pipeline, stages, sources and an "Interested in" field per practice), `000300` (integrations), `000400` (lead imports), `20261009000100` (practice roles, notifications, follow-up reminders, `leads.view_all_clinics`). All are reversible (`npm run migrate:down <name>`).
 
 ### Duplicates
 
@@ -52,9 +54,19 @@ What happens on a match depends on where the lead comes from:
 | Permission | Doctor | Staff |
 |---|:-:|:-:|
 | `leads.view` (own leads) / `leads.view_all` | ✓ | ✓ |
+| `leads.view_all_clinics` | ✓ | |
 | `leads.create`, `leads.edit`, `leads.convert` | ✓ | ✓ |
 | `leads.delete`, `leads.assign`, `leads.import`, `leads.export` | ✓ | |
 | `pipelines.manage`, `custom_fields.manage`, `forms.manage`, `integrations.manage` | ✓ | |
+
+These are the built-in defaults. A practice can create its own roles in **Settings → Roles & permissions** (based on Staff, with any practice permission except role management), and assign staff members to them. Built-in roles are shared by every practice and can't be edited there. Permission changes apply immediately in the process that saved them and within 60 seconds elsewhere.
+
+### Which leads someone sees
+
+* Without `leads.view_all`, only leads they own.
+* Without `leads.view_all_clinics`, only practice-wide leads (no clinic), leads of the clinics they work at (staff clinic mappings, or clinics they run as the doctor) and leads they own. They also can't create or move leads into another clinic.
+
+The same rule applies everywhere a lead is read: list, kanban, detail, timeline, edits and moves, conversion, follow-ups, duplicate checks (a duplicate warning never names a lead the user can't see) and export.
 
 Platform admins bypass permission checks. The route → permission map is `app/lib/permission-map.js` (a test fails when a route is missing); `PERMISSIONS_ENFORCE=false` logs denials instead of blocking, as an emergency switch.
 
@@ -74,6 +86,9 @@ All under `/v1`, authenticated (Bearer token or the dashboard's session cookie),
 | Integrations | `GET /integrations/providers`, `GET/POST /integrations`, `GET/PUT/DELETE /integrations/:id`, `POST /integrations/:id/rotate-token` · `/sync` · `/check`, `GET /integrations/:id/events`, `POST /integrations/:id/events/:eventId/retry`, Facebook: `GET /integrations/facebook/oauth/start` · `/pages` · `/forms`, `POST /integrations/facebook/oauth/finalize` |
 | Add-ons | `GET /practice-features`, `PUT /practice-features/:key` (`{ enabled, clinic_id?, reset? }`) |
 | Imports | `GET /lead-imports`, `POST /lead-imports/upload` (multipart `file`), `POST /lead-imports/sheet` (`{ url }`), `GET /lead-imports/:id`, `GET /lead-imports/:id/rows`, `POST /lead-imports/:id/dry-run`, `POST /lead-imports/:id/start`, `POST /lead-imports/:id/cancel`, `GET /lead-imports/:id/errors.csv` |
+| Export | `GET /leads/export` (same filters as the list; CSV with custom fields and tags; refuses above `LEAD_EXPORT_MAX_ROWS`) |
+| Roles | `GET /roles`, `GET /roles/permissions` (catalogue), `GET /roles/members`, `GET /roles/mine` (any signed-in user: own role and permissions), `POST /roles` (`{ name, permissions? , copy_from? }`), `PUT/DELETE /roles/:id`, `PUT /roles/members/:userId` (`{ role_id }`, staff only) |
+| Notifications | `GET /notifications` (`unread=true`, paginated; `meta.unread`), `GET /notifications/unread-count`, `POST /notifications/:id/read`, `POST /notifications/read-all` — always the caller's own |
 | Background jobs | `GET /jobs/failed`, `POST /jobs/:id/retry` |
 
 **Public (no login):**
@@ -158,6 +173,14 @@ Limits: `LEAD_IMPORT_MAX_ROWS` (default 5000) rows per import, `LEAD_IMPORT_SHEE
 
 ---
 
+## Follow-up reminders and notifications
+
+A follow-up (timeline entry with a due date) triggers one in-app notification to the lead's owner, or to whoever added it when the lead has no owner, `LEAD_FOLLOW_UP_REMIND_MINUTES` before it is due. It shows in the bell in the dashboard header and links to the lead. Completed follow-ups and closed leads are skipped; changing the due time re-arms the reminder; follow-ups more than a day overdue are not reminded (so a deploy or downtime doesn't flood anyone). There is no WhatsApp/email reminder to staff yet: Wafly templates are only set up for patients.
+
+## Export
+
+**Export** on the leads page downloads the leads matching the current filters (all stages on the kanban) as CSV: core fields, pipeline/stage/owner/clinic, tags, follow-up and activity dates, notes and one column per custom field. Cells are escaped against spreadsheet formulas and the file starts with a UTF-8 BOM so Excel shows non-Latin names correctly. Needs `leads.export` (doctors by default); the log records who exported how many rows, never the data.
+
 ## Background jobs (pg-boss)
 
 | Queue | What it does | Retries |
@@ -167,6 +190,7 @@ Limits: `LEAD_IMPORT_MAX_ROWS` (default 5000) rows per import, `LEAD_IMPORT_SHEE
 | `integrations.fb-token-check` | Daily token expiry check (03:00) | 1 |
 | `integrations.purge-payloads` | Clears raw payloads and import rows older than the retention period (03:30) | 1 |
 | `leads.import` | Runs a spreadsheet import | 3, backoff from 60 s |
+| `leads.follow-up-reminders` | Notifies lead owners of follow-ups coming due (`LEAD_FOLLOW_UP_REMINDER_CRON`, every 5 min) | — |
 
 Jobs live in the `pgboss` schema of the application database. Failed jobs (after all retries) are listed in **Settings → Failed jobs** with a retry button, filtered to the caller's practice.
 
@@ -192,9 +216,12 @@ Jobs live in the `pgboss` schema of the application database. Failed jobs (after
 | `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`, `FACEBOOK_WEBHOOK_VERIFY_TOKEN` | empty | Facebook Lead Ads |
 | `FACEBOOK_GRAPH_API_VERSION` | `v23.0` | Graph API version |
 | `FB_PULL_SYNC_CRON` | `*/10 * * * *` | Facebook pull-sync schedule |
+| `LEAD_EXPORT_MAX_ROWS` | `10000` | Rows per CSV export |
+| `LEAD_FOLLOW_UP_REMIND_MINUTES` | `15` | Remind this long before a follow-up is due |
+| `LEAD_FOLLOW_UP_REMINDER_CRON` | `*/5 * * * *` | How often reminders are checked |
 | `LEAD_IMPORT_MAX_ROWS` | `5000` | Rows per import |
 | `LEAD_IMPORT_SHEET_MAX_MB` | `10` | Google Sheet download limit |
 
 ## Tests
 
-`test/leads/` covers configuration (pipelines, stages, custom fields), leads (CRUD, moves, required fields, assignment, dedupe, filters, permissions), forms (validation, spam protection, rate limit, tenant isolation), integrations (Facebook OAuth, signature, fetch, mapping, pull sync, token checks, custom webhook), conversion, and the Google add-on (switches, Google webhook, imports). Run with `npm test`.
+`test/leads/` covers configuration (pipelines, stages, custom fields), leads (CRUD, moves, required fields, assignment, dedupe, filters, permissions), forms (validation, spam protection, rate limit, tenant isolation), integrations (Facebook OAuth, signature, fetch, mapping, pull sync, token checks, custom webhook), conversion, the Google add-on (switches, Google webhook, imports) and access (practice roles, clinic-scoped visibility, export, follow-up reminders and notifications). Run with `npm test`.

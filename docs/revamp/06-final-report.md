@@ -3,7 +3,7 @@
 Revamp of the Dr. Dipti dental platform using the BW Task source as a reference (patterns adapted, not copied), plus the new Leads module and the Google Leads add-on.
 
 * **Repositories:** `server/` and `client/dashboard/` (separate git repos).
-* **Branch:** `revamp/leads-module` in both, tagged `revamp-phase3`, `revamp-phase4` and `revamp-phase5` after each phase. Security fixes were also made on `hotfix/security` (both repos) and merged into the revamp branch.
+* **Branch:** `revamp/leads-module` in both, tagged `revamp-phase3` … `revamp-phase6` after each phase, and `revamp-followups` after the follow-up items (§5). Security fixes were also made on `hotfix/security` (both repos) and merged into the revamp branch.
 * **Reference project** (`bw-task-full-source`) was read-only and is unchanged.
 * **Not committed on purpose:** your earlier uncommitted change in `client/dashboard/src/components/forms/book-slot.js` is still uncommitted in the working tree.
 
@@ -15,12 +15,12 @@ Revamp of the Dr. Dipti dental platform using the BW Task source as a reference 
 |---|---|---|
 | Build passes | ✅ | `next build` compiles (dashboard); server boots via `buildApp` in every test run |
 | Lint passes | ✅ | `npm run lint` (server): 0 problems. `next lint` (dashboard): 0 errors, 4 warnings, all in files the revamp didn't touch |
-| Tests pass | ✅ | Server **368 tests / 19 files**, dashboard **7 tests / 4 files** |
-| Tests for pipelines, stages, forms, custom fields, ingestion (Facebook + Google), dedupe, permissions | ✅ | `test/leads/{config,leads,forms,integrations,conversion,google-addon}.test.js`, `test/platform/permissions.test.js` |
-| Migrations up/down on a fresh DB | ✅ | Empty DB: up (11) → down to 0 (11 reverted, only the migration-tracking table left) → up (11) |
-| Migrations up/down on a copy of existing data | ✅ | Fresh `pg_dump` of the local `drdipti` DB: baseline → up (10) → down to the first revamp migration (10 reverted) → up (10). Row counts unchanged at each step (503 users, 499 patients, 623 bookings, 1349 treatments, 1 clinic) |
+| Tests pass | ✅ | Server **387 tests / 20 files**, dashboard **7 tests / 4 files** |
+| Tests for pipelines, stages, forms, custom fields, ingestion (Facebook + Google), dedupe, permissions | ✅ | `test/leads/{config,leads,forms,integrations,conversion,google-addon,access}.test.js`, `test/platform/permissions.test.js` |
+| Migrations up/down on a fresh DB | ✅ | Empty DB: up (12) → down to 0 (12 reverted, only the migration-tracking table left) → up (12) |
+| Migrations up/down on a copy of existing data | ✅ | Fresh `pg_dump` of the local `drdipti` DB: baseline → up (11) → down to the first revamp migration (11 reverted) → up (11). Row counts unchanged at each step (503 users, 499 patients, 623 bookings, 1349 treatments) |
 | Existing dental features keep working | ✅ | `test/characterization` pins auth, users, patients, bookings, treatments, billing, uploads and imports. Response shapes are frozen. Changes in behaviour are only the listed bug fixes |
-| Every schema change has a reversible migration | ✅ | 10 migrations after the baseline, each with a tested `down` |
+| Every schema change has a reversible migration | ✅ | 11 migrations after the baseline, each with a tested `down` |
 | No hardcoded secrets; everything in `.env.example` | ✅ | Config is validated with zod. A script check confirms every config variable and every `process.env` read appears in `.env.example` (server and dashboard) |
 | Docs | ✅ | Both READMEs rewritten; `docs/leads-module.md`; this report |
 
@@ -102,11 +102,13 @@ READMEs for both repos, `docs/leads-module.md` (data model, API, Facebook and Go
 6. Private Google Sheets via OAuth are not implemented; sheets must be shared by link (as planned for v1, assumption A2). There is no `GOOGLE_SHEETS_OAUTH_ENABLED` flag.
 7. `ACCESS_TOKEN_TTL` defaults to `1d` (not 15 m) so older clients that don't refresh on 401 keep working. Shorten it once every client refreshes.
 
-**From the plan, not built (follow-ups):**
-1. **Roles & permissions editing screen/API.** Roles and permissions exist and are enforced with system defaults (doctor, staff, patient, admin), but practices can't edit them yet.
-2. **Lead follow-up reminder job.** Follow-ups are stored, shown on the lead and filterable (`follow_up=overdue|today|…`, `GET /leads/follow-ups/due`), but nobody is notified.
-3. **Clinic-scoped lead visibility for staff** (assumption A4). Visibility is owner-based: `leads.view` sees own leads, `leads.view_all` sees the whole practice. Staff mapped to one clinic who hold `view_all` (the default) also see other clinics' leads.
-4. Lead **export** (`leads.export` permission exists; no endpoint yet).
+**Plan items finished after the first report** (tag `revamp-followups`, migration `20261009000100`):
+1. **Roles & permissions** — `Settings → Roles & permissions`. Practices create roles based on Staff (copy, tick permissions, rename, delete when unused) and assign them to staff. Built-in roles are shared and read-only; role management, the platform catalogue and patient self-service can't be put in a practice role, so a role can't escalate itself. `GET /roles/mine` lets the dashboard hide actions.
+2. **Lead follow-up reminders** — a `leads.follow-up-reminders` job (every 5 minutes) sends one in-app notification to the lead owner 15 minutes before a follow-up is due (both configurable); a bell in the dashboard header shows them. In-app only: there's no WhatsApp/email template for staff.
+3. **Clinic-scoped lead visibility** (assumption A4) — new permission `leads.view_all_clinics` (doctor/admin by default, not staff). Without it a user sees practice-wide leads, their clinics' leads and leads they own, everywhere leads are read (list, kanban, detail, timeline, moves, conversion, follow-ups, duplicate warnings, export), and can't put leads in other clinics. A practice role can grant it. While doing this, conversion was found to skip the owner-only visibility check that the rest of the module applied; it now uses the same check.
+4. **Lead export** — `GET /leads/export` and an Export button: CSV of the current filters with custom fields and tags, formula-safe, UTF-8 BOM for Excel, refuses (rather than truncates) above `LEAD_EXPORT_MAX_ROWS`; logs who exported how many rows.
+
+**Behaviour change to note:** staff no longer see leads of clinics they don't work at (before, `leads.view_all` showed them every lead in the practice). Staff with no clinic mapping see only practice-wide leads and leads they own. Map staff to their clinics, or give them a role with `leads.view_all_clinics`.
 
 ---
 
@@ -127,4 +129,4 @@ READMEs for both repos, `docs/leads-module.md` (data model, API, Facebook and Go
 1. **Billing (#30):** should an advance used on a payment reduce the treatment's remaining balance?
 2. **`backup.sql` history (#2):** rewrite git history and rotate the leaked credentials?
 3. **Self-registration with several practices:** registration now needs a `clinic_id` when more than one practice exists. Does the patient app send one?
-4. **Follow-ups (§5):** which of the four "not built" items do you want next?
+4. **Staff reminders by WhatsApp or email:** follow-up reminders are in-app only. If you want them on WhatsApp, a Wafly template for staff is needed first.
