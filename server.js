@@ -2,7 +2,7 @@
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import path from "path";
-import { exec } from "child_process";
+import fs from "fs";
 // fastify modules
 import cors from "@fastify/cors";
 import fastifyView from "@fastify/view";
@@ -23,7 +23,6 @@ import { ErrorHandler } from "./app/helpers/error-handler.js";
 // other modules
 import ejs from "ejs";
 import publcRoutes from "./app/routes/v1/public.js";
-import config from "./app/config/index.js";
 import { scheduleAppointmentCron } from "./app/scheduler/appointment-cron.js";
 
 /*
@@ -52,9 +51,11 @@ export default (app) => {
     },
   });
   app.register(fastifyHelmet);
-  app.register(fastifyStatic, {
-    root: path.join(dirname(fileURLToPath(import.meta.url), "public")),
-  });
+  // Only the uploads folder is public. Stored file paths look like
+  // "public/images/<file>", so it is served under the /public/ prefix.
+  const publicDir = path.join(dirname(fileURLToPath(import.meta.url)), "public");
+  fs.mkdirSync(publicDir, { recursive: true });
+  app.register(fastifyStatic, { root: publicDir, prefix: "/public/" });
 
   app.register(cors, { origin: "*" });
   app.register(pg_database);
@@ -69,40 +70,4 @@ export default (app) => {
   app.register(routes, { prefix: "v1" });
   app.register(publcRoutes, { prefix: "v1" });
   app.register(authRoutes, { prefix: "v1/auth" });
-
-  app.get("/v1/generate-backup", async (req, res) => {
-    try {
-      // Get current file and directory paths
-      const currentFilePath = fileURLToPath(import.meta.url);
-      const currentDirPath = dirname(currentFilePath);
-      // Define a valid output file path
-      const outputPath = path.join(currentDirPath, "../server/backup.sql");
-
-      const generateBackup = (outputPath) => {
-        return new Promise((resolve, reject) => {
-          // Construct pg_dump command with correct flags
-          const command = `pg_dump -U ${config.pg_username} -h localhost -p ${config.pg_port} -d ${config.pg_database_name} -f "${outputPath}"`;
-
-          exec(
-            command,
-            { env: { PGPASSWORD: config.pg_password } }, // Pass password securely
-            (error, stdout, stderr) => {
-              if (error) {
-                reject(`Error: ${stderr || error.message}`);
-              } else {
-                resolve(outputPath);
-              }
-            },
-          );
-        });
-      };
-
-      // Generate the backup
-      await generateBackup(outputPath);
-
-      res.send({ message: "Backup generated successfully", path: outputPath });
-    } catch (error) {
-      res.status(500).send({ error });
-    }
-  });
 };

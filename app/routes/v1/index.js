@@ -16,7 +16,10 @@ import clinicPatientRoutes from "../../api/clinic-patient/routes.js";
 import noteRoutes from "../../api/note/routes.js";
 import investigationRoutes from "../../api/investigation/routes.js";
 import treatmentPaymentRoutes from "../../api/treatment-payment/routes.js";
-import patientRoutes from "../../api/patients/routes.js";
+import patientRoutes, {
+  patientImportRoutes,
+} from "../../api/patients/routes.js";
+import { serviceImportRoutes } from "../../api/service/routes.js";
 import reportRoutes from "../../api/report/routes.js";
 import staffRoutes from "../../api/staff/routes.js";
 import clinicStaffRoutes from "../../api/clinic-staff/routes.js";
@@ -29,9 +32,6 @@ import visitRoutes from "../../api/treatment-visit/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
-  fastify.addHook("preHandler", async (request, reply) => {
-    request.body && console.log("body", request.body);
-  });
   // fastify.addHook("onSend", async (request, reply, payload) => {
   //   console.log({ response: payload }, "Response payload");
   //   // return payload;
@@ -56,6 +56,8 @@ export default async function routes(fastify, options) {
   fastify.register(investigationRoutes, { prefix: "investigations" });
   fastify.register(treatmentPaymentRoutes, { prefix: "treatment-payments" });
   fastify.register(patientRoutes, { prefix: "patients" });
+  fastify.register(patientImportRoutes, { prefix: "patients" });
+  fastify.register(serviceImportRoutes, { prefix: "services" });
   fastify.register(reportRoutes, { prefix: "reports" });
   fastify.register(staffRoutes, { prefix: "staff" });
   fastify.register(clinicStaffRoutes, { prefix: "clinic-staff" });

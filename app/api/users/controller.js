@@ -9,12 +9,27 @@ import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
 import { patientSchema } from "../../validation-schemas/patient.schema.js";
 import { userSchema } from "../../validation-schemas/user.schema.js";
 
+// Which roles each caller role may create.
+const CREATABLE_ROLES = {
+  admin: ["admin", "doctor", "staff", "patient"],
+  doctor: ["staff", "patient"],
+  staff: ["patient"],
+  patient: [],
+};
+
 const create = async (req, res) => {
+  const { role } = req.user_data;
+  const validateUserData = userSchema.parse(req.body);
+  if (!CREATABLE_ROLES[role]?.includes(validateUserData.role)) {
+    return res.code(403).send({
+      status: false,
+      message: "You don't have permission to create this type of user.",
+    });
+  }
+
   const transaction = await sequelize.transaction();
 
   try {
-    const { role } = req.user_data;
-    const validateUserData = userSchema.parse(req.body);
 
     if (validateUserData.role === "patient") {
       const currPatientCount = await table.PatientSequenceModel.get();

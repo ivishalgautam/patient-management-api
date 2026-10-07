@@ -38,3 +38,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .qodo
+
+# database dumps (may contain patient data)
+backup.sql
+*.sql

@@ -1,9 +1,9 @@
 "use strict";
-import { ErrorHandler } from "../../helpers/error-handler.js";
 import {
   deleteFile as deleteStoredFile,
   uploadFiles,
   getFile,
+  resolvePublicPath,
 } from "../../helpers/file.js";
 
 const upload = async (req, res) => {
@@ -11,19 +11,22 @@ const upload = async (req, res) => {
   res.send(path);
 };
 
-const get = async (req, res) => {
-  res.send(await getFile(req, res));
-};
+const get = async (req, res) => getFile(req, res);
 
 const _delete = async (req, res) => {
-  const filePath = !req.query || !req.query.file_path;
-  if (filePath) {
-    return res.send({
-      message: "file_path is required parameter",
-    });
+  if (!req.query?.file_path) {
+    return res
+      .code(400)
+      .send({ status: false, message: "file_path is required parameter" });
   }
 
-  deleteStoredFile(req.query.file_path);
+  if (!resolvePublicPath(req.query.file_path)) {
+    return res.code(400).send({ status: false, message: "Invalid file_path." });
+  }
+
+  // Idempotent: a file that is already gone counts as deleted.
+  await deleteStoredFile(req.query.file_path);
+  return res.send({ status: true, message: "File deleted." });
 };
 
 export default {

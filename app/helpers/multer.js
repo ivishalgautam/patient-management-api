@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { resolvePublicPath } from "./file.js";
 
 export const saveFile = async (file) => {
   const mime = file.mimetype.split("/").pop();
@@ -33,13 +34,9 @@ export const saveFile = async (file) => {
 };
 
 export const deleteFile = async (filePath) => {
-  const fullPath = path.resolve(filePath);
-
-  try {
-    await fs.promises.unlink(fullPath); // Delete the file from disk
-    console.log(`File deleted: ${filePath}`);
-  } catch (err) {
-    console.error(`Failed to delete file: ${filePath}`, err);
-    throw err; // Optionally, rethrow or log the error
+  const fullPath = resolvePublicPath(filePath);
+  if (!fullPath) {
+    throw new Error(`Refusing to delete file outside public/: ${filePath}`);
   }
+  await fs.promises.unlink(fullPath);
 };
