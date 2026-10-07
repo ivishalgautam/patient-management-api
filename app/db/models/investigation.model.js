@@ -62,7 +62,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await InvestigationModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

@@ -92,7 +92,6 @@ const init = async (sequelize) => {
     },
   );
 
-  await LedgerModel.sync({ alter: true });
 };
 
 const create = async (req, transaction = null) => {

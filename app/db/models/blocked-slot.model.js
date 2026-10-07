@@ -47,7 +47,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await BlockSlotModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

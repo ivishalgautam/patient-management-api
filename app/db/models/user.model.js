@@ -103,7 +103,6 @@ const init = async (sequelize) => {
     },
   );
 
-  await UserModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

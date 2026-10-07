@@ -61,7 +61,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await XrayModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

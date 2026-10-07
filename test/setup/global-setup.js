@@ -1,5 +1,5 @@
-// Recreates the test database once per `vitest run`. Tables are created by
-// the app's own model init when the first test file boots the server.
+// Recreates the test database once per `vitest run` and applies every
+// migration, exactly like a fresh install.
 import pg from "pg";
 import { TEST_DB, applyTestEnv } from "./test-env.js";
 
@@ -19,4 +19,9 @@ export default async function globalSetup() {
   await client.query(`DROP DATABASE IF EXISTS "${TEST_DB}" WITH (FORCE)`);
   await client.query(`CREATE DATABASE "${TEST_DB}"`);
   await client.end();
+
+  const { sequelize } = await import("../../app/db/postgres.js");
+  const { createMigrator } = await import("../../app/db/migrator.js");
+  await createMigrator(sequelize, { logger: undefined }).up();
+  await sequelize.close();
 }

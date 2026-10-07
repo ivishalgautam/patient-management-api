@@ -54,7 +54,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await NoteModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

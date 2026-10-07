@@ -73,7 +73,6 @@ const init = async (sequelize) => {
     },
   );
 
-  await TreatmentPlanModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

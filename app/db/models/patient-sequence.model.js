@@ -20,11 +20,6 @@ const init = async (sequelize) => {
     { createdAt: "created_at", updatedAt: "updated_at" },
   );
 
-  await PatientSequenceModel.sync({ alter: true });
-  await PatientSequenceModel.findOrCreate({
-    where: { id: "patient" },
-    defaults: { value: 0 },
-  });
 };
 
 const update = async (value, { transaction }) => {

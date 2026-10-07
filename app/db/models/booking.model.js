@@ -83,7 +83,6 @@ const init = async (sequelize) => {
     },
   );
 
-  await BookingModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

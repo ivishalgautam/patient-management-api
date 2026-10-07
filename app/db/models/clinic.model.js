@@ -50,7 +50,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await ClinicModel.sync({ alter: true });
 };
 
 const create = async (req, doctor_id, { transaction }) => {

@@ -69,7 +69,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await ServiceModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

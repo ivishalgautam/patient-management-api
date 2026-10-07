@@ -54,7 +54,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await TreatmentHistoryModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

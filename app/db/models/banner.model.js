@@ -32,7 +32,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await BannerModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

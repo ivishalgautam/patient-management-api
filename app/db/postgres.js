@@ -1,6 +1,7 @@
 import config from "../config/index.js";
 import { Sequelize } from "sequelize";
 import migration from "./index.js";
+import { createMigrator } from "./migrator.js";
 
 export const sequelize = new Sequelize(
   config.pg_database_name,
@@ -21,6 +22,14 @@ async function postgresConnection(fastify, options) {
     // Models must be ready before the server accepts requests.
     await migration.init(sequelize);
     fastify.log.info(`Models initialized.`);
+
+    // Schema changes are applied with `npm run migrate:up`, never at boot.
+    const pending = await createMigrator(sequelize, { logger: undefined }).pending();
+    if (pending.length) {
+      fastify.log.warn(
+        `${pending.length} pending migration(s): ${pending.map((m) => m.name).join(", ")}. Run \`npm run migrate:up\`.`,
+      );
+    }
   } catch (error) {
     fastify.log.error(error);
     process.exit(1);

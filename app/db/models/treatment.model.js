@@ -80,7 +80,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await TreatmentModel.sync({ alter: true });
 };
 
 const create = async (

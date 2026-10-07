@@ -42,7 +42,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await OtpModel.sync({ alter: true });
 };
 
 const create = async ({ user_id, otp }) => {

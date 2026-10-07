@@ -40,7 +40,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await ProcedureModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

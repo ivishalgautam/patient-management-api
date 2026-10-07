@@ -63,7 +63,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await SlotModel.sync({ alter: true });
 };
 
 const create = async (req, doctor_id, { transaction }) => {

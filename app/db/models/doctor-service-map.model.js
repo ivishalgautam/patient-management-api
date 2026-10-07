@@ -48,7 +48,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await DoctorServiceMapModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

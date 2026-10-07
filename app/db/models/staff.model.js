@@ -42,7 +42,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await StaffModel.sync({ alter: true });
 };
 
 const create = async (doctor_id, user_id, { transaction }) => {

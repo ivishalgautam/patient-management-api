@@ -78,7 +78,6 @@ const init = async (sequelize) => {
     },
   );
 
-  await ComprehensiveExaminationModel.sync({ alter: true });
 };
 
 const create = async (req, { transaction }) => {

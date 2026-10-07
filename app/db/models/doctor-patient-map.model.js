@@ -42,7 +42,6 @@ const init = async (sequelize) => {
     }
   );
 
-  await DoctorPatientMappingModel.sync({ alter: true });
 };
 
 const create = async (doctor_id, patient_id, { transaction }) => {
