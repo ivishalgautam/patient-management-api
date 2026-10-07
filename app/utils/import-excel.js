@@ -1,26 +1,20 @@
-// utils/importExcel.js
 import fs from "fs";
+import os from "os";
 import path from "path";
+import crypto from "crypto";
 import xlsx from "xlsx";
-import { pipeline } from "stream";
-import { promisify } from "util";
-const pump = promisify(pipeline);
+import { pipeline } from "stream/promises";
 
-export async function handleExcelImport(part, uploadSubDir = "uploads") {
-  const uploadsDir = path.join(process.cwd(), uploadSubDir);
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+// Reads the first sheet of an uploaded Excel/CSV file into row objects.
+// The upload goes to a random temp file (never the client's filename).
+export async function handleExcelImport(part) {
+  const tempPath = path.join(os.tmpdir(), `import-${crypto.randomUUID()}`);
+  await pipeline(part.file, fs.createWriteStream(tempPath));
+  try {
+    const workbook = xlsx.readFile(tempPath);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    return xlsx.utils.sheet_to_json(sheet, { raw: false });
+  } finally {
+    fs.rmSync(tempPath, { force: true });
   }
-
-  const tempPath = path.join(uploadsDir, part.filename);
-  await pump(part.file, fs.createWriteStream(tempPath));
-
-  const workbook = xlsx.readFile(tempPath);
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  const data = xlsx.utils.sheet_to_json(sheet, { raw: false });
-
-  fs.unlinkSync(tempPath);
-
-  return data;
 }

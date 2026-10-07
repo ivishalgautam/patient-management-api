@@ -23,7 +23,7 @@ export const saveFile = async (file) => {
 
   fs.mkdirSync(folder, { recursive: true });
 
-  const filename = `${Date.now()}_${file.filename.replace(/[\\s'/]/g, "_").toLowerCase()}`;
+  const filename = `${Date.now()}_${file.filename.replace(/[\s'/\\]/g, "_").toLowerCase()}`;
   const filepath = path.join(folder, filename);
 
   await file

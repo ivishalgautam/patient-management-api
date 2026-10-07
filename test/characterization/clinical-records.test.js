@@ -71,7 +71,7 @@ describe("clinical records", () => {
     expect(fs.existsSync(doc.documents[0])).toBe(true);
   });
 
-  it.fails("#25 keeps the original file name (today every 's' becomes '_')", async () => {
+  it("#25 fixed: keeps the original file name", async () => {
     const res = await upload("/v1/documents", {
       patient_id: p.patient.id,
       title: "Scan",

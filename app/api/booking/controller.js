@@ -1,78 +1,24 @@
 "use strict";
 import { beginTransaction } from "../../db/transaction.js";
-import moment from "moment";
 import table from "../../db/models.js";
-import { sendBookingConfirm } from "../../utils/waffly.js";
+import { createBooking, notifyBookingConfirmed } from "./service.js";
 import { bookingSchema } from "../../validation-schemas/booking.schema.js";
 
 const create = async (req, res) => {
-  let transaction;
-  try {
-    transaction = await beginTransaction(req);
-    const validateData = bookingSchema.parse(req.body);
-    // Use the validated values (defaults, coercions) from here on.
-    Object.assign(req.body, validateData);
-    const { role, id: userId } = req.user_data;
+  const data = bookingSchema.parse(req.body);
+  const transaction = await beginTransaction(req);
+  const result = await createBooking(
+    { clinicId: data.clinic_id, patientId: req.body.patient_id, date: data.date, slot: data.slot },
+    { user: req.user_data, transaction },
+  );
+  await transaction.commit();
 
-    const clinicRecord = await table.ClinicModel.getById(0, req.body.clinic_id);
-    if (!clinicRecord) {
-      await transaction.rollback();
-      return res
-        .code(404)
-        .send({ status: false, message: "Clinic not found!" });
-    }
+  // Notification failures must not undo a committed booking.
+  notifyBookingConfirmed(result).catch((error) =>
+    req.log.error({ err: error }, "booking confirmation not sent"),
+  );
 
-    const bookedSlotsCount =
-      await table.BookingModel.getByClinicDateAndSlot(req);
-    if (bookedSlotsCount >= clinicRecord.max_patients_per_slot) {
-      return res.code(400).send({ status: false, message: "Slots full." });
-    }
-
-    const patientRecord =
-      role === "patient"
-        ? await table.PatientModel.getByUserId(userId)
-        : await table.PatientModel.getById(0, req.body.patient_id);
-    if (!patientRecord || !patientRecord.id) {
-      return res
-        .code(404)
-        .send({ status: false, message: "Patient not registered." });
-    }
-    req.body.patient_id = patientRecord.id;
-    const [slotRecord] = await Promise.all([
-      table.SlotModel.getByClinicId(0, req.body.clinic_id),
-    ]);
-
-    req.body.doctor_id = clinicRecord.doctor_id;
-
-    if (!slotRecord?.slots?.includes(validateData.slot)) {
-      return res.code(404).send({ status: false, message: "Slot not found." });
-    }
-
-    const bookingRecord = await table.BookingModel.create(req, { transaction });
-
-    await sendBookingConfirm({
-      patient_phone: patientRecord.mobile_number,
-      patient_name: patientRecord.fullname,
-      service_name: "Dental service",
-      booked_slot: moment(`${bookingRecord.date} ${bookingRecord.slot}`).format(
-        "dddd DD MMMM h:mm A",
-      ),
-    });
-
-    await transaction.commit();
-
-    res.send({ status: true, message: "Successfully booked a slot." });
-  } catch (error) {
-    if (transaction) {
-      try {
-        await transaction.rollback();
-      } catch (rollbackError) {
-        console.error("Transaction rollback failed:", rollbackError);
-      }
-    }
-
-    throw error;
-  }
+  res.send({ status: true, message: "Successfully booked a slot." });
 };
 
 const get = async (req, res) => {

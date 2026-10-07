@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, describe, it, expect } from "vitest";
+import { beforeAll, afterAll, describe, it, expect, vi } from "vitest";
 import { buildTestApp } from "../setup/app.js";
 import { resetDb, query } from "../setup/db.js";
 import { setupPractice, api, nextWorkingDate, createPatient } from "../setup/factories.js";
@@ -32,7 +32,8 @@ describe("booking", () => {
     );
     expect(row.status).toBe("pending");
     expect(row.doctor_id).toBe(p.doctor.doctor.id);
-    expect(waflyRequest).toHaveBeenCalledTimes(1);
+    // Sent after the booking is committed, without blocking the response.
+    await vi.waitFor(() => expect(waflyRequest).toHaveBeenCalledTimes(1));
     expect(waflyRequest.mock.calls[0][0].url).toContain("sendtemplate.php");
   });
 
