@@ -3,7 +3,7 @@ import xlsx from "xlsx";
 import { buildTestApp } from "../setup/app.js";
 import { resetDb, query } from "../setup/db.js";
 import { setupPractice, api, multipart } from "../setup/factories.js";
-import { sheetHttp } from "../../app/lib/leads/import-parse.js";
+import { parseSpreadsheet, sheetExportUrl, sheetHttp, suggestMapping } from "../../app/lib/leads/import-parse.js";
 import { processImport, purgeImportRows } from "../../app/api/lead-import/service.js";
 import { toNormalized } from "../../app/lib/integrations/providers/google-ads.js";
 import config from "../../app/config/index.js";
@@ -205,6 +205,34 @@ describe("Google Ads lead form webhook", () => {
     ok(await doctor.put("/v1/practice-features/google_leads", { enabled: false }));
     expect((await app.inject({ method: "POST", url: path, payload: googleLead("G4", { google_key: "brand-new-key" }) })).statusCode).toBe(404);
     ok(await doctor.put("/v1/practice-features/google_leads", { enabled: true }));
+  });
+});
+
+describe("spreadsheet parsing", () => {
+  it("handles a BOM, quoted commas, line breaks and leading zeros", () => {
+    const { headers, rows } = parseSpreadsheet(
+      Buffer.from('\uFEFFName,Phone,Note\n"Rao, Asha",09876500001,"two\nlines"\n,,\n'),
+      { csv: true },
+    );
+    expect(headers).toEqual(["Name", "Phone", "Note"]);
+    expect(rows).toEqual([{ Name: "Rao, Asha", Phone: "09876500001", Note: "two\nlines" }]);
+  });
+
+  it("names blank and repeated headings", () => {
+    const { headers } = parseSpreadsheet(Buffer.from("Phone,,Phone\n1,2,3\n"), { csv: true });
+    expect(headers).toEqual(["Phone", "Column 2", "Phone (2)"]);
+    expect(suggestMapping(headers)).toEqual({ Phone: "phone", "Column 2": "ignore", "Phone (2)": "ignore" });
+  });
+
+  it("rejects files over the row limit", () => {
+    const big = "Phone\n" + Array.from({ length: config.integrations.import_max_rows + 1 }, (_, i) => i).join("\n");
+    expect(() => parseSpreadsheet(Buffer.from(big), { csv: true })).toThrow(/limit/);
+  });
+
+  it("builds the CSV export URL from a sheet link", () => {
+    expect(sheetExportUrl("https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMnOpQrStUvWxYz0123456789/edit?gid=7").url).toBe(
+      "https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMnOpQrStUvWxYz0123456789/export?format=csv&gid=7",
+    );
   });
 });
 
