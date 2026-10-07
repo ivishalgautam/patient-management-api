@@ -38,6 +38,14 @@ const envSchema = z.object({
 
   JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
   JWT_REFRESH_SECRET: z.string().min(1, "JWT_REFRESH_SECRET is required"),
+  // jsonwebtoken duration strings ("15m", "1d"). Default access TTL stays
+  // long until every client (incl. the patient app) refreshes tokens.
+  ACCESS_TOKEN_TTL: z.string().optional().default("1d"),
+  REFRESH_TOKEN_TTL: z.string().optional().default("30d"),
+  // Tokens issued before the revamp (full user object in the payload) are
+  // accepted until this ISO date. Empty = not accepted.
+  LEGACY_TOKEN_GRACE_UNTIL: z.string().optional().default(""),
+  PATIENT_PASSWORD_MODE: z.enum(["random", "legacy"]).optional().default("random"),
 
   // Empty = allow any origin (pre-revamp behaviour); a warning is logged.
   ALLOWED_ORIGINS: csv,
@@ -104,6 +112,12 @@ const config = Object.freeze({
   // auth
   jwt_secret: env.JWT_SECRET,
   jwt_refresh_secret: env.JWT_REFRESH_SECRET,
+  access_token_ttl: env.ACCESS_TOKEN_TTL,
+  refresh_token_ttl: env.REFRESH_TOKEN_TTL,
+  legacy_token_grace_until: env.LEGACY_TOKEN_GRACE_UNTIL
+    ? new Date(env.LEGACY_TOKEN_GRACE_UNTIL)
+    : null,
+  patient_password_mode: env.PATIENT_PASSWORD_MODE,
 
   // http
   allowed_origins: env.ALLOWED_ORIGINS,

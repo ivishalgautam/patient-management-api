@@ -7,5 +7,6 @@ export const loginSchema = z.object({
   password: z
     .string({ required_error: "Password is required." })
     .min(1, { message: "Password is required." }),
-  role: z.enum(["admin", "doctor", "staff", "patient"]),
+  // Optional: the role comes from the account. When sent it must match.
+  role: z.enum(["admin", "doctor", "staff", "patient"]).optional(),
 });

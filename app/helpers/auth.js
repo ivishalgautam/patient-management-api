@@ -1,71 +1,110 @@
 "use strict";
 
-import constants from "../lib/constants/index.js";
 import config from "../config/index.js";
 import table from "../db/models.js";
 import jwt from "jsonwebtoken";
 
-const expiresIn = constants.time.TOKEN_EXPIRES_IN;
+// Tokens carry only identifiers: { sub: user id, role, ver, typ }.
+// `ver` must match users.token_version, so bumping it revokes every token.
 
-function generateAccessToken(userData) {
-  return [
-    jwt.sign({ user: userData }, config.jwt_secret, {
-      expiresIn: String(expiresIn),
-    }),
-    expiresIn,
-  ];
+const SENSITIVE_FIELDS = ["password", "reset_password_token", "confirmation_token"];
+
+export function sanitizeUser(user) {
+  if (!user) return user;
+  const safe = { ...user };
+  for (const field of SENSITIVE_FIELDS) delete safe[field];
+  return safe;
 }
 
-function generateRefreshToken(userData) {
-  return jwt.sign({ user: userData }, config.jwt_refresh_secret, {
-    expiresIn: constants.time.REFRESH_TOKEN_EXPIRES_IN,
-  });
+const ttlMs = (token) => jwt.decode(token).exp * 1000 - Date.now();
+
+function generateAccessToken(user) {
+  const token = jwt.sign(
+    { sub: user.id, role: user.role, ver: user.token_version ?? 0, typ: "access" },
+    config.jwt_secret,
+    { expiresIn: config.access_token_ttl },
+  );
+  return [token, ttlMs(token)];
 }
+
+function generateRefreshToken(user) {
+  return jwt.sign(
+    { sub: user.id, ver: user.token_version ?? 0, typ: "refresh" },
+    config.jwt_refresh_secret,
+    { expiresIn: config.refresh_token_ttl },
+  );
+}
+
+// Pre-revamp tokens embedded the whole user row: { user: { username, ... } }.
+const legacyAllowed = () =>
+  !!config.legacy_token_grace_until && Date.now() < config.legacy_token_grace_until.getTime();
+
+async function resolveUser(decoded) {
+  if (decoded.sub) {
+    const user = await table.UserModel.findAuthUserById(decoded.sub);
+    if (!user || (user.token_version ?? 0) !== (decoded.ver ?? 0)) return null;
+    return user;
+  }
+  if (decoded.user?.username && legacyAllowed()) {
+    return table.UserModel.getByUsername(null, decoded);
+  }
+  return null;
+}
+
+const unauthorized = (res, message = "Invalid token or token expired") =>
+  res.code(401).send({ status: false, message });
 
 const verifyToken = async (req, res) => {
   const authHeader = req.headers["authorization"];
+  if (!authHeader) return unauthorized(res, "unauthorized!");
 
-  if (!authHeader) {
-    return res.code(401).send({ message: "unauthorized!" });
-  }
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  if (!token) return unauthorized(res, "A token is required for authentication");
 
-  const token = authHeader.split(" ")[1];
-  if (!token) {
-    return res
-      .code(401)
-      .send({ message: "A token is required for authentication" });
-  }
+  let decoded;
   try {
-    const decoded = jwt.verify(token, config.jwt_secret);
-    const userData = await table.UserModel.getByUsername(req, decoded);
-    if (!userData || !userData.is_active) {
-      return res.code(401).send({ message: "Invalid token or token expired" });
-    }
-
-    req.user_data = userData;
-    req.decoded = decoded;
-  } catch (error) {
-    return res.code(401).send({ message: "Invalid token or token expired" });
+    decoded = jwt.verify(token, config.jwt_secret);
+  } catch {
+    return unauthorized(res);
   }
-  return;
+  if (decoded.typ && decoded.typ !== "access") return unauthorized(res);
+
+  const user = await resolveUser(decoded);
+  if (!user || !user.is_active) return unauthorized(res);
+
+  req.user_data = sanitizeUser(user);
+  req.decoded = decoded;
 };
 
+// POST /auth/refresh { refresh_token } -> new access token and a rotated
+// refresh token. The user is re-checked (active, token version).
 const verifyRefreshToken = async (req, res) => {
+  let decoded;
   try {
-    const decoded = jwt.verify(
-      req.body.refresh_token,
-      config.jwt_refresh_secret
-    );
-    const [jwtToken, time] = generateAccessToken(decoded.user, expiresIn);
-    return res.send({
-      token: jwtToken,
-      expire_time: Date.now() + expiresIn,
-    });
-  } catch (error) {
+    decoded = jwt.verify(req.body?.refresh_token, config.jwt_refresh_secret);
+  } catch {
     return res
       .code(401)
-      .send({ message: "Invalid refresh token or a refresh token is expired" });
+      .send({ status: false, message: "Invalid refresh token or a refresh token is expired" });
   }
+
+  const user = decoded.sub
+    ? await resolveUser(decoded)
+    : legacyAllowed() && decoded.user?.username
+      ? await table.UserModel.getByUsername(null, decoded)
+      : null;
+  if (!user || !user.is_active) {
+    return res
+      .code(401)
+      .send({ status: false, message: "Invalid refresh token or a refresh token is expired" });
+  }
+
+  const [token, expiresIn] = generateAccessToken(user);
+  return res.send({
+    token,
+    expire_time: Date.now() + expiresIn,
+    refresh_token: generateRefreshToken(user),
+  });
 };
 
 export default {
@@ -73,4 +112,5 @@ export default {
   verifyRefreshToken,
   generateAccessToken,
   generateRefreshToken,
+  sanitizeUser,
 };

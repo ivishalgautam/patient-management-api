@@ -107,4 +107,68 @@ describe("auth", () => {
     });
     expect(res.statusCode).toBe(403);
   });
+
+  it("accepts a pre-revamp token during the grace period", async () => {
+    const jwt = (await import("jsonwebtoken")).default;
+    const doc = await createDoctor();
+    const legacy = jwt.sign({ user: { username: doc.username } }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    expect((await api(app, legacy).get("/v1/users/me")).statusCode).toBe(200);
+  });
+
+  it("refresh rotates tokens and the new pair works", async () => {
+    const doc = await createDoctor();
+    const loginRes = await app.inject({
+      method: "POST",
+      url: "/v1/auth/login",
+      payload: { username: doc.username, password: doc.password },
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/refresh",
+      payload: { refresh_token: loginRes.json().refresh_token },
+    });
+    expect(res.statusCode).toBe(200);
+    const { token, refresh_token, expire_time } = res.json();
+    expect(refresh_token).toBeTypeOf("string");
+    expect(expire_time).toBeGreaterThan(Date.now());
+    expect((await api(app, token).get("/v1/users/me")).statusCode).toBe(200);
+  });
+
+  it("a refresh token cannot be used as an access token", async () => {
+    const doc = await createDoctor();
+    const loginRes = await app.inject({
+      method: "POST",
+      url: "/v1/auth/login",
+      payload: { username: doc.username, password: doc.password },
+    });
+    const res = await api(app, loginRes.json().refresh_token).get("/v1/users/me");
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("refresh is refused for a deactivated user", async () => {
+    const doc = await createDoctor();
+    const loginRes = await app.inject({
+      method: "POST",
+      url: "/v1/auth/login",
+      payload: { username: doc.username, password: doc.password },
+    });
+    const { query } = await import("../setup/db.js");
+    await query(`UPDATE users SET is_active = false WHERE id = :id`, { id: doc.user.id });
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/refresh",
+      payload: { refresh_token: loginRes.json().refresh_token },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("access tokens carry only identifiers", async () => {
+    const jwt = (await import("jsonwebtoken")).default;
+    const doc = await createDoctor();
+    const token = await login(app, doc);
+    const payload = jwt.decode(token);
+    expect(Object.keys(payload).sort()).toEqual(["exp", "iat", "role", "sub", "typ", "ver"]);
+  });
 });

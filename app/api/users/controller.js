@@ -5,6 +5,7 @@ import { sequelize } from "../../db/postgres.js";
 import { cleanupFiles } from "../../helpers/cleanup-files.js";
 import { credentialGenerator } from "../../helpers/credential-generator.js";
 import hash from "../../lib/encryption/index.js";
+import authToken from "../../helpers/auth.js";
 import { doctorSchema } from "../../validation-schemas/doctor.schema.js";
 import { patientSchema } from "../../validation-schemas/patient.schema.js";
 import { userSchema } from "../../validation-schemas/user.schema.js";
@@ -28,6 +29,7 @@ const create = async (req, res) => {
   }
 
   const transaction = await sequelize.transaction();
+  let generatedPassword;
 
   try {
 
@@ -43,6 +45,7 @@ const create = async (req, res) => {
       await table.PatientSequenceModel.update(patientNumber, { transaction });
       req.body.username = username;
       req.body.password = password;
+      generatedPassword = password;
     }
 
     const data = await table.UserModel.create(req, { transaction });
@@ -101,6 +104,8 @@ const create = async (req, res) => {
       status: true,
       message: "User created",
       user: data,
+      // Only for generated patient credentials; shown once to the staff.
+      ...(generatedPassword ? { temporary_password: generatedPassword } : {}),
     });
   } catch (error) {
     await transaction.rollback();
@@ -131,6 +136,7 @@ const update = async (req, res) => {
     if (user && req.body.password) {
       req.body.new_password = req.body.password;
       await table.UserModel.updatePassword(req, req.user_data.id);
+      await table.UserModel.bumpTokenVersion(req.params.id);
     }
 
     await transaction.commit();
@@ -151,6 +157,9 @@ const updateStatus = async (req, res) => {
       req.params.id,
       req.body.is_active,
     );
+    if (!req.body.is_active) {
+      await table.UserModel.bumpTokenVersion(req.params.id);
+    }
 
     res.send({
       status: true,
@@ -165,8 +174,9 @@ const deleteById = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
     const filesToDelete = [];
-    const record = await table.UserModel.getByPk(req);
-    if (record === 0) {
+    const record = await table.UserModel.findAuthUserById(req.params.id);
+    if (!record) {
+      await transaction.rollback();
       return res.code(404).send({ status: false, message: "User not exists" });
     }
     if (record.avatar) filesToDelete.push(record.avatar);
@@ -240,33 +250,42 @@ const getPatientById = async (req, res) => {
 };
 
 const updatePassword = async (req, res) => {
-  try {
-    const record = await table.UserModel.getByPk(req);
-
-    if (!record) {
-      return res.code(404).send({ status: false, message: "User not exists" });
-    }
-
-    const verify_old_password = hash.verify(
-      req.body.old_password,
-      record.password,
-    );
-
-    if (!verify_old_password) {
-      return res.code(404).send({
-        status: false,
-        message: "Incorrect password. Please enter a valid password",
-      });
-    }
-
-    await table.UserModel.updatePassword(req);
-    return res.send({
-      status: true,
-      message: "Password changed successfully!",
+  // Only the account owner changes their own password here.
+  if (req.params.id !== req.user_data.id) {
+    return res.code(403).send({
+      status: false,
+      message: "You can only change your own password.",
     });
-  } catch (error) {
-    throw error;
   }
+
+  const record = await table.UserModel.findAuthUserById(req.params.id);
+  if (!record) {
+    return res.code(404).send({ status: false, message: "User not exists" });
+  }
+
+  if (!req.body.old_password || !hash.verify(req.body.old_password, record.password)) {
+    return res.code(400).send({
+      status: false,
+      message: "Incorrect password. Please enter a valid password",
+    });
+  }
+  if (!req.body.new_password) {
+    return res.code(400).send({ status: false, message: "New password is required." });
+  }
+
+  await table.UserModel.updatePassword(req);
+  await table.UserModel.bumpTokenVersion(record.id);
+
+  // Old tokens are now revoked; hand back fresh ones for this session.
+  const fresh = await table.UserModel.findAuthUserById(record.id);
+  const [token, expiresIn] = authToken.generateAccessToken(fresh);
+  return res.send({
+    status: true,
+    message: "Password changed successfully!",
+    token,
+    expire_time: Date.now() + expiresIn,
+    refresh_token: authToken.generateRefreshToken(fresh),
+  });
 };
 
 const checkUsername = async (req, res) => {
@@ -292,7 +311,7 @@ const getUser = async (req, res) => {
     return res.code(401).send({ status: false, message: "invalid token" });
   }
 
-  return res.send(req.user_data);
+  return res.send(authToken.sanitizeUser(req.user_data));
 };
 
 const resetPassword = async (req, res) => {

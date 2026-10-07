@@ -4,6 +4,7 @@ import { handleExcelImport } from "../../utils/import-excel.js";
 import { sequelize } from "../../db/postgres.js";
 import config from "../../config/index.js";
 import slugify from "slugify";
+import { patientPassword } from "../../helpers/credential-generator.js";
 
 const get = async (req, res) => {
   try {
@@ -76,9 +77,7 @@ const importPatients = async (req, res) => {
       //   user.mobile_number,
       // );
       const username = `ddss${user.patient_id}`;
-      const password =
-        String(user.fullname.substring(0, 4)).toLowerCase() +
-        user.mobile_number.slice(-4);
+      const password = patientPassword(user.fullname, user.mobile_number);
 
       const payload = {
         username: username,

@@ -12,6 +12,8 @@ export function applyTestEnv() {
   process.env.DB_DIALECT = process.env.DB_DIALECT || "postgres";
   process.env.JWT_SECRET = "test-jwt-secret";
   process.env.JWT_REFRESH_SECRET = "test-jwt-refresh-secret";
+  process.env.LEGACY_TOKEN_GRACE_UNTIL = "2999-01-01T00:00:00Z";
+  process.env.PATIENT_PASSWORD_MODE = "random";
   process.env.MAX_RATE_LIMIT = "100000";
   process.env.TIME_WINDOW = "1 minute";
   process.env.WAFFLY_LICENSE = "test-license";

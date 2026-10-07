@@ -96,6 +96,11 @@ const init = async (sequelize) => {
       confirmation_token: {
         type: DataTypes.STRING,
       },
+      token_version: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
     },
     {
       createdAt: "created_at",
@@ -252,6 +257,15 @@ const getByPk = async (req, id) => {
   return data.dataValues;
 };
 
+const findAuthUserById = async (id) => {
+  return await UserModel.findByPk(id, { raw: true });
+};
+
+// Invalidates every token issued to the user.
+const bumpTokenVersion = async (id, { transaction } = {}) => {
+  await UserModel.increment("token_version", { where: { id }, transaction });
+};
+
 const getByUsername = async (req, record = undefined) => {
   const data = await UserModel.findOne({
     where: {
@@ -396,5 +410,7 @@ export default {
   getByResetToken: getByResetToken,
   getByUserIds: getByUserIds,
   updateStatus: updateStatus,
+  findAuthUserById: findAuthUserById,
+  bumpTokenVersion: bumpTokenVersion,
   bulkCreate: bulkCreate,
 };

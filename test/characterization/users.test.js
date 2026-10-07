@@ -63,7 +63,9 @@ describe("user management", () => {
       password: "NewStaff@1",
     });
     expect(res.statusCode).toBe(200);
-    await login(app, {
+    // Resetting a password revokes that user's existing tokens.
+    expect((await api(app, p.staff.token).get("/v1/users/me")).statusCode).toBe(401);
+    p.staff.token = await login(app, {
       username: p.staff.user.username,
       password: "NewStaff@1",
       role: "staff",
@@ -92,16 +94,66 @@ describe("user management", () => {
 
 // Known defects from docs/revamp/02 §7. Each is expected to fail today and
 // is flipped to a normal `it` when fixed in Phase 3.
-describe("known defects", () => {
-  it.fails("#15 change-password works with the correct old password", async () => {
-    const res = await api(app, p.doctor.token).post(
+describe("passwords and token revocation", () => {
+  it("#15 fixed: change-password works and revokes old tokens", async () => {
+    const oldToken = p.doctor.token;
+    const wrong = await api(app, oldToken).post(
+      `/v1/users/${p.doctor.user.id}/change-password`,
+      { old_password: "nope", new_password: "Doctor@456" },
+    );
+    expect(wrong.statusCode).toBe(400);
+
+    const res = await api(app, oldToken).post(
       `/v1/users/${p.doctor.user.id}/change-password`,
       { old_password: p.doctor.password, new_password: "Doctor@456" },
     );
     expect(res.statusCode).toBe(200);
+    p.doctor.token = res.json().token;
+    p.doctor.password = "Doctor@456";
+
+    expect((await api(app, oldToken).get("/v1/users/me")).statusCode).toBe(401);
+    expect((await api(app, p.doctor.token).get("/v1/users/me")).statusCode).toBe(200);
+    await login(app, { ...p.doctor, role: "doctor" });
   });
 
-  it.fails("#16 deleting an unknown user returns 404", async () => {
+  it("cannot change someone else's password via change-password", async () => {
+    const res = await api(app, p.staff.token).post(
+      `/v1/users/${p.doctor.user.id}/change-password`,
+      { old_password: "x", new_password: "y" },
+    );
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("/users/me and login never return the password hash", async () => {
+    const me = await api(app, p.doctor.token).get("/v1/users/me");
+    expect(me.json()).not.toHaveProperty("password");
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/login",
+      payload: { username: p.doctor.username, password: p.doctor.password },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().user_data).not.toHaveProperty("password");
+  });
+
+  it("new patients get a random temporary password, returned once", async () => {
+    const res = await api(app, p.doctor.token).post("/v1/users", {
+      role: "patient",
+      fullname: "Ravi Kumar",
+      country_code: "91",
+      mobile_number: "9811112222",
+    });
+    const { temporary_password, user } = res.json();
+    expect(temporary_password).toMatch(/^[A-Za-z2-9]{10}$/);
+    expect(temporary_password).not.toBe("ravi2222");
+    await login(app, { username: user.username, password: temporary_password });
+  });
+});
+
+describe("known defects", () => {
+
+
+  it("#16 fixed: deleting an unknown user returns 404", async () => {
     const res = await api(app, p.doctor.token).delete(
       `/v1/users/00000000-0000-4000-8000-000000000000`,
     );

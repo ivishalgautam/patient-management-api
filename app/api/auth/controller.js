@@ -16,7 +16,7 @@ const verifyUserCredentials = async (req, res) => {
 
   try {
     let userData = await table.UserModel.getByUsername(req);
-    if (!userData || role !== userData.role) {
+    if (!userData || (role && role !== userData.role)) {
       return res.code(404).send({ status: false, message: "User not found!" });
     }
 
@@ -41,7 +41,7 @@ const verifyUserCredentials = async (req, res) => {
       token: jwtToken,
       expire_time: Date.now() + expiresIn,
       refresh_token: refreshToken,
-      user_data: userData,
+      user_data: authToken.sanitizeUser(userData),
     });
   } catch (error) {
     throw error;
@@ -50,6 +50,7 @@ const verifyUserCredentials = async (req, res) => {
 
 const createNewUser = async (req, res) => {
   const transaction = await sequelize.transaction();
+  let generatedPassword;
 
   try {
     const validateUserData = userSchema.parse(req.body);
@@ -74,6 +75,7 @@ const createNewUser = async (req, res) => {
       );
       req.body.username = username;
       req.body.password = password;
+      generatedPassword = password;
     }
 
     const data = await table.UserModel.create(req, { transaction });
@@ -100,6 +102,8 @@ const createNewUser = async (req, res) => {
       expire_time: Date.now() + expiresIn,
       refresh_token: refreshToken,
       user_data: data,
+      // Shown once; the patient logs in later with username + this password.
+      temporary_password: generatedPassword,
     });
   } catch (error) {
     await transaction.rollback();
