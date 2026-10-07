@@ -244,6 +244,13 @@ describe("bulk actions", () => {
   });
 });
 
+describe("owners", () => {
+  it("lists active team members for the owner picker", async () => {
+    const owners = ok(await staff.get("/v1/leads/owners"));
+    expect(owners.map((o) => o.id).sort()).toEqual([p.doctor.user.id, p.staff.user.id].sort());
+  });
+});
+
 describe("visibility", () => {
   it("users without leads.view_all only see their own leads", async () => {
     const mine = ok(await doctor.post("/v1/leads", { full_name: "Staff Own", phone: phone(), owner_id: p.staff.user.id }));

@@ -28,6 +28,7 @@ export default async function routes(fastify) {
   fastify.get("/duplicates", async (req, reply) =>
     reply.ok(await service.findDuplicates(req.ctx.practiceId, duplicateQuery.parse(req.query))),
   );
+  fastify.get("/owners", async (req, reply) => reply.ok(await service.listOwners(req.ctx)));
   fastify.get("/follow-ups/due", async (req, reply) => reply.ok(await service.dueFollowUps(req.ctx)));
   fastify.post("/bulk", async (req, reply) => reply.ok(await service.bulk(req.ctx, bulkInput.parse(req.body))));
 

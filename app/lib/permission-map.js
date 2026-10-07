@@ -198,6 +198,7 @@ export const PERMISSION_MAP = {
   "POST /v1/leads": ["leads.create"],
   "GET /v1/leads/duplicates": ["leads.view"],
   "GET /v1/leads/follow-ups/due": ["leads.view"],
+  "GET /v1/leads/owners": ["leads.view", "pipelines.manage"],
   "POST /v1/leads/bulk": ["leads.edit", "leads.assign", "leads.delete"],
   "GET /v1/leads/:id": ["leads.view"],
   "PUT /v1/leads/:id": ["leads.edit"],

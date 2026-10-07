@@ -217,6 +217,7 @@ export const TENANT_MAP = {
   ],
   "GET /v1/leads/duplicates": "list",
   "GET /v1/leads/follow-ups/due": "list",
+  "GET /v1/leads/owners": "list",
   "POST /v1/leads/bulk": "list",
   "GET /v1/leads/:id": byId("lead"),
   "PUT /v1/leads/:id": [c("lead", "params.id"), c("clinic", "body.clinic_id")],

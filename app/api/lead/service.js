@@ -709,6 +709,16 @@ export async function deleteActivity(ctx, activityId) {
   });
 }
 
+// Active doctors/staff of the practice (owner pickers, pipeline members).
+export function listOwners(ctx) {
+  return select(
+    `SELECT id, fullname, role FROM users
+      WHERE practice_id = :practiceId AND role IN ('doctor', 'staff') AND is_active AND deleted_at IS NULL
+      ORDER BY fullname`,
+    { practiceId: ctx.practiceId },
+  );
+}
+
 // Open follow-ups due up to the end of today, for the caller's leads (or
 // everyone's with leads.view_all).
 export function dueFollowUps(ctx) {
