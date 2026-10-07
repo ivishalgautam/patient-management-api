@@ -325,19 +325,6 @@ const getUser = async (req, res) => {
   });
 };
 
-const resetPassword = async (req, res) => {
-  const token = await table.UserModel.getByResetToken(req);
-  if (!token) {
-    return res.code(401).send({ status: false, message: "invalid url" });
-  }
-
-  await table.UserModel.updatePassword(req, token.id);
-  return res.send({
-    status: true,
-    message: "Password reset successfully!",
-  });
-};
-
 const getMyPatients = async (req, res) => {
   res.send({
     status: true,
@@ -355,7 +342,6 @@ export default {
   checkUsername: checkUsername,
   updatePassword: updatePassword,
   getUser: getUser,
-  resetPassword: resetPassword,
   updateStatus: updateStatus,
   getMyPatients: getMyPatients,
   getPatientById: getPatientById,

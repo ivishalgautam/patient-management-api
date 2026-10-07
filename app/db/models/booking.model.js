@@ -370,16 +370,6 @@ const updateStatus = async (req, id) => {
   return data[1];
 };
 
-const deleteById = async (req, id) => {
-  return await BookingModel.destroy({
-    where: {
-      id: req?.params?.id || id,
-    },
-    returning: true,
-    raw: true,
-  });
-};
-
 const count = async (clinicId, today = false) => {
   const whereCondition = {};
 
@@ -411,7 +401,6 @@ export default {
   updateOne: updateOne,
   update: update,
   updateStatus: updateStatus,
-  deleteById: deleteById,
   getByClinicDateAndSlot: getByClinicDateAndSlot,
   count: count,
   getByDateAndClinic: getByDateAndClinic,

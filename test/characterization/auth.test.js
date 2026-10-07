@@ -196,3 +196,18 @@ describe("auth", () => {
     expect(res.statusCode).toBe(200);
   });
 });
+
+// Audit #22/#23: handlers that could never work were removed with their routes.
+describe("removed dead routes", () => {
+  it("the public reset-password catch-all POST /auth/:token is gone", async () => {
+    const res = await app.inject({ method: "POST", url: "/v1/auth/some-reset-token", payload: { password: "x" } });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("bookings have no delete route (cancel through the status endpoint)", async () => {
+    const doc = await createDoctor();
+    const token = await login(app, doc);
+    const res = await api(app, token).delete("/v1/bookings/00000000-0000-0000-0000-000000000000");
+    expect(res.statusCode).toBe(404);
+  });
+});

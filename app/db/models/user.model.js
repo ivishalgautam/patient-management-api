@@ -390,14 +390,6 @@ const getByEmailId = async (req) => {
   });
 };
 
-const getByResetToken = async (req) => {
-  return await UserModel.findOne({
-    where: {
-      reset_password_token: req.params.token,
-    },
-  });
-};
-
 const getByUserIds = async (user_ids) => {
   return await UserModel.findAll({
     where: {
@@ -437,7 +429,6 @@ export default {
   deleteById: deleteById,
   countUser: countUser,
   getByEmailId: getByEmailId,
-  getByResetToken: getByResetToken,
   getByUserIds: getByUserIds,
   updateStatus: updateStatus,
   findAuthUserById: findAuthUserById,

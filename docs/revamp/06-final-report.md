@@ -15,7 +15,7 @@ Revamp of the Dr. Dipti dental platform using the BW Task source as a reference 
 |---|---|---|
 | Build passes | ✅ | `next build` compiles (dashboard); server boots via `buildApp` in every test run |
 | Lint passes | ✅ | `npm run lint` (server): 0 problems. `next lint` (dashboard): 0 errors, 4 warnings, all in files the revamp didn't touch |
-| Tests pass | ✅ | Server **400 tests / 21 files**, dashboard **7 tests / 4 files** |
+| Tests pass | ✅ | Server **402 tests / 21 files**, dashboard **7 tests / 4 files** |
 | Tests for pipelines, stages, forms, custom fields, ingestion (Facebook + Google), dedupe, permissions | ✅ | `test/leads/{config,leads,forms,integrations,conversion,google-addon,access}.test.js`, `test/platform/permissions.test.js` |
 | Migrations up/down on a fresh DB | ✅ | Empty DB: up (13) → down to 0 (13 reverted, only the migration-tracking table left) → up (13) |
 | Migrations up/down on a copy of existing data | ✅ | Fresh `pg_dump` of the local `drdipti` DB: baseline → up (12) → down to the first revamp migration (12 reverted) → up (12). Row counts unchanged at each step (503 users, 499 patients, 623 bookings, 1349 treatments) |
@@ -85,7 +85,7 @@ READMEs for both repos, `docs/leads-module.md` (data model, API, Facebook and Go
 | 18 | Patient number race | ✅ DB sequence |
 | 19 | Import shares one transaction concurrently | ✅ Rewritten as a sequential service |
 | 20 | Broken duplicate WhatsApp helper | ✅ Removed |
-| 22, 23, 29 | Dead routes / handlers (booking delete not routed, reset-password flow never armed, `GET /users/staff`) | ⏸ Left as they were: no client uses them, and there's no agreed behaviour to restore |
+| 22, 23, 29 | Dead routes / handlers (booking delete not routed, reset-password flow never armed, `GET /users/staff`) | ✅ Removed. `GET /users/staff` went in Phase 3 (e3572fc); the unrouted booking delete handler and the public `POST /auth/:token` reset endpoint (nothing ever set a reset token) were removed afterwards with their model helpers. Appointments are canceled through the status endpoint. The unused `reset_password_token` / `confirmation_token` columns stay and are still stripped from responses |
 | 24 | No state validation on clinic/slot/booking/payment updates | ✅ Business-state rules added (§4a); ownership was already enforced by tenancy |
 | 30 | Advance used doesn't reduce the remaining balance | ❓ **Needs your confirmation** of the intended billing rule; unchanged |
 

@@ -155,29 +155,9 @@ const updateStatus = async (req, res) => {
   }
 };
 
-const deleteById = async (req, res) => {
-  const transaction = await beginTransaction(req);
-  try {
-    const record = await table.BookingModel.getByPk(req, { transaction });
-    if (!record)
-      return res
-        .code(404)
-        .send({ status: false, message: "Service not found." });
-
-    await table.BookingModel.deleteById(req, 0, { transaction });
-    await transaction.commit();
-
-    res.send({ status: true, mesage: "Service deleted." });
-  } catch (error) {
-    await transaction.rollback();
-    throw error;
-  }
-};
-
 export default {
   create: create,
   get: get,
-  deleteById: deleteById,
   getByClinicId: getByClinicId,
   updateById: updateById,
   updateStatus: updateStatus,
