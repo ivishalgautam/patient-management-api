@@ -1,18 +1,20 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { deleteFile } from "../../helpers/file.js";
-import { sequelize } from "../../db/postgres.js";
 import { treatmentPrescriptionSchema } from "../../validation-schemas/treatment.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const validatePrescriptionData = treatmentPrescriptionSchema.parse(
       req.body
     );
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validatePrescriptionData);
     const treatment = await table.TreatmentModel.getByPk(
       0,
       req.body.treatment_id
@@ -116,7 +118,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const record = await table.TreatmentPrescriptionModel.getByPk(req);

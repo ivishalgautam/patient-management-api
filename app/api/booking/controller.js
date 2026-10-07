@@ -1,15 +1,17 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import moment from "moment";
 import table from "../../db/models.js";
-import { sequelize } from "../../db/postgres.js";
 import { sendBookingConfirm } from "../../utils/waffly.js";
 import { bookingSchema } from "../../validation-schemas/booking.schema.js";
 
 const create = async (req, res) => {
   let transaction;
   try {
-    transaction = await sequelize.transaction();
+    transaction = await beginTransaction(req);
     const validateData = bookingSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateData);
     const { role, id: userId } = req.user_data;
 
     const clinicRecord = await table.ClinicModel.getById(0, req.body.clinic_id);
@@ -113,7 +115,7 @@ const getByDateAndClinic = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const bookingRecord = await table.BookingModel.getById(req);
     if (!bookingRecord)
@@ -132,7 +134,7 @@ const updateById = async (req, res) => {
 };
 
 const updateStatus = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const status = req.body.status;
@@ -210,7 +212,7 @@ const updateStatus = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const record = await table.BookingModel.getByPk(req, { transaction });
     if (!record)

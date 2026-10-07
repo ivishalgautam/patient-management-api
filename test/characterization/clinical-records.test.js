@@ -80,7 +80,7 @@ describe("clinical records", () => {
     expect(res.json().data.documents[0]).toMatch(/_scan\.png$/);
   });
 
-  it.fails("#26 exam without gallery uses the schema default []", async () => {
+  it("#26 fixed: exam without gallery uses the schema default []", async () => {
     const res = await api(app, p.doctor.token).post("/v1/comprehensive-examinations", {
       patient_id: p.patient.id,
       chief_complaint: "Pain",

@@ -1,12 +1,14 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import table from "../../db/models.js";
-import { sequelize } from "../../db/postgres.js";
 import { ledgerSchema } from "../../validation-schemas/ledger.schema.js";
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const validateData = ledgerSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateData);
 
     const clinic = await table.ClinicModel.getById(0, validateData.clinic_id);
     if (!clinic)
@@ -74,7 +76,7 @@ const getById = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const ledger = await table.LedgerModel.getById(req);

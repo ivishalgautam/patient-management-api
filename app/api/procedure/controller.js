@@ -1,17 +1,19 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import slugify from "slugify";
 import { deleteFile } from "../../helpers/file.js";
-import { sequelize } from "../../db/postgres.js";
 import { procedureSchema } from "../../validation-schemas/procedure.schema.js";
 
 const { BAD_REQUEST, NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const validateProcedureData = procedureSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateProcedureData);
     let slug = slugify(req.body.name, { lower: true });
     req.body.slug = slug;
 
@@ -104,7 +106,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const record = await table.ProcedureModel.getByPk(req);

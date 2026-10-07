@@ -1,8 +1,8 @@
 "use strict";
 
+import { beginTransaction } from "../../db/transaction.js";
 import hash from "../../lib/encryption/index.js";
 import table from "../../db/models.js";
-import { sequelize } from "../../db/postgres.js";
 import authToken from "../../helpers/auth.js";
 import { userSchema } from "../../validation-schemas/user.schema.js";
 import { patientSchema } from "../../validation-schemas/patient.schema.js";
@@ -13,6 +13,8 @@ import { resolvePracticeForPatient } from "../../lib/practice.js";
 
 const verifyUserCredentials = async (req, res) => {
   const validateBody = loginSchema.parse(req.body);
+  // Use the validated values (defaults, coercions) from here on.
+  Object.assign(req.body, validateBody);
   const role = req.body.role;
 
   try {
@@ -50,11 +52,13 @@ const verifyUserCredentials = async (req, res) => {
 };
 
 const createNewUser = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   let generatedPassword;
 
   try {
     const validateUserData = userSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateUserData);
     // Public self-registration may only create patients.
     if (validateUserData.role !== "patient") {
       await transaction.rollback();
@@ -85,6 +89,8 @@ const createNewUser = async (req, res) => {
 
     if (data.role === "patient") {
       const validatePatientData = patientSchema.parse(req.body);
+      // Use the validated values (defaults, coercions) from here on.
+      Object.assign(req.body, validatePatientData);
       const practiceId = await resolvePracticeForPatient({
         clinicId: req.body.clinic_id,
         transaction,
@@ -94,6 +100,8 @@ const createNewUser = async (req, res) => {
 
     if (data.role === "doctor") {
       const validateDoctorData = doctorSchema.parse(req.body);
+      // Use the validated values (defaults, coercions) from here on.
+      Object.assign(req.body, validateDoctorData);
       await table.DoctorModel.create(req, data.id, { transaction });
     }
 

@@ -1,17 +1,19 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import slugify from "slugify";
 import { deleteFile } from "../../helpers/file.js";
-import { sequelize } from "../../db/postgres.js";
 import { treatmentHistorySchema } from "../../validation-schemas/treatment.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const validateHistoryData = treatmentHistorySchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateHistoryData);
     const treatment = await table.TreatmentModel.getByPk(
       0,
       req.body.treatment_id
@@ -122,7 +124,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const record = await table.TreatmentHistoryModel.getByPk(req);

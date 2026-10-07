@@ -1,7 +1,7 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import { sequelize } from "../../db/postgres.js";
 import { comprehensiveExaminationSchema } from "../../validation-schemas/comprehensive-examination.schema.js";
 import { cleanupFiles } from "../../helpers/cleanup-files.js";
 import { getItemsToDelete } from "../../helpers/filter.js";
@@ -9,9 +9,11 @@ import { getItemsToDelete } from "../../helpers/filter.js";
 const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const validateHistoryData = comprehensiveExaminationSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateHistoryData);
     const patient = await table.PatientModel.getById(0, req.body.patient_id);
     if (!patient)
       return res
@@ -45,10 +47,12 @@ const create = async (req, res) => {
 };
 
 const createMultipart = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     req.body.gallery = req.filePaths;
     const validateHistoryData = comprehensiveExaminationSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateHistoryData);
     const patient = await table.PatientModel.getById(0, req.body.patient_id);
     if (!patient)
       return res
@@ -131,7 +135,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const record = await table.ComprehensiveExaminationModel.getById(req);
@@ -159,7 +163,7 @@ const deleteById = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const record = await table.ComprehensiveExaminationModel.getById(req);
@@ -182,7 +186,7 @@ const update = async (req, res) => {
 };
 
 const updateMultipart = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const record = await table.ComprehensiveExaminationModel.getById(req);

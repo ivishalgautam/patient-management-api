@@ -1,7 +1,7 @@
 "use strict";
 
+import { beginTransaction } from "../../db/transaction.js";
 import table from "../../db/models.js";
-import { sequelize } from "../../db/postgres.js";
 import { cleanupFiles } from "../../helpers/cleanup-files.js";
 import { credentialGenerator } from "../../helpers/credential-generator.js";
 import hash from "../../lib/encryption/index.js";
@@ -30,6 +30,8 @@ const CREATABLE_ROLES = {
 const create = async (req, res) => {
   const { role } = req.user_data;
   const validateUserData = userSchema.parse(req.body);
+  // Use the validated values (defaults, coercions) from here on.
+  Object.assign(req.body, validateUserData);
   const needed = validateUserData.role === "patient" ? "patients.create" : "users.manage";
   if (!CREATABLE_ROLES[role]?.includes(validateUserData.role) || !can(req.ctx, needed)) {
     return res.code(403).send({
@@ -38,7 +40,7 @@ const create = async (req, res) => {
     });
   }
 
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   let generatedPassword;
 
   try {
@@ -64,6 +66,8 @@ const create = async (req, res) => {
 
     if (data.role === "doctor") {
       const validateDoctorData = doctorSchema.parse(req.body);
+      // Use the validated values (defaults, coercions) from here on.
+      Object.assign(req.body, validateDoctorData);
       await table.DoctorModel.create(req, data.id, { transaction });
     }
 
@@ -129,7 +133,7 @@ const create = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const record = await table.UserModel.findAuthUserById(req.params.id);
     if (!record) {
@@ -194,7 +198,7 @@ const updateStatus = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const filesToDelete = [];
     const record = await table.UserModel.findAuthUserById(req.params.id);

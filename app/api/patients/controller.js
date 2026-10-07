@@ -1,7 +1,7 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import table from "../../db/models.js";
 import { handleExcelImport } from "../../utils/import-excel.js";
-import { sequelize } from "../../db/postgres.js";
 import config from "../../config/index.js";
 import slugify from "slugify";
 import { patientPassword } from "../../helpers/credential-generator.js";
@@ -16,7 +16,7 @@ const get = async (req, res) => {
 };
 
 const importPatients = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const parts = req.parts();
     const patientData = [];

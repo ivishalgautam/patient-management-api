@@ -132,4 +132,29 @@ describe("booking", () => {
     });
     expect(res.statusCode).toBe(200);
   });
+
+  it("early returns don't leak database connections", async () => {
+    // "Slots full" returns before commit; do it more times than the pool size.
+    const date = nextWorkingDate(5);
+    const patient = await createPatient(app, p.doctor.token);
+    await api(app, p.staff.token).post("/v1/bookings", {
+      clinic_id: p.clinic.id,
+      patient_id: patient.id,
+      date,
+      slot: "09:00:00",
+    });
+    for (let i = 0; i < 12; i++) {
+      const res = await api(app, p.staff.token).post("/v1/bookings", {
+        clinic_id: p.clinic.id,
+        patient_id: p.patient.id,
+        date,
+        slot: "09:00:00",
+      });
+      expect(res.statusCode).toBe(400);
+    }
+    const started = Date.now();
+    const res = await api(app, p.doctor.token).get(`/v1/bookings/getByClinicId/${p.clinic.id}`);
+    expect(res.statusCode).toBe(200);
+    expect(Date.now() - started).toBeLessThan(5000);
+  });
 });

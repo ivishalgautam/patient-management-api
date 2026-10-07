@@ -1,12 +1,14 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import table from "../../db/models.js";
-import { sequelize } from "../../db/postgres.js";
 import { clinicStaffSchema } from "../../validation-schemas/clinic-staff.schema.js";
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const validateData = clinicStaffSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateData);
 
     const clinic = await table.ClinicModel.getById(0, req.body.clinic_id);
     if (!clinic)
@@ -39,7 +41,7 @@ const getMyPatientsByClinicId = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const record = await table.ClinicStaffMapModel.getById(req);
     if (!record)

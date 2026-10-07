@@ -1,17 +1,19 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
 import { deleteFile } from "../../helpers/file.js";
-import { sequelize } from "../../db/postgres.js";
 import { createSlots } from "../../helpers/slot.js";
 import { blockSlotSchema } from "../../validation-schemas/block-slot.schema.js";
 
 const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const validateData = blockSlotSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateData);
 
     const clinicRecord = await table.ClinicModel.getById(0, req.body.clinic_id);
     if (!clinicRecord)
@@ -55,6 +57,8 @@ const create = async (req, res) => {
 const updateById = async (req, res) => {
   try {
     const validateData = blockSlotSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateData);
 
     const record = await table.BlockedSlotModel.getById(req);
     if (!record)
@@ -181,7 +185,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const record = await table.BlockedSlotModel.getByPk(req);

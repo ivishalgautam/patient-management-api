@@ -1,12 +1,14 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import table from "../../db/models.js";
-import { sequelize } from "../../db/postgres.js";
 import { doctorServiceSchema } from "../../validation-schemas/doctor-service.schema.js";
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const validateProcedureData = doctorServiceSchema.parse(req.body);
+    // Use the validated values (defaults, coercions) from here on.
+    Object.assign(req.body, validateProcedureData);
 
     let doctorRecord = null;
     if (req.user_data.role === "doctor") {
@@ -75,7 +77,7 @@ const getByServiceId = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const record = await table.DoctorServiceMapModel.getByPk(req, {
       transaction,

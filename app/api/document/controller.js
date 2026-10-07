@@ -1,7 +1,7 @@
 "use strict";
+import { beginTransaction } from "../../db/transaction.js";
 import constants from "../../lib/constants/index.js";
 import table from "../../db/models.js";
-import { sequelize } from "../../db/postgres.js";
 import { deleteFile } from "../../helpers/file.js";
 import {
   documentDoctorSchema,
@@ -13,17 +13,21 @@ import { cleanupFiles } from "../../helpers/cleanup-files.js";
 const { NOT_FOUND } = constants.http.status;
 
 const create = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const { id, role } = req.user_data;
     req.body.documents = req.filePaths;
 
     if (["doctor", "staff"].includes(role)) {
       const validateData = documentDoctorSchema.parse(req.body);
+      // Use the validated values (defaults, coercions) from here on.
+      Object.assign(req.body, validateData);
     }
 
     if (role === "patient") {
       const validateData = documentPatientSchema.parse(req.body);
+      // Use the validated values (defaults, coercions) from here on.
+      Object.assign(req.body, validateData);
       const patient = await table.PatientModel.getByUserId(id);
 
       if (!patient)
@@ -56,7 +60,7 @@ const create = async (req, res) => {
 };
 
 const updateById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
   try {
     const record = await table.DocumentModel.getById(req);
     if (!record) {
@@ -168,7 +172,7 @@ const get = async (req, res) => {
 };
 
 const deleteById = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  const transaction = await beginTransaction(req);
 
   try {
     const record = await table.DocumentModel.getById(req);
