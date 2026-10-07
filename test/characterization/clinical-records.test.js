@@ -66,7 +66,7 @@ describe("clinical records", () => {
     });
     expect(res.statusCode).toBe(200);
     const doc = res.json().data;
-    expect(doc.documents[0]).toMatch(/^public[\\/]images[\\/]\d+_.+\.png$/);
+    expect(doc.documents[0]).toMatch(/^public\/images\/\d+_.+\.png$/);
     created.push(...doc.documents);
     expect(fs.existsSync(doc.documents[0])).toBe(true);
   });

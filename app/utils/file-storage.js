@@ -34,7 +34,8 @@ export const resolvePublicPath = (filePath) => {
 export async function saveFile(part) {
   const folder = folderFor(part.mimetype);
   await fs.promises.mkdir(folder, { recursive: true });
-  const filePath = path.join(folder, safeName(part.filename));
+  // Forward slashes on every OS: the path doubles as a URL.
+  const filePath = path.posix.join(folder, safeName(part.filename));
   await pipeline(part.file, fs.createWriteStream(filePath));
   return filePath;
 }
