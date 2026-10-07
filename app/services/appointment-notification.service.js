@@ -41,9 +41,12 @@ export const processAppointmentNotifications = async () => {
 
           u.fullname,
           u.country_code,
-          u.mobile_number
+          u.mobile_number,
+          c.contact_phone
 
       FROM bookings b
+      INNER JOIN clinics c
+          ON c.id = b.clinic_id
       INNER JOIN patients p 
           ON p.id = b.patient_id
       INNER JOIN users u
@@ -92,6 +95,7 @@ export const processAppointmentNotifications = async () => {
           await send24HoursBeforeAppointment({
             patient_phone: patientPhone,
             patient_name: patientName,
+            contact_phone: booking.contact_phone,
             booked_day: booking.date,
             booked_slot: formattedSlot,
           });
@@ -113,6 +117,7 @@ export const processAppointmentNotifications = async () => {
           await send2HoursBeforeAppointment({
             patient_phone: patientPhone,
             patient_name: patientName,
+            contact_phone: booking.contact_phone,
             booked_slot: formattedSlot,
           });
 
@@ -133,6 +138,7 @@ export const processAppointmentNotifications = async () => {
           await send1HourAfterAppointment({
             patient_phone: patientPhone,
             patient_name: patientName,
+            contact_phone: booking.contact_phone,
           });
 
           await updateNotificationFlag(
@@ -155,6 +161,7 @@ export const processAppointmentNotifications = async () => {
           await sendReviewMessage({
             patient_phone: patientPhone,
             patient_name: patientName,
+            contact_phone: booking.contact_phone,
           });
 
           await updateNotificationFlag(booking.id, "review_message_sent");

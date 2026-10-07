@@ -40,4 +40,13 @@ const get = async () => {
   });
 };
 
-export default { init: init, update: update, get: get };
+// Next patient number (ddss<N>). Concurrency-safe: Postgres sequence.
+const next = async ({ transaction } = {}) => {
+  const [[row]] = await PatientSequenceModel.sequelize.query(
+    `SELECT nextval('patient_number_seq')::int AS value`,
+    { transaction },
+  );
+  return row.value;
+};
+
+export default { init: init, update: update, get: get, next: next };

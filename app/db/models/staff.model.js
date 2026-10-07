@@ -77,7 +77,7 @@ const getByPk = async (req, id) => {
 };
 
 const get = async (req, id) => {
-  const whereConditions = [`dr.user_id = :drUserId`];
+  const whereConditions = [`dr.user_id = :drUserId`, `usr.deleted_at IS NULL`];
   const queryParams = { drUserId: req.user_data.id || id };
   const q = req.query.q ? req.query.q : null;
 

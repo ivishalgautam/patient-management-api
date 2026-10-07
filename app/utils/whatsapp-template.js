@@ -1,6 +1,9 @@
 import axios from "axios";
 import config from "../config/index.js";
 
+// Used only when the clinic has no contact_phone set.
+const DEFAULT_CONTACT = "8882850066";
+
 const normalizePhone = (phone) => {
   return String(phone).trim().replace(/^\+/, "").replace(/\s+/g, "");
 };
@@ -37,7 +40,7 @@ export const send24HoursBeforeAppointment = (payload) =>
       formatName(payload.patient_name),
       payload.booked_day,
       payload.booked_slot,
-      "8882850066",
+      payload.contact_phone || DEFAULT_CONTACT,
     ],
   });
 
@@ -49,7 +52,7 @@ export const send2HoursBeforeAppointment = (payload) =>
     params: [
       formatName(payload.patient_name),
       payload.booked_slot,
-      "8882850066",
+      payload.contact_phone || DEFAULT_CONTACT,
     ],
   });
 
@@ -58,7 +61,7 @@ export const send1HourAfterAppointment = (payload) =>
     phone: payload.patient_phone,
     template: config.waffly_template_1_hr_after_appointment,
     label: "1 hour follow-up",
-    params: [formatName(payload.patient_name), "8882850066"],
+    params: [formatName(payload.patient_name), payload.contact_phone || DEFAULT_CONTACT],
   });
 
 export const sendReviewMessage = (payload) =>
@@ -66,5 +69,5 @@ export const sendReviewMessage = (payload) =>
     phone: payload.patient_phone,
     template: config.waffly_template_review_mesaage,
     label: "review request",
-    params: [formatName(payload.patient_name), "8882850066"],
+    params: [formatName(payload.patient_name), payload.contact_phone || DEFAULT_CONTACT],
   });

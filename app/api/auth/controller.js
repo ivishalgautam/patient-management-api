@@ -65,9 +65,7 @@ const createNewUser = async (req, res) => {
     }
 
     if (validateUserData.role === "patient") {
-      const currPatientCount = await table.PatientSequenceModel.get();
-      const patientNumber = currPatientCount.value + 1;
-      await table.PatientSequenceModel.update(patientNumber, { transaction });
+      const patientNumber = await table.PatientSequenceModel.next({ transaction });
 
       const { username, password } = credentialGenerator(
         patientNumber,

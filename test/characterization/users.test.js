@@ -160,7 +160,7 @@ describe("known defects", () => {
     expect(res.statusCode).toBe(404);
   });
 
-  it.fails("#17 deleting a staff user keeps the clinical records they created", async () => {
+  it("#17 fixed: deleting a staff user keeps the clinical records they created", async () => {
     const pat = await createPatient(app, p.doctor.token);
     await api(app, p.staff.token).post("/v1/treatments", {
       clinic_id: p.clinic.id,

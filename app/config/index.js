@@ -35,6 +35,7 @@ const envSchema = z.object({
   PG_DATABASE: z.string().min(1, "PG_DATABASE is required"),
   PG_USERNAME: z.string().min(1, "PG_USERNAME is required"),
   PG_PASSWORD: optional,
+  PG_POOL_MAX: z.coerce.number().int().positive().optional().default(20),
 
   JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
   JWT_REFRESH_SECRET: z.string().min(1, "JWT_REFRESH_SECRET is required"),
@@ -114,6 +115,7 @@ const config = Object.freeze({
   pg_host: env.PG_HOST,
   pg_dialect: env.DB_DIALECT,
   pg_port: env.PG_PORT,
+  pg_pool_max: env.PG_POOL_MAX,
 
   // auth
   jwt_secret: env.JWT_SECRET,

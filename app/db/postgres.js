@@ -10,6 +10,8 @@ export const sequelize = new Sequelize(
   {
     host: config.pg_host,
     port: config.pg_port,
+    // A saturated pool fails fast (10s) instead of hanging requests.
+    pool: { max: config.pg_pool_max, min: 0, acquire: 10_000, idle: 10_000 },
     dialect: config.pg_dialect,
     logging: false,
   },

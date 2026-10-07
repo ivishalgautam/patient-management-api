@@ -112,6 +112,11 @@ const init = async (sequelize) => {
         type: DataTypes.UUID,
         allowNull: true,
       },
+      // Soft delete for staff/doctor accounts (their records stay).
+      deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       createdAt: "created_at",
@@ -161,7 +166,7 @@ const bulkCreate = async (userData, { transaction }) => {
   return sanitizedUsers;
 };
 const get = async (req) => {
-  const whereConditions = ["usr.role != 'admin'"];
+  const whereConditions = ["usr.role != 'admin'", "usr.deleted_at IS NULL"];
   const queryParams = {};
   const scope = practiceScope(req);
   if (scope) {
@@ -274,7 +279,15 @@ const getByPk = async (req, id) => {
 };
 
 const findAuthUserById = async (id) => {
-  return await UserModel.findByPk(id, { raw: true });
+  return await UserModel.findOne({ where: { id, deleted_at: null }, raw: true });
+};
+
+const softDelete = async (id, { transaction } = {}) => {
+  await UserModel.update(
+    { deleted_at: new Date(), is_active: false },
+    { where: { id }, transaction },
+  );
+  await bumpTokenVersion(id, { transaction });
 };
 
 // Invalidates every token issued to the user.
@@ -286,6 +299,7 @@ const getByUsername = async (req, record = undefined) => {
   const data = await UserModel.findOne({
     where: {
       username: req?.body?.username || record?.user?.username,
+      deleted_at: null,
     },
     raw: true,
   });
@@ -428,5 +442,6 @@ export default {
   updateStatus: updateStatus,
   findAuthUserById: findAuthUserById,
   bumpTokenVersion: bumpTokenVersion,
+  softDelete: softDelete,
   bulkCreate: bulkCreate,
 };

@@ -34,11 +34,11 @@ export async function createBooking({ clinicId, patientId, date, slot }, { user,
     },
     { transaction },
   );
-  return { booking, patient };
+  return { booking, patient, clinic };
 }
 
 // WhatsApp confirmation; called only after the booking is committed.
-export async function notifyBookingConfirmed({ booking, patient }) {
+export async function notifyBookingConfirmed({ booking, patient, clinic }) {
   // patient.mobile_number from PatientModel.getById is "+<cc> <number>";
   // getByUserId returns the raw patient row, so fall back to the user.
   let phone = patient.mobile_number;
@@ -52,6 +52,7 @@ export async function notifyBookingConfirmed({ booking, patient }) {
     patient_phone: phone,
     patient_name: name,
     service_name: "Dental service",
+    ...(clinic?.contact_phone ? { contact_us_at: clinic.contact_phone } : {}),
     booked_slot: moment(`${booking.date} ${booking.slot}`).format("dddd DD MMMM h:mm A"),
   });
 }

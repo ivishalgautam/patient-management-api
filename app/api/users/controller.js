@@ -31,91 +31,70 @@ const create = async (req, res) => {
   const validateUserData = userSchema.parse(req.body);
   // Use the validated values (defaults, coercions) from here on.
   Object.assign(req.body, validateUserData);
-  const needed = validateUserData.role === "patient" ? "patients.create" : "users.manage";
-  if (!CREATABLE_ROLES[role]?.includes(validateUserData.role) || !can(req.ctx, needed)) {
+  const newRole = validateUserData.role;
+  const needed = newRole === "patient" ? "patients.create" : "users.manage";
+  if (!CREATABLE_ROLES[role]?.includes(newRole) || !can(req.ctx, needed)) {
     return res.code(403).send({
       status: false,
       message: "You don't have permission to create this type of user.",
     });
   }
+  if (newRole === "doctor") {
+    Object.assign(req.body, doctorSchema.parse(req.body));
+  }
+
+  // Reads first: holding a transaction while other queries wait for a pooled
+  // connection deadlocks the pool under concurrent requests.
+  let doctorRecord = null;
+  if ((newRole === "patient" && role === "doctor") || newRole === "staff") {
+    doctorRecord =
+      role === "admin"
+        ? await table.DoctorModel.getById(0, req.body.doctor_id)
+        : await table.DoctorModel.getByUserId(req);
+    if (newRole === "staff" && !doctorRecord) {
+      return res.code(404).send({ status: false, message: "Doctor not found." });
+    }
+  }
+  let practiceId = null;
+  let generatedPassword;
+  if (newRole === "patient") {
+    practiceId = await resolvePracticeForPatient({
+      practiceId: req.user_data.practice_id,
+      clinicId: req.body.clinic_id,
+    });
+    const patientNumber = await table.PatientSequenceModel.next();
+    const { username, password } = credentialGenerator(
+      patientNumber,
+      validateUserData.fullname,
+      validateUserData.mobile_number,
+    );
+    req.body.username = username;
+    req.body.password = password;
+    generatedPassword = password;
+  }
 
   const transaction = await beginTransaction(req);
-  let generatedPassword;
-
   try {
-
-    if (validateUserData.role === "patient") {
-      const currPatientCount = await table.PatientSequenceModel.get();
-      const patientNumber = currPatientCount.value + 1;
-
-      const { username, password } = credentialGenerator(
-        patientNumber,
-        validateUserData.fullname,
-        validateUserData.mobile_number,
-      );
-      await table.PatientSequenceModel.update(patientNumber, { transaction });
-      req.body.username = username;
-      req.body.password = password;
-      generatedPassword = password;
-    }
-
     const data = await table.UserModel.create(req, { transaction });
-    if (!data)
-      return res.code(400).send({ message: "Error while registering." });
 
-    if (data.role === "doctor") {
-      const validateDoctorData = doctorSchema.parse(req.body);
-      // Use the validated values (defaults, coercions) from here on.
-      Object.assign(req.body, validateDoctorData);
+    if (newRole === "doctor") {
       await table.DoctorModel.create(req, data.id, { transaction });
     }
-
-    if (data.role === "patient") {
-      const practiceId = await resolvePracticeForPatient({
-        practiceId: req.user_data.practice_id,
-        clinicId: req.body.clinic_id,
-      });
+    if (newRole === "patient") {
       const patient = await table.PatientModel.create(req, data.id, {
         transaction,
         practiceId,
       });
-
-      if (role === "doctor") {
-        const drRecord = await table.DoctorModel.getByUserId(req);
-        await table.DoctorPatientMapModel.create(drRecord.id, patient.id, {
-          transaction,
-        });
+      if (role === "doctor" && doctorRecord) {
+        await table.DoctorPatientMapModel.create(doctorRecord.id, patient.id, { transaction });
       }
       if (role === "staff") {
-        await table.ClinicPatientMapModel.create(
-          patient.id,
-          req.body.clinic_id,
-          {
-            transaction,
-          },
-        );
+        await table.ClinicPatientMapModel.create(patient.id, req.body.clinic_id, { transaction });
       }
     }
-
-    if (data.role === "staff") {
-      let drRecord = null;
-
-      if (role === "doctor")
-        drRecord = await table.DoctorModel.getByUserId(req);
-      if (role === "admin")
-        drRecord = await table.DoctorModel.getById(0, req.body.doctor_id);
-
-      if (!drRecord)
-        return res
-          .code(404)
-          .send({ status: false, message: "Doctor not found." });
-
-      await table.StaffModel.create(drRecord.id, data.id, {
-        transaction,
-      });
+    if (newRole === "staff") {
+      await table.StaffModel.create(doctorRecord.id, data.id, { transaction });
     }
-
-    // throw new Error("mhmvhj");
 
     await transaction.commit();
     return res.send({
@@ -225,13 +204,29 @@ const deleteById = async (req, res) => {
       }
     }
 
+    if (role !== "patient") {
+      // Staff/doctor accounts are deactivated, never removed: their
+      // treatments, payments and notes must survive.
+      await table.UserModel.softDelete(record.id, { transaction });
+      await transaction.commit();
+      return res.send({
+        status: true,
+        data: authToken.sanitizeUser(record),
+        message: "Users deleted.",
+      });
+    }
+
     if (filesToDelete.length) {
       await cleanupFiles(filesToDelete);
     }
 
     await table.UserModel.deleteById(req, 0, { transaction });
     await transaction.commit();
-    return res.send({ status: true, data: record, message: "Users deleted." });
+    return res.send({
+      status: true,
+      data: authToken.sanitizeUser(record),
+      message: "Users deleted.",
+    });
   } catch (error) {
     await transaction.rollback();
     throw error;

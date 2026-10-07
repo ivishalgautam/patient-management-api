@@ -39,6 +39,11 @@ const init = async (sequelize) => {
           notEmpty: { msg: "Clinic address is required." },
         },
       },
+      contact_phone: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: "",
+      },
       max_patients_per_slot: {
         type: DataTypes.INTEGER,
         defaultValue: 1,
