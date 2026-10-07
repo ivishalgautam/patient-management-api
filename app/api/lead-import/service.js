@@ -9,6 +9,7 @@ import { normalizeEmail, normalizePhone } from "../../lib/leads/normalize.js";
 import { suggestMapping } from "../../lib/leads/import-parse.js";
 import { createLead, missingRequired, resolveEntryStage, systemContext } from "../lead/service.js";
 import { QUEUES, enqueue } from "../../jobs/queue.js";
+import { toCsv } from "../../lib/csv.js";
 
 // Lead imports (Google add-on): upload/sheet -> draft (rows staged) ->
 // mapping + dry-run -> background job creates leads row by row.
@@ -292,13 +293,6 @@ export async function cancelImport(ctx, id) {
 }
 
 // CSV of rows that failed (or were skipped), with the original columns.
-const csvCell = (v) => {
-  let s = String(v ?? "");
-  // Keep spreadsheet apps from evaluating cells as formulas.
-  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
-  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-
 export async function errorReport(ctx, id, { includeSkipped = false } = {}) {
   const imp = await loadImport(ctx, id);
   const rows = await select(
@@ -310,7 +304,7 @@ export async function errorReport(ctx, id, { includeSkipped = false } = {}) {
   const lines = [header, ...rows.map((r) => [r.row_number, r.status, r.message ?? "", ...imp.headers.map((h) => r.data?.[h] ?? "")])];
   return {
     filename: `import-${imp.created_at.toISOString().slice(0, 10)}-problems.csv`,
-    csv: lines.map((line) => line.map(csvCell).join(",")).join("\r\n") + "\r\n",
+    csv: toCsv(lines),
   };
 }
 

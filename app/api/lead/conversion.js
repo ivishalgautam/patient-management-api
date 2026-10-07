@@ -3,10 +3,10 @@ import { parsePhoneNumberFromString } from "libphonenumber-js";
 import config from "../../config/index.js";
 import table from "../../db/models.js";
 import { select, one, exec, withTransaction } from "../../db/sql.js";
-import { badRequest, conflict, notFound } from "../../lib/app-error.js";
+import { badRequest, conflict } from "../../lib/app-error.js";
 import { credentialGenerator } from "../../helpers/credential-generator.js";
 import { createBooking, notifyBookingConfirmed } from "../booking/service.js";
-import { addActivity, moveLead } from "./service.js";
+import { addActivity, loadLead, moveLead } from "./service.js";
 
 const splitPhone = (raw) => {
   const parsed = parsePhoneNumberFromString(String(raw ?? ""), config.default_phone_region);
@@ -14,24 +14,13 @@ const splitPhone = (raw) => {
   return { country_code: parsed.countryCallingCode, mobile_number: parsed.nationalNumber };
 };
 
-async function loadConvertible(ctx, leadId, transaction) {
-  const lead = await one(
-    `SELECT * FROM leads WHERE id = :leadId AND practice_id = :practiceId AND deleted_at IS NULL FOR UPDATE`,
-    { leadId, practiceId: ctx.practiceId },
-    { transaction },
-  );
-  if (!lead) throw notFound("Lead not found.");
-  return lead;
-}
+// Same visibility rules as the rest of the Leads module.
+const loadConvertible = (ctx, leadId, transaction) => loadLead(ctx, leadId, { transaction, forUpdate: true });
 
 // Patients of this practice whose phone matches the lead's (to link
 // instead of creating a duplicate patient).
 export async function conversionCandidates(ctx, leadId) {
-  const lead = await one(`SELECT phone FROM leads WHERE id = :leadId AND practice_id = :p AND deleted_at IS NULL`, {
-    leadId,
-    p: ctx.practiceId,
-  });
-  if (!lead) throw notFound("Lead not found.");
+  const lead = await loadLead(ctx, leadId);
   const phone = splitPhone(lead.phone);
   if (!phone) return [];
   return select(

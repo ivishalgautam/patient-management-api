@@ -307,6 +307,22 @@ export const TENANT_MAP = {
   "GET /v1/lead-imports/:id/errors.csv": byId("lead_import"),
   "GET /v1/practice-features": "list",
   "PUT /v1/practice-features/:key": [c("clinic", "body.clinic_id")],
+
+  // roles (system roles are shared, so the service checks ownership) and
+  // the caller's own notifications
+  "GET /v1/roles": "list",
+  "GET /v1/roles/permissions": "global",
+  "GET /v1/roles/members": "list",
+  "GET /v1/roles/mine": "global",
+  "POST /v1/roles": "list",
+  "PUT /v1/roles/:id": "list",
+  "DELETE /v1/roles/:id": "list",
+  "PUT /v1/roles/members/:id": byId("user"),
+  "GET /v1/notifications": "list",
+  "GET /v1/notifications/unread-count": "list",
+  "POST /v1/notifications/read-all": "list",
+  "POST /v1/notifications/:id/read": "list",
+  "GET /v1/leads/export": "list",
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.

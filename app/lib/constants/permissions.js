@@ -27,6 +27,7 @@ export const PERMISSIONS = {
   "jobs.manage": "See and retry failed background jobs",
   "leads.view": "View leads assigned to me",
   "leads.view_all": "View every lead in the practice",
+  "leads.view_all_clinics": "See leads of every clinic, not only the clinics I work at",
   "leads.create": "Create leads",
   "leads.edit": "Edit leads, move stages, add notes and follow-ups",
   "leads.delete": "Delete leads",
@@ -43,6 +44,24 @@ export const PERMISSIONS = {
 };
 
 export const PERMISSION_KEYS = Object.keys(PERMISSIONS);
+
+// Permissions a practice can put in its own (staff-based) roles. Platform
+// catalogue, patient self-service and role management stay out so a
+// custom role can't escalate.
+export const ASSIGNABLE_PERMISSIONS = PERMISSION_KEYS.filter(
+  (k) => !["catalogue.manage", "self.records", "roles.manage"].includes(k),
+);
+
+// Grouping for the roles screen.
+export const PERMISSION_GROUPS = [
+  ["Patients", "patients."],
+  ["Appointments & schedule", ["appointments.", "schedule."]],
+  ["Clinics & team", ["clinics.", "users.", "doctor_services."]],
+  ["Clinical", "treatments."],
+  ["Billing & reports", ["billing.", "reports."]],
+  ["Leads", ["leads.", "pipelines.", "forms.", "custom_fields.", "integrations."]],
+  ["Administration", ["roles.", "jobs.", "catalogue.", "self."]],
+];
 
 const all = (prefix) => PERMISSION_KEYS.filter((k) => k.startsWith(prefix));
 

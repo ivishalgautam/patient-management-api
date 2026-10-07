@@ -84,6 +84,9 @@ export const listQuery = z.object({
   order: z.enum(["asc", "desc"]).optional().default("desc"),
 });
 
+// Same filters as the list, without paging/kanban.
+export const exportQuery = listQuery.omit({ view: true, page: true, limit: true, per_stage: true });
+
 export const duplicateQuery = z.object({
   phone: z.string().max(32).optional(),
   email: z.string().max(160).optional(),

@@ -15,6 +15,7 @@ export const QUEUES = {
   FB_TOKEN_CHECK: "integrations.fb-token-check",
   PAYLOAD_PURGE: "integrations.purge-payloads",
   LEADS_IMPORT: "leads.import",
+  LEADS_FOLLOW_UP_REMINDERS: "leads.follow-up-reminders",
 };
 
 // Retry policy per queue.
@@ -27,6 +28,7 @@ const QUEUE_OPTIONS = {
   [QUEUES.FB_TOKEN_CHECK]: { retryLimit: 1 },
   [QUEUES.PAYLOAD_PURGE]: { retryLimit: 1 },
   [QUEUES.LEADS_IMPORT]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
+  [QUEUES.LEADS_FOLLOW_UP_REMINDERS]: { retryLimit: 0 },
 };
 
 export function getBoss() {

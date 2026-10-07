@@ -17,6 +17,7 @@ export default fp(async (app, { enableWorkers = false } = {}) => {
   await boss.schedule(QUEUES.FB_PULL_SYNC, config.facebook.pull_sync_cron);
   await boss.schedule(QUEUES.FB_TOKEN_CHECK, "0 3 * * *");
   await boss.schedule(QUEUES.PAYLOAD_PURGE, "30 3 * * *");
+  await boss.schedule(QUEUES.LEADS_FOLLOW_UP_REMINDERS, config.leads.follow_up_reminder_cron);
   if (config.reminders_engine === "queue") {
     await boss.schedule(QUEUES.REMINDERS_RECONCILE, "*/5 * * * *");
   } else {

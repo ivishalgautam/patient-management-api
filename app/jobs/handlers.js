@@ -8,6 +8,7 @@ import {
   purgeIntegrationPayloads,
 } from "./integration-handlers.js";
 import { processImport, purgeImportRows } from "../api/lead-import/service.js";
+import { purgeNotifications, sendFollowUpReminders } from "../api/notification/service.js";
 import {
   findDueReminders,
   sendReminder,
@@ -37,8 +38,10 @@ export const HANDLERS = {
   [QUEUES.PAYLOAD_PURGE]: each(async () => {
     await purgeIntegrationPayloads();
     await purgeImportRows();
+    await purgeNotifications();
   }),
   [QUEUES.LEADS_IMPORT]: each((data) => processImport(data)),
+  [QUEUES.LEADS_FOLLOW_UP_REMINDERS]: each(() => sendFollowUpReminders()),
 };
 
 export default HANDLERS;

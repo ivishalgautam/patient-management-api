@@ -25,6 +25,11 @@ export async function seedSystemRoles(sequelize, { transaction } = {}) {
       key,
     });
   }
+  // roles.base_role exists from migration 20261009000100 on.
+  const [[hasBase]] = await q(
+    `SELECT 1 AS ok FROM information_schema.columns WHERE table_name = 'roles' AND column_name = 'base_role'`,
+  );
+  if (hasBase) await q(`UPDATE roles SET base_role = key WHERE is_system AND base_role IS NULL`);
 }
 
 export default seedSystemRoles;

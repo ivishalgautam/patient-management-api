@@ -69,6 +69,9 @@ const envSchema = z.object({
   // (openssl rand -base64 32); required once an integration is connected.
   INTEGRATION_ENCRYPTION_KEY: optional,
   INTEGRATION_PAYLOAD_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(30),
+  LEAD_EXPORT_MAX_ROWS: z.coerce.number().int().min(1).optional().default(10000),
+  LEAD_FOLLOW_UP_REMIND_MINUTES: z.coerce.number().int().min(0).optional().default(15),
+  LEAD_FOLLOW_UP_REMINDER_CRON: z.string().optional().default("*/5 * * * *"),
   LEAD_IMPORT_MAX_ROWS: z.coerce.number().int().min(1).optional().default(5000),
   LEAD_IMPORT_SHEET_MAX_MB: z.coerce.number().min(1).optional().default(10),
   FACEBOOK_APP_ID: optional,
@@ -157,6 +160,11 @@ const config = Object.freeze({
   api_url: (env.API_URL ?? `http://localhost:${env.PORT}/v1`).replace(/\/$/, ""),
   form_token_secret: env.FORM_TOKEN_SECRET || `form-token:${env.JWT_SECRET}`,
   turnstile: { site_key: env.TURNSTILE_SITE_KEY, secret_key: env.TURNSTILE_SECRET_KEY },
+  leads: {
+    export_max_rows: env.LEAD_EXPORT_MAX_ROWS,
+    follow_up_remind_minutes: env.LEAD_FOLLOW_UP_REMIND_MINUTES,
+    follow_up_reminder_cron: env.LEAD_FOLLOW_UP_REMINDER_CRON,
+  },
   integrations: {
     encryption_key: env.INTEGRATION_ENCRYPTION_KEY,
     payload_retention_days: env.INTEGRATION_PAYLOAD_RETENTION_DAYS,

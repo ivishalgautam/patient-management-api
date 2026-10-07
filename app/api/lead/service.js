@@ -1,6 +1,8 @@
 "use strict";
+import config from "../../config/index.js";
 import { select, one, exec, withTransaction } from "../../db/sql.js";
 import { AppError, badRequest, conflict, forbidden, notFound } from "../../lib/app-error.js";
+import { toCsv } from "../../lib/csv.js";
 import { can } from "../../lib/permissions.js";
 import { ensureLeadDefaults } from "../../lib/leads/defaults.js";
 import { normalizeEmail, normalizePhone } from "../../lib/leads/normalize.js";
@@ -18,16 +20,50 @@ import { resolveTagIds } from "../tag/service.js";
 // context: systemContext(practiceId).
 export const systemContext = (practiceId) => ({ practiceId, userId: null, system: true });
 const seesAll = (ctx) => ctx.system || can(ctx, "leads.view_all");
-const visibility = (ctx) => (seesAll(ctx) ? "" : "AND l.owner_id = :viewerId");
+const seesAllClinics = (ctx) => ctx.system || can(ctx, "leads.view_all_clinics");
+
+// Clinics the caller works at: staff clinic mappings plus clinics they run
+// as the doctor. Cached on the request context.
+async function viewerClinicIds(ctx) {
+  if (!ctx.clinicIds) {
+    const rows = await select(
+      `SELECT m.clinic_id AS id FROM clinic_staff_mappings m JOIN staffs s ON s.id = m.staff_id WHERE s.user_id = :userId
+       UNION
+       SELECT c.id FROM clinics c JOIN doctors d ON d.id = c.doctor_id WHERE d.user_id = :userId`,
+      { userId: ctx.userId },
+    );
+    ctx.clinicIds = rows.map((r) => r.id);
+  }
+  return ctx.clinicIds;
+}
+
+// Which leads (alias l) the caller sees: their own unless leads.view_all;
+// practice-wide leads, their clinics' leads and their own leads unless
+// leads.view_all_clinics. Returns { conditions, sql: "AND ..." | "", params }.
+async function visibility(ctx) {
+  const conditions = [];
+  const params = { viewerId: ctx.userId ?? null, viewerClinicIds: [] };
+  if (!seesAll(ctx)) conditions.push(`l.owner_id = :viewerId`);
+  if (!seesAllClinics(ctx)) {
+    params.viewerClinicIds = await viewerClinicIds(ctx);
+    conditions.push(
+      params.viewerClinicIds.length
+        ? `(l.clinic_id IS NULL OR l.clinic_id IN (:viewerClinicIds) OR l.owner_id = :viewerId)`
+        : `(l.clinic_id IS NULL OR l.owner_id = :viewerId)`,
+    );
+  }
+  return { conditions, sql: conditions.map((c) => `AND ${c}`).join(" "), params };
+}
 
 const STAGE_STATUS = { open: "open", won: "won", lost: "lost" };
 
-async function loadLead(ctx, id, { transaction, forUpdate = false } = {}) {
+export async function loadLead(ctx, id, { transaction, forUpdate = false } = {}) {
+  const scope = await visibility(ctx);
   const lead = await one(
     `SELECT l.* FROM leads l
-      WHERE l.id = :id AND l.practice_id = :practiceId AND l.deleted_at IS NULL ${visibility(ctx)}
+      WHERE l.id = :id AND l.practice_id = :practiceId AND l.deleted_at IS NULL ${scope.sql}
       ${forUpdate ? "FOR UPDATE" : ""}`,
-    { id, practiceId: ctx.practiceId, viewerId: ctx.userId },
+    { id, practiceId: ctx.practiceId, ...scope.params },
     { transaction },
   );
   if (!lead) throw notFound("Lead not found.");
@@ -107,9 +143,13 @@ async function assertClinic(ctx, clinicId, transaction) {
     { transaction },
   );
   if (!ok) throw badRequest("Clinic not found in this practice.");
+  if (!seesAllClinics(ctx) && !(await viewerClinicIds(ctx)).includes(clinicId)) {
+    throw forbidden("You can only use clinics you work at.");
+  }
 }
 
-export async function findDuplicates(practiceId, { phone, email }, { excludeId, transaction } = {}) {
+// scope: a visibility() result, to list only leads the caller may see.
+export async function findDuplicates(practiceId, { phone, email }, { excludeId, transaction, scope } = {}) {
   const phoneNormalized = normalizePhone(phone);
   const emailNormalized = normalizeEmail(email);
   if (!phoneNormalized && !emailNormalized) return [];
@@ -120,10 +160,16 @@ export async function findDuplicates(practiceId, { phone, email }, { excludeId, 
       WHERE l.practice_id = :practiceId AND l.deleted_at IS NULL
         AND (${excludeId ? "l.id <> :excludeId AND" : ""}
              (l.phone_normalized = :phoneNormalized OR l.email_normalized = :emailNormalized))
+        ${scope?.sql ?? ""}
       ORDER BY (l.status = 'open') DESC, l.created_at DESC LIMIT 10`,
-    { practiceId, phoneNormalized, emailNormalized, excludeId: excludeId ?? null },
+    { practiceId, phoneNormalized, emailNormalized, excludeId: excludeId ?? null, ...(scope?.params ?? {}) },
     { transaction },
   );
+}
+
+// Duplicates the caller is allowed to see (GET /leads/duplicates, 409s).
+export async function findVisibleDuplicates(ctx, input, options = {}) {
+  return findDuplicates(ctx.practiceId, input, { ...options, scope: await visibility(ctx) });
 }
 
 export async function addActivity(practiceId, leadId, activity, { transaction } = {}) {
@@ -195,7 +241,7 @@ export async function createLead(ctx, input, options = {}) {
       if (dedupe === "reject" && !input.force) {
         throw new AppError(409, "A lead with this phone or email already exists.", {
           code: "DUPLICATE_LEAD",
-          details: { duplicates },
+          details: { duplicates: ctx.system ? duplicates : await findVisibleDuplicates(ctx, input, { transaction }) },
         });
       }
       if (dedupe === "skip") return { lead: existing, created: false, duplicate: true };
@@ -361,7 +407,13 @@ export async function updateLead(ctx, id, input) {
       if (dups.length && (changed.includes("phone") || changed.includes("email"))) {
         throw new AppError(409, "Another lead already uses this phone or email.", {
           code: "DUPLICATE_LEAD",
-          details: { duplicates: dups },
+          details: {
+            duplicates: await findVisibleDuplicates(
+              ctx,
+              { phone: input.phone ?? lead.phone, email: input.email ?? lead.email },
+              { excludeId: id, transaction },
+            ),
+          },
         });
       }
     }
@@ -515,9 +567,9 @@ const LEAD_FROM = `
   LEFT JOIN users u ON u.id = l.owner_id`;
 
 async function buildFilters(ctx, query, rawQuery) {
-  const where = [`l.practice_id = :practiceId`, `l.deleted_at IS NULL`];
-  const params = { practiceId: ctx.practiceId, viewerId: ctx.userId };
-  if (!seesAll(ctx)) where.push(`l.owner_id = :viewerId`);
+  const scope = await visibility(ctx);
+  const where = [`l.practice_id = :practiceId`, `l.deleted_at IS NULL`, ...scope.conditions];
+  const params = { practiceId: ctx.practiceId, ...scope.params };
   const eq = (col, key, value) => {
     where.push(`${col} = :${key}`);
     params[key] = value;
@@ -617,6 +669,47 @@ export async function listLeads(ctx, query, rawQuery = {}) {
   };
 }
 
+// CSV of the leads matching the list filters (same visibility rules).
+// Refuses rather than truncates when there are more than the limit.
+export async function exportLeads(ctx, query, rawQuery = {}) {
+  const { where, params } = await buildFilters(ctx, query, rawQuery);
+  const max = config.leads.export_max_rows;
+  const [{ total }] = await select(`SELECT count(*)::int AS total FROM leads l WHERE ${where.join(" AND ")}`, params);
+  if (total > max) throw badRequest(`${total} leads match; narrow the filters to ${max} or fewer to export.`);
+
+  const rows = await select(
+    `SELECT ${LEAD_COLUMNS}, l.notes, l.lost_reason, p.name AS pipeline_name, c.name AS clinic_name
+       ${LEAD_FROM}
+       JOIN pipelines p ON p.id = l.pipeline_id
+       LEFT JOIN clinics c ON c.id = l.clinic_id
+      WHERE ${where.join(" AND ")}
+      ORDER BY l.created_at DESC, l.id`,
+    params,
+  );
+  const fields = await practiceFields(ctx.practiceId);
+  const values = await readCustomValues(ctx.practiceId, rows.map((r) => r.id));
+  const iso = (d) => (d ? new Date(d).toISOString() : "");
+  const header = [
+    "Name", "Phone", "Email", "Pipeline", "Stage", "Status", "Owner", "Clinic", "Source", "Sub-source",
+    "Tags", "Next follow-up", "Last activity", "Created", "Lost reason", "Notes",
+    ...fields.map((f) => f.label),
+  ];
+  const lines = rows.map((l) => [
+    l.full_name, l.phone, l.email, l.pipeline_name, l.stage_name, l.status, l.owner_name, l.clinic_name ?? "Practice-wide",
+    l.source, l.sub_source, (l.tags ?? []).map((t) => t.name).join(", "), iso(l.next_follow_up_at), iso(l.last_activity_at),
+    iso(l.created_at), l.lost_reason, l.notes,
+    ...fields.map((f) => {
+      const v = values[l.id]?.[f.key];
+      return Array.isArray(v) ? v.join(", ") : v ?? "";
+    }),
+  ]);
+  return {
+    count: rows.length,
+    filename: `leads-${new Date().toISOString().slice(0, 10)}.csv`,
+    csv: toCsv([header, ...lines], { bom: true }),
+  };
+}
+
 export async function getLead(ctx, id) {
   await loadLead(ctx, id);
   const lead = await one(
@@ -673,6 +766,7 @@ export async function updateActivity(ctx, activityId, input) {
       `UPDATE lead_activities SET
           body = CASE WHEN :setBody THEN :body ELSE body END,
           due_at = CASE WHEN :setDue THEN :dueAt::timestamptz ELSE due_at END,
+          reminded_at = CASE WHEN :setDue THEN NULL ELSE reminded_at END,
           completed_at = CASE WHEN :completed IS NULL THEN completed_at WHEN :completed THEN now() ELSE NULL END,
           updated_by = :userId, updated_at = now()
         WHERE id = :activityId RETURNING *`,
@@ -721,15 +815,16 @@ export function listOwners(ctx) {
 
 // Open follow-ups due up to the end of today, for the caller's leads (or
 // everyone's with leads.view_all).
-export function dueFollowUps(ctx) {
+export async function dueFollowUps(ctx) {
+  const scope = await visibility(ctx);
   return select(
     `SELECT a.id, a.lead_id, a.body, a.due_at, l.full_name, l.phone, l.owner_id, u.fullname AS owner_name
        FROM lead_activities a
        JOIN leads l ON l.id = a.lead_id AND l.deleted_at IS NULL
        LEFT JOIN users u ON u.id = l.owner_id
       WHERE a.practice_id = :practiceId AND a.type = 'follow_up' AND a.completed_at IS NULL
-        AND a.due_at < (current_date + 1) ${visibility(ctx)}
+        AND a.due_at < (current_date + 1) ${scope.sql}
       ORDER BY a.due_at LIMIT 200`,
-    { practiceId: ctx.practiceId, viewerId: ctx.userId },
+    { practiceId: ctx.practiceId, ...scope.params },
   );
 }

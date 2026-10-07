@@ -5,6 +5,7 @@ import {
   assignInput,
   bulkInput,
   duplicateQuery,
+  exportQuery,
   leadCreate,
   leadUpdate,
   listQuery,
@@ -26,8 +27,17 @@ export default async function routes(fastify) {
     return reply.code(201).ok(await service.getLead(req.ctx, lead.id), { message: "Lead created." });
   });
   fastify.get("/duplicates", async (req, reply) =>
-    reply.ok(await service.findDuplicates(req.ctx.practiceId, duplicateQuery.parse(req.query))),
+    reply.ok(await service.findVisibleDuplicates(req.ctx, duplicateQuery.parse(req.query))),
   );
+  fastify.get("/export", async (req, reply) => {
+    const { filename, csv, count } = await service.exportLeads(req.ctx, exportQuery.parse(req.query ?? {}), req.query ?? {});
+    // Who exported how many, never what (PII-safe).
+    req.log.info({ userId: req.ctx.userId, count }, "leads exported");
+    return reply
+      .header("content-type", "text/csv; charset=utf-8")
+      .header("content-disposition", `attachment; filename="${filename}"`)
+      .send(csv);
+  });
   fastify.get("/owners", async (req, reply) => reply.ok(await service.listOwners(req.ctx)));
   fastify.get("/follow-ups/due", async (req, reply) => reply.ok(await service.dueFollowUps(req.ctx)));
   fastify.post("/bulk", async (req, reply) => reply.ok(await service.bulk(req.ctx, bulkInput.parse(req.body))));

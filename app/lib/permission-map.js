@@ -197,6 +197,7 @@ export const PERMISSION_MAP = {
   "GET /v1/leads": ["leads.view"],
   "POST /v1/leads": ["leads.create"],
   "GET /v1/leads/duplicates": ["leads.view"],
+  "GET /v1/leads/export": ["leads.export"],
   "GET /v1/leads/follow-ups/due": ["leads.view"],
   "GET /v1/leads/owners": ["leads.view", "pipelines.manage"],
   "POST /v1/leads/bulk": ["leads.edit", "leads.assign", "leads.delete"],
@@ -249,4 +250,18 @@ export const PERMISSION_MAP = {
   "GET /v1/lead-imports/:id/errors.csv": ["leads.import"],
   "GET /v1/practice-features": ["integrations.manage", "leads.import"],
   "PUT /v1/practice-features/:key": ["integrations.manage"],
+
+  // roles & permissions; notifications are the caller's own
+  "GET /v1/roles": ["roles.manage"],
+  "GET /v1/roles/permissions": ["roles.manage"],
+  "GET /v1/roles/members": ["roles.manage"],
+  "GET /v1/roles/mine": AUTH,
+  "POST /v1/roles": ["roles.manage"],
+  "PUT /v1/roles/:id": ["roles.manage"],
+  "DELETE /v1/roles/:id": ["roles.manage"],
+  "PUT /v1/roles/members/:id": ["roles.manage"],
+  "GET /v1/notifications": AUTH,
+  "GET /v1/notifications/unread-count": AUTH,
+  "POST /v1/notifications/read-all": AUTH,
+  "POST /v1/notifications/:id/read": AUTH,
 };
