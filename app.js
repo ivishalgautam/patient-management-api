@@ -7,6 +7,7 @@ import { loggerOptions } from "./app/logger/index.js";
 export async function buildApp({
   enableCron = false,
   logger = loggerOptions(),
+  enableWorkers = enableCron,
   onRoute,
 } = {}) {
   const app = fastify({
@@ -15,7 +16,7 @@ export async function buildApp({
     genReqId: () => crypto.randomUUID(),
   });
   if (onRoute) app.addHook("onRoute", onRoute);
-  await registerPlugins(app, { enableCron });
+  await registerPlugins(app, { enableCron, enableWorkers });
   return app;
 }
 

@@ -180,6 +180,10 @@ export const TENANT_MAP = {
   ],
   "GET /v1/reports": "admin",
   "GET /v1/reports/:id": byId("clinic"),
+
+  // background jobs (controller filters by practiceId in the job data)
+  "GET /v1/jobs/failed": "list",
+  "POST /v1/jobs/:id/retry": "list",
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.

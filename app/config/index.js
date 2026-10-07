@@ -52,6 +52,8 @@ const envSchema = z.object({
     .optional()
     .default("true")
     .transform((v) => v === "true"),
+  // queue = pg-boss jobs with retries (default); legacy = in-process timer.
+  REMINDERS_ENGINE: z.enum(["queue", "legacy"]).optional().default("queue"),
   PATIENT_PASSWORD_MODE: z.enum(["random", "legacy"]).optional().default("random"),
 
   // Empty = allow any origin (pre-revamp behaviour); a warning is logged.
@@ -127,6 +129,7 @@ const config = Object.freeze({
     : null,
   patient_password_mode: env.PATIENT_PASSWORD_MODE,
   permissions_enforce: env.PERMISSIONS_ENFORCE,
+  reminders_engine: env.REMINDERS_ENGINE,
 
   // http
   allowed_origins: env.ALLOWED_ORIGINS,

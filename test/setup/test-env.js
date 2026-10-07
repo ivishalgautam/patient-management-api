@@ -18,4 +18,9 @@ export function applyTestEnv() {
   process.env.TIME_WINDOW = "1 minute";
   process.env.WAFFLY_LICENSE = "test-license";
   process.env.WAFFLY_API_KEY = "test-key";
+  process.env.WAFFLY_TEMPLATE_BOOKING_CONFIRM = "booking_confirm";
+  process.env.WAFFLY_TEMPLATE_24_HOURS_BEFORE_APPOINTMENT = "reminder_24h";
+  process.env.WAFFLY_TEMPLATE_2_HRS_BEFORE_APPOINTMENT = "reminder_2h";
+  process.env.WAFFLY_TEMPLATE_1_HR_AFTER_APPOINTMENT = "follow_up";
+  process.env.WAFFLY_TEMPLATE_REVIEW_MESAAGE = "review";
 }

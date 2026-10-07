@@ -3,8 +3,16 @@ import moment from "moment";
 import { buildTestApp } from "../setup/app.js";
 import { resetDb, query } from "../setup/db.js";
 import { setupPractice } from "../setup/factories.js";
-import { waflyGet } from "../setup/env.js";
-import { processAppointmentNotifications } from "../../app/services/appointment-notification.service.js";
+import { waflyRequest } from "../setup/env.js";
+import {
+  findDueReminders,
+  sendReminder,
+} from "../../app/services/notifications/appointment-reminders.js";
+
+// One reconcile pass, sending synchronously (the queue does the same).
+async function processAppointmentNotifications() {
+  for (const due of await findDueReminders()) await sendReminder(due);
+}
 
 let app;
 let p;
@@ -52,7 +60,7 @@ describe("appointment reminder cron", () => {
     const review = await bookingAt(-122, "completed");
     const outside = await bookingAt(600, "pending");
 
-    waflyGet.mockClear();
+    waflyRequest.mockClear();
     await processAppointmentNotifications();
 
     expect((await flags(day)).notification_24hr_sent).toBe(true);
@@ -60,10 +68,20 @@ describe("appointment reminder cron", () => {
     expect((await flags(followUp)).notification_1hr_after_sent).toBe(true);
     expect((await flags(review)).review_message_sent).toBe(true);
     expect(Object.values(await flags(outside)).some(Boolean)).toBe(false);
-    expect(waflyGet).toHaveBeenCalledTimes(4);
+    expect(waflyRequest).toHaveBeenCalledTimes(4);
 
-    waflyGet.mockClear();
+    waflyRequest.mockClear();
     await processAppointmentNotifications();
-    expect(waflyGet).not.toHaveBeenCalled();
+    expect(waflyRequest).not.toHaveBeenCalled();
+  });
+
+  it("catches up on a reminder up to an hour late (short outage)", async () => {
+    const late = await bookingAt(1400, "pending"); // 23h20m before
+    waflyRequest.mockClear();
+    await processAppointmentNotifications();
+    expect((await flags(late)).notification_24hr_sent).toBe(true);
+    const url = waflyRequest.mock.calls[0][0].url;
+    expect(url).toContain("Template=");
+    expect(url).not.toContain("undefined");
   });
 });

@@ -9,13 +9,17 @@ import staticFiles from "./static.js";
 import multipart from "./multipart.js";
 import view from "./view.js";
 import scheduler from "./scheduler.js";
+import queue from "./queue.js";
 import healthRoutes from "./health.js";
 import routes from "../routes/v1/index.js";
 import publicRoutes from "../routes/v1/public.js";
 import authRoutes from "../api/auth/routes.js";
 import uploadFileRoutes from "../api/upload_files/routes.js";
 
-export default async function registerPlugins(app, { enableCron = false } = {}) {
+export default async function registerPlugins(
+  app,
+  { enableCron = false, enableWorkers = enableCron } = {},
+) {
   app.setErrorHandler(ErrorHandler);
 
   await app.register(requestContext);
@@ -27,6 +31,7 @@ export default async function registerPlugins(app, { enableCron = false } = {}) 
   await app.register(view);
   await app.register(pg_database);
   await app.register(scheduler, { enableCron });
+  await app.register(queue, { enableWorkers });
 
   await app.register(healthRoutes);
   await app.register(uploadFileRoutes, { prefix: "v1/upload" });

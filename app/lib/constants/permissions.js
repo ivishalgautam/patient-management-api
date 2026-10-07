@@ -24,6 +24,7 @@ export const PERMISSIONS = {
   "doctor_services.manage": "Manage the services a doctor offers",
   "catalogue.manage": "Manage procedures, services and banners (platform)",
   "roles.manage": "Manage roles and permissions",
+  "jobs.manage": "See and retry failed background jobs",
   // Patients: their own records only (tenant guard enforces ownership).
   "self.records": "Patient self-service: own bookings, treatments, payments, documents",
 };

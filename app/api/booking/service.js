@@ -1,7 +1,7 @@
 "use strict";
 import moment from "moment";
 import table from "../../db/models.js";
-import { sendBookingConfirm } from "../../utils/waffly.js";
+import { QUEUES, enqueue } from "../../jobs/queue.js";
 import { badRequest, notFound } from "../../lib/app-error.js";
 
 // Books a slot for a patient at a clinic. Patients book for themselves;
@@ -48,12 +48,17 @@ export async function notifyBookingConfirmed({ booking, patient, clinic }) {
     phone = `${user?.country_code ?? ""}${user?.mobile_number ?? ""}`;
     name = user?.fullname;
   }
-  await sendBookingConfirm({
-    patient_phone: phone,
-    patient_name: name,
-    service_name: "Dental service",
-    ...(clinic?.contact_phone ? { contact_us_at: clinic.contact_phone } : {}),
-    booked_slot: moment(`${booking.date} ${booking.slot}`).format("dddd DD MMMM h:mm A"),
+  // Queued so a WhatsApp outage is retried instead of lost.
+  await enqueue(QUEUES.WHATSAPP_SEND, {
+    kind: "booking_confirm",
+    practiceId: clinic?.practice_id,
+    payload: {
+      patient_phone: phone,
+      patient_name: name,
+      service_name: "Dental service",
+      contact_phone: clinic?.contact_phone,
+      booked_slot: moment(`${booking.date} ${booking.slot}`).format("dddd DD MMMM h:mm A"),
+    },
   });
 }
 

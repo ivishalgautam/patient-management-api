@@ -166,4 +166,8 @@ export const PERMISSION_MAP = {
   "GET /v1/ledgers/:clinic_id/:patient_id": ["billing.view", SELF],
   "GET /v1/reports": ["reports.view"],
   "GET /v1/reports/:id": ["reports.view"],
+
+  // background jobs
+  "GET /v1/jobs/failed": ["jobs.manage"],
+  "POST /v1/jobs/:id/retry": ["jobs.manage"],
 };
