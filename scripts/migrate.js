@@ -1,6 +1,7 @@
 // Usage:
 //   node scripts/migrate.js up [name]      apply pending (optionally up to name)
-//   node scripts/migrate.js down [name]    revert last (or down to name; "0" = all)
+//   node scripts/migrate.js down [name]    revert last, or every migration after AND
+//                                          including name ("0" = all)
 //   node scripts/migrate.js status
 //   node scripts/migrate.js baseline       mark the baseline as applied on an
 //                                          existing database (no DDL runs)

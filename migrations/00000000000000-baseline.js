@@ -22,7 +22,22 @@ export async function up({ context: queryInterface }) {
   );
 }
 
+// Dropping the baseline drops every table. Refused when there is data,
+// unless ALLOW_BASELINE_DOWN=true (only for throwaway databases).
+// Note: `migrate:down <name>` is inclusive, so never target the baseline
+// on a real database.
 export async function down({ context: queryInterface }) {
+  if (process.env.ALLOW_BASELINE_DOWN !== "true") {
+    const [[{ n }]] = await queryInterface.sequelize.query(
+      `SELECT (SELECT count(*) FROM public.users)::int AS n`,
+    );
+    if (n > 0) {
+      throw new Error(
+        "Refusing to revert the baseline: it would drop every table and all data " +
+          `(${n} users). Set ALLOW_BASELINE_DOWN=true only on a throwaway database.`,
+      );
+    }
+  }
   const sql = readSql();
   const tables = [...sql.matchAll(/CREATE TABLE public\.(\w+)/g)].map((m) => m[1]);
   const types = [...sql.matchAll(/CREATE TYPE public\.(\w+)/g)].map((m) => m[1]);
