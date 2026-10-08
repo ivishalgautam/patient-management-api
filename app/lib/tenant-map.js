@@ -376,6 +376,19 @@ export const TENANT_MAP = {
   "POST /v1/schedule/bookings/:id/finish": byId("booking"),
   "POST /v1/schedule/bookings/:id/undo": byId("booking"),
   "GET /v1/schedule/waiting-report": [c("clinic", "query.clinic_id")],
+
+  // patient messages
+  "GET /v1/patient-messages/settings": "list",
+  "PUT /v1/patient-messages/settings/:kind": [c("whatsapp_template", "body.whatsapp_template_id")],
+  "GET /v1/patient-messages/settings/:kind/preview": "list",
+  "POST /v1/patient-messages/run-now": "list",
+  "POST /v1/patient-messages/audience": [c("clinic", "body.clinic_id")],
+  "GET /v1/patient-messages/broadcasts": "list",
+  "POST /v1/patient-messages/broadcasts": [c("whatsapp_template", "body.whatsapp_template_id")],
+  "GET /v1/patient-messages/broadcasts/:id": byId("patient_broadcast"),
+  "POST /v1/patient-messages/broadcasts/:id/start": byId("patient_broadcast"),
+  "GET /v1/patient-messages/messages": [c("patient_broadcast", "query.broadcast_id")],
+  "POST /v1/patient-messages/messages/retry": [c("patient_broadcast", "body.broadcast_id")],
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.
@@ -420,6 +433,7 @@ export const RESOURCES = {
   integration: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM integrations WHERE id = :id`,
   whatsapp_template: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM whatsapp_templates WHERE id = :id`,
   whatsapp_conversation: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM whatsapp_conversations WHERE id = :id`,
+  patient_broadcast: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM patient_broadcasts WHERE id = :id`,
   chair: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM chairs WHERE id = :id`,
   expense_category: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM expense_categories WHERE id = :id`,
   expense: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM expenses WHERE id = :id`,

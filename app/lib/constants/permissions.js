@@ -43,6 +43,7 @@ export const PERMISSIONS = {
   "integrations.manage": "Connect and manage lead integrations",
   "whatsapp.use": "Use the WhatsApp inbox and message leads",
   "whatsapp.manage": "WhatsApp settings, templates and campaigns",
+  "patient_messages.manage": "Recall and birthday messages and bulk messages to patients",
   // Patients: their own records only (tenant guard enforces ownership).
   "self.records": "Patient self-service: own bookings, treatments, payments, documents",
 };
@@ -64,7 +65,7 @@ export const PERMISSION_GROUPS = [
   ["Clinical", "treatments."],
   ["Billing & reports", ["billing.", "reports.", "accounts."]],
   ["Leads", ["leads.", "pipelines.", "forms.", "custom_fields.", "integrations."]],
-  ["WhatsApp", "whatsapp."],
+  ["WhatsApp & messages", ["whatsapp.", "patient_messages."]],
   ["Administration", ["roles.", "jobs.", "catalogue.", "self."]],
 ];
 

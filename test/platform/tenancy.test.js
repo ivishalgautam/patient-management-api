@@ -205,6 +205,23 @@ beforeAll(async () => {
       { c: A.clinic.id, t: ids.whatsapp_template },
     )
   ).id;
+  // Accounts, chair board and patient messages records.
+  const insert = async (sql, extra = {}) => (await one(sql, { c: A.clinic.id, ...extra })).id;
+  ids.expense_category = await insert(`INSERT INTO expense_categories (practice_id, name) VALUES (${practiceOf}, 'Fixture') RETURNING id`);
+  ids.expense = await insert(
+    `INSERT INTO expenses (practice_id, clinic_id, category_id, expense_date, amount) VALUES (${practiceOf}, :c, :cat, current_date, 10) RETURNING id`,
+    { cat: ids.expense_category },
+  );
+  ids.cash_entry = await insert(
+    `INSERT INTO cash_entries (practice_id, clinic_id, entry_date, type, amount) VALUES (${practiceOf}, :c, current_date, 'cash_in', 10) RETURNING id`,
+  );
+  ids.invoice = await insert(
+    `INSERT INTO invoices (practice_id, clinic_id, patient_id, number, issue_date, subtotal, total)
+     VALUES (${practiceOf}, :c, :p, 'INV-FIXTURE', current_date, 10, 10) RETURNING id`,
+    { p: A.patient.id },
+  );
+  ids.chair = await insert(`INSERT INTO chairs (practice_id, clinic_id, name) VALUES (${practiceOf}, :c, 'Fixture') RETURNING id`);
+  ids.patient_broadcast = await insert(`INSERT INTO patient_broadcasts (practice_id, name) VALUES (${practiceOf}, 'Fixture') RETURNING id`);
   Object.assign(ids, {
     clinic: A.clinic.id,
     patient: A.patient.id,

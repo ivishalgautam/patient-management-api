@@ -34,6 +34,7 @@
     "jsonwebtoken": "^9.0.0",
     "libphonenumber-js": "^1.13.14",
     "moment": "^2.29.4",
+    "nodemailer": "^6.10.1",
     "pg": "^8.11.0",
     "pg-boss": "^10.4.2",
     "pg-hstore": "^2.3.4",

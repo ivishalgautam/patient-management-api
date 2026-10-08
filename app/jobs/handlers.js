@@ -10,6 +10,7 @@ import {
 import { processImport, purgeImportRows } from "../api/lead-import/service.js";
 import { purgeNotifications, sendFollowUpReminders } from "../api/notification/service.js";
 import { runCampaign } from "../api/whatsapp/service.js";
+import { deliverPending, runDaily } from "../api/patient-messages/service.js";
 import {
   findDueReminders,
   sendReminder,
@@ -44,6 +45,8 @@ export const HANDLERS = {
   [QUEUES.LEADS_IMPORT]: each((data) => processImport(data)),
   [QUEUES.LEADS_FOLLOW_UP_REMINDERS]: each(() => sendFollowUpReminders()),
   [QUEUES.WHATSAPP_CAMPAIGN]: each((data) => runCampaign(data)),
+  [QUEUES.PATIENT_MESSAGES_DAILY]: each(() => runDaily()),
+  [QUEUES.PATIENT_MESSAGES_DELIVER]: each((data) => deliverPending(data)),
 };
 
 export default HANDLERS;
