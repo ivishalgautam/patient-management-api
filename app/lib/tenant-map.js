@@ -364,6 +364,18 @@ export const TENANT_MAP = {
   "POST /v1/accounts/invoices/:id/cancel": byId("invoice"),
   "GET /v1/accounts/treatments/:id/invoice-draft": byId("treatment"),
   "GET /v1/accounts/summary": [c("clinic", "query.clinic_id")],
+
+  // chair board
+  "GET /v1/schedule/chairs": [c("clinic", "query.clinic_id")],
+  "POST /v1/schedule/chairs": [c("clinic", "body.clinic_id")],
+  "PUT /v1/schedule/chairs/:id": byId("chair"),
+  "GET /v1/schedule/day": [c("clinic", "query.clinic_id")],
+  "PUT /v1/schedule/bookings/:id/chair": [c("booking", "params.id"), c("chair", "body.chair_id")],
+  "POST /v1/schedule/bookings/:id/check-in": byId("booking"),
+  "POST /v1/schedule/bookings/:id/seat": [c("booking", "params.id"), c("chair", "body.chair_id")],
+  "POST /v1/schedule/bookings/:id/finish": byId("booking"),
+  "POST /v1/schedule/bookings/:id/undo": byId("booking"),
+  "GET /v1/schedule/waiting-report": [c("clinic", "query.clinic_id")],
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.
@@ -408,6 +420,7 @@ export const RESOURCES = {
   integration: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM integrations WHERE id = :id`,
   whatsapp_template: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM whatsapp_templates WHERE id = :id`,
   whatsapp_conversation: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM whatsapp_conversations WHERE id = :id`,
+  chair: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM chairs WHERE id = :id`,
   expense_category: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM expense_categories WHERE id = :id`,
   expense: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM expenses WHERE id = :id`,
   cash_entry: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM cash_entries WHERE id = :id`,

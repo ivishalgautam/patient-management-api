@@ -46,6 +46,7 @@ import roleRoutes from "../../api/role/routes.js";
 import notificationRoutes from "../../api/notification/routes.js";
 import whatsappRoutes from "../../api/whatsapp/routes.js";
 import accountsRoutes from "../../api/accounts/routes.js";
+import scheduleRoutes from "../../api/schedule/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
@@ -108,4 +109,5 @@ export default async function routes(fastify, options) {
   fastify.register(notificationRoutes, { prefix: "notifications" });
   fastify.register(whatsappRoutes, { prefix: "whatsapp" });
   fastify.register(accountsRoutes, { prefix: "accounts" });
+  fastify.register(scheduleRoutes, { prefix: "schedule" });
 }
