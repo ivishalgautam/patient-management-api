@@ -194,17 +194,28 @@ const CASH_MOVEMENTS = `
     FROM expenses e JOIN expense_categories c ON c.id = e.category_id
    WHERE e.clinic_id = :clinicId AND e.payment_method = 'cash' AND e.deleted_at IS NULL`;
 
+// The book starts at the clinic's latest opening balance: older movements
+// (cash long since banked) don't count. Without an opening balance nothing
+// is carried forward from before the selected range.
 export async function cashBook(ctx, { clinic_id: clinicId, from, to }) {
   await assertClinic(ctx, clinicId);
-  const params = { clinicId, from: from ?? null, to: to ?? null };
+  const start = await one(
+    `SELECT to_char(max(entry_date), 'YYYY-MM-DD') AS date FROM cash_entries
+      WHERE clinic_id = :clinicId AND type = 'opening_balance' AND deleted_at IS NULL`,
+    { clinicId },
+  );
+  const startDate = start?.date ?? null;
+  const params = { clinicId, from: from ?? null, to: to ?? null, start: startDate };
+  const inBook = `(:start::date IS NULL OR (m.date >= :start::date AND (m.kind <> 'opening_balance' OR m.date = :start::date)))`;
   const [{ opening }] = await select(
-    `SELECT coalesce(sum(amount), 0)::bigint AS opening FROM (${CASH_MOVEMENTS}) m WHERE :from::date IS NOT NULL AND m.date < :from::date`,
+    `SELECT coalesce(sum(amount), 0)::bigint AS opening FROM (${CASH_MOVEMENTS}) m
+      WHERE :start::date IS NOT NULL AND :from::date IS NOT NULL AND m.date < :from::date AND ${inBook}`,
     params,
   );
   const rows = await select(
     `SELECT * FROM (${CASH_MOVEMENTS}) m
-      WHERE (:from::date IS NULL OR m.date >= :from::date) AND (:to::date IS NULL OR m.date <= :to::date)
-      ORDER BY m.date, m.created_at`,
+      WHERE ${inBook} AND (:from::date IS NULL OR m.date >= :from::date) AND (:to::date IS NULL OR m.date <= :to::date)
+      ORDER BY m.date, (m.kind = 'opening_balance') DESC, m.created_at`,
     params,
   );
   let balance = int(opening);
@@ -219,7 +230,7 @@ export async function cashBook(ctx, { clinic_id: clinicId, from, to }) {
     if (r.kind === "bank_deposit") totals.bank_deposits -= amount;
     return { ...r, amount, balance };
   });
-  return { opening_balance: int(opening), closing_balance: balance, totals, entries: entries.reverse() };
+  return { started_on: startDate, opening_balance: int(opening), closing_balance: balance, totals, entries: entries.reverse() };
 }
 
 export async function createCashEntry(ctx, input) {

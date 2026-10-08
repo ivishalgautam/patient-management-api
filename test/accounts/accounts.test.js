@@ -110,6 +110,15 @@ describe("cash book", () => {
     expect(book.entries[0].balance).toBe(1800);
   });
 
+  it("starts the book at the latest opening balance", async () => {
+    const lastYear = `${Number(today.slice(0, 4)) - 1}-01-15`;
+    ok(await doctor.post("/v1/accounts/expenses", { clinic_id: A.clinic.id, category_id: category.id, expense_date: lastYear, amount: 5000 }));
+    const book = ok(await doctor.get(`/v1/accounts/cash-book?clinic_id=${A.clinic.id}`));
+    expect(book.started_on).toBe(today);
+    expect(book.closing_balance).toBe(1800);
+    expect(book.entries.at(-1).kind).toBe("opening_balance");
+  });
+
   it("carries earlier movements into the opening balance of a later range", async () => {
     const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
     const book = ok(await doctor.get(`/v1/accounts/cash-book?clinic_id=${A.clinic.id}&from=${tomorrow}`));
