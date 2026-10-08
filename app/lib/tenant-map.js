@@ -346,6 +346,24 @@ export const TENANT_MAP = {
   "GET /v1/whatsapp/campaigns/:id": byId("whatsapp_campaign"),
   "POST /v1/whatsapp/campaigns/:id/start": byId("whatsapp_campaign"),
   "POST /v1/whatsapp/campaigns/:id/retry": byId("whatsapp_campaign"),
+
+  // accounts & cash
+  "GET /v1/accounts/expense-categories": "list",
+  "POST /v1/accounts/expense-categories": "list",
+  "PUT /v1/accounts/expense-categories/:id": byId("expense_category"),
+  "GET /v1/accounts/expenses": [c("clinic", "query.clinic_id"), c("expense_category", "query.category_id")],
+  "POST /v1/accounts/expenses": [c("clinic", "body.clinic_id"), c("expense_category", "body.category_id")],
+  "PUT /v1/accounts/expenses/:id": [c("expense", "params.id"), c("clinic", "body.clinic_id"), c("expense_category", "body.category_id")],
+  "DELETE /v1/accounts/expenses/:id": byId("expense"),
+  "GET /v1/accounts/cash-book": [c("clinic", "query.clinic_id")],
+  "POST /v1/accounts/cash-entries": [c("clinic", "body.clinic_id")],
+  "DELETE /v1/accounts/cash-entries/:id": byId("cash_entry"),
+  "GET /v1/accounts/invoices": [c("clinic", "query.clinic_id"), c("patient", "query.patient_id")],
+  "POST /v1/accounts/invoices": [c("clinic", "body.clinic_id"), c("patient", "body.patient_id"), c("treatment", "body.treatment_id")],
+  "GET /v1/accounts/invoices/:id": byId("invoice"),
+  "POST /v1/accounts/invoices/:id/cancel": byId("invoice"),
+  "GET /v1/accounts/treatments/:id/invoice-draft": byId("treatment"),
+  "GET /v1/accounts/summary": [c("clinic", "query.clinic_id")],
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.
@@ -390,6 +408,10 @@ export const RESOURCES = {
   integration: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM integrations WHERE id = :id`,
   whatsapp_template: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM whatsapp_templates WHERE id = :id`,
   whatsapp_conversation: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM whatsapp_conversations WHERE id = :id`,
+  expense_category: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM expense_categories WHERE id = :id`,
+  expense: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM expenses WHERE id = :id`,
+  cash_entry: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM cash_entries WHERE id = :id`,
+  invoice: `SELECT practice_id, patient_id, NULL::uuid AS user_id FROM invoices WHERE id = :id`,
   whatsapp_campaign: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM whatsapp_campaigns WHERE id = :id`,
   lead_import: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM lead_imports WHERE id = :id`,
   form: `SELECT practice_id, NULL::uuid AS patient_id, NULL::uuid AS user_id FROM forms WHERE id = :id`,
