@@ -51,7 +51,7 @@ export async function getSettings(ctx) {
   const rules = Object.fromEntries(
     KINDS.map((kind) => [kind, rows.find((r) => r.kind === kind) ?? { kind, is_active: false, whatsapp_template_id: null, variable_mapping: [], ...DEFAULTS[kind] }]),
   );
-  return { rules, email_configured: emailConfigured(), whatsapp: await whatsappStatus(ctx.practiceId) };
+  return { rules, email_configured: await emailConfigured(ctx.practiceId), whatsapp: await whatsappStatus(ctx.practiceId) };
 }
 
 async function checkContent(ctx, { whatsapp_template_id: templateId, variable_mapping: mapping = [], email_subject: subject, email_body: body }, { requireChannel }) {
@@ -222,6 +222,7 @@ async function sendOne(row) {
 
   if (row.channel === "email") {
     await mailer.send({
+      practiceId: row.practice_id,
       to: row.to_address,
       subject: fillPlaceholders(content.email_subject, values),
       text: fillPlaceholders(content.email_body, values),
@@ -355,11 +356,12 @@ export async function startBroadcast(ctx, id) {
   if (b.whatsapp_template_id && !(await whatsappStatus(ctx.practiceId)).active) {
     throw new AppError(409, "Connect and switch on WhatsApp before sending.", { code: "WHATSAPP_INACTIVE" });
   }
-  if (!b.whatsapp_template_id && !emailConfigured()) throw new AppError(409, "Email isn't set up on the server.", { code: "EMAIL_NOT_CONFIGURED" });
+  const emailReady = await emailConfigured(ctx.practiceId);
+  if (!b.whatsapp_template_id && !emailReady) throw new AppError(409, "Email isn't set up. Add your email account in Settings › Email.", { code: "EMAIL_NOT_CONFIGURED" });
   const patients = await audiencePatients(ctx.practiceId, b.audience);
   const queued = await queueFor(ctx.practiceId, patients, {
     kind: "broadcast",
-    content: { ...b, email_subject: emailConfigured() ? b.email_subject : null },
+    content: { ...b, email_subject: emailReady ? b.email_subject : null },
     broadcastId: b.id,
     keyOf: (p, channel) => `broadcast:${b.id}:${channel}:${p.patient_id}`,
   });

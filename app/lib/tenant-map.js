@@ -411,6 +411,12 @@ export const TENANT_MAP = {
   "PUT /v1/lab/orders/:id": byId("lab_order"),
   "POST /v1/lab/orders/:id/status": byId("lab_order"),
   "POST /v1/lab/orders/:id/paid": byId("lab_order"),
+
+  // email settings (one SMTP account per practice)
+  "GET /v1/email/settings": "list",
+  "PUT /v1/email/settings": "list",
+  "DELETE /v1/email/settings": "list",
+  "POST /v1/email/test": "list",
 };
 
 // SQL returning { practice_id, patient_id, user_id } for one row id.

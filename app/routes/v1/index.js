@@ -50,6 +50,7 @@ import scheduleRoutes from "../../api/schedule/routes.js";
 import patientMessagesRoutes from "../../api/patient-messages/routes.js";
 import inventoryRoutes from "../../api/inventory/routes.js";
 import labRoutes from "../../api/lab/routes.js";
+import emailRoutes from "../../api/email/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
@@ -116,4 +117,5 @@ export default async function routes(fastify, options) {
   fastify.register(patientMessagesRoutes, { prefix: "patient-messages" });
   fastify.register(inventoryRoutes, { prefix: "inventory" });
   fastify.register(labRoutes, { prefix: "lab" });
+  fastify.register(emailRoutes, { prefix: "email" });
 }
