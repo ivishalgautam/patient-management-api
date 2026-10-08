@@ -54,9 +54,15 @@ Messages go by WhatsApp and email. There is no SMS yet.
   template** (see `docs/whatsapp-cloud.md`). Template variables are filled with
   the patient's first name or fixed text. Sent messages show in the WhatsApp
   inbox.
-- **Email** is sent over SMTP: set `SMTP_SERVER`, `SMTP_PORT`, `SMTP_EMAIL`
-  and `SMTP_PASSWORD`. These fill-ins are available: `{{first_name}}`,
-  `{{name}}`, `{{clinic}}`, and `{{months}}` (recall only).
+- **Email** goes over SMTP. Each practice connects its own mailbox in
+  **Settings › Email setup** (`/v1/email`):
+  - The login is checked with the mail server before it is saved.
+  - The password is stored encrypted and never returned.
+  - A test email can be sent from the same screen.
+  - Without a practice account, the server-wide `SMTP_SERVER`, `SMTP_PORT`,
+    `SMTP_EMAIL` and `SMTP_PASSWORD` are used.
+  - These fill-ins are available in emails: `{{first_name}}`, `{{name}}`,
+    `{{clinic}}`, and `{{months}}` (recall only).
 - **Recall.** Goes to patients whose last visit (a completed appointment or a
   treatment) was N months ago and who have nothing booked. A window of 7 days
   catches up after a missed run.
@@ -108,5 +114,6 @@ Messages go by WhatsApp and email. There is no SMS yet.
 | `20261012000100-chairs.js` | Chairs; `bookings` gains `chair_id`, `checked_in_at`, `seated_at`, `finished_at` |
 | `20261013000100-patient-messages.js` | Rules, broadcasts, and messages (the queue and the log) |
 | `20261014000100-inventory-lab.js` | Suppliers, items, stock movements, labs, lab orders and their events |
+| `20261015000100-email-settings.js` | Each practice's SMTP account |
 
 Each migration seeds the new permissions into the system roles.
