@@ -460,3 +460,16 @@ export async function summary(ctx, { clinic_id: clinicId, from, to }) {
     by_month: byMonth,
   };
 }
+
+// Records an expense from another module (stock purchase, lab bill) in the
+// named category, creating the category if the practice removed it.
+export async function recordExpense(ctx, { categoryName, ...input }) {
+  await ensureCategories(ctx.practiceId);
+  let category = await one(
+    `SELECT id, archived_at FROM expense_categories WHERE practice_id = :practiceId AND lower(name) = lower(:name)`,
+    { practiceId: ctx.practiceId, name: categoryName },
+  );
+  if (!category) category = await createCategory(ctx, { name: categoryName });
+  if (category.archived_at) await updateCategory(ctx, category.id, { archived: false });
+  return createExpense(ctx, { payment_method: "cash", ...input, category_id: category.id });
+}

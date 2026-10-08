@@ -221,6 +221,13 @@ beforeAll(async () => {
     { p: A.patient.id },
   );
   ids.chair = await insert(`INSERT INTO chairs (practice_id, clinic_id, name) VALUES (${practiceOf}, :c, 'Fixture') RETURNING id`);
+  ids.supplier = await insert(`INSERT INTO suppliers (practice_id, name) VALUES (${practiceOf}, 'Fixture') RETURNING id`);
+  ids.inventory_item = await insert(`INSERT INTO inventory_items (practice_id, clinic_id, name) VALUES (${practiceOf}, :c, 'Fixture') RETURNING id`);
+  ids.lab = await insert(`INSERT INTO labs (practice_id, name) VALUES (${practiceOf}, 'Fixture') RETURNING id`);
+  ids.lab_order = await insert(
+    `INSERT INTO lab_orders (practice_id, clinic_id, lab_id, patient_id, number, work_type) VALUES (${practiceOf}, :c, :l, :p, 'LAB-FIXTURE', 'Crown') RETURNING id`,
+    { l: ids.lab, p: A.patient.id },
+  );
   ids.patient_broadcast = await insert(`INSERT INTO patient_broadcasts (practice_id, name) VALUES (${practiceOf}, 'Fixture') RETURNING id`);
   Object.assign(ids, {
     clinic: A.clinic.id,

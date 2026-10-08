@@ -48,6 +48,8 @@ import whatsappRoutes from "../../api/whatsapp/routes.js";
 import accountsRoutes from "../../api/accounts/routes.js";
 import scheduleRoutes from "../../api/schedule/routes.js";
 import patientMessagesRoutes from "../../api/patient-messages/routes.js";
+import inventoryRoutes from "../../api/inventory/routes.js";
+import labRoutes from "../../api/lab/routes.js";
 
 export default async function routes(fastify, options) {
   fastify.addHook("onRequest", jwtVerify.verifyToken);
@@ -112,4 +114,6 @@ export default async function routes(fastify, options) {
   fastify.register(accountsRoutes, { prefix: "accounts" });
   fastify.register(scheduleRoutes, { prefix: "schedule" });
   fastify.register(patientMessagesRoutes, { prefix: "patient-messages" });
+  fastify.register(inventoryRoutes, { prefix: "inventory" });
+  fastify.register(labRoutes, { prefix: "lab" });
 }
