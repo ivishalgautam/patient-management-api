@@ -15,7 +15,8 @@
     "migrate:down": "node scripts/migrate.js down",
     "migrate:status": "node scripts/migrate.js status",
     "migrate:baseline": "node scripts/migrate.js baseline",
-    "preflight": "node scripts/preflight.js"
+    "preflight": "node scripts/preflight.js",
+    "seed:demo": "node scripts/seed-demo.js"
   },
   "dependencies": {
     "@fastify/cookie": "^9.4.0",
