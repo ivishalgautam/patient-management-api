@@ -17,7 +17,8 @@
     "migrate:baseline": "node scripts/migrate.js baseline",
     "preflight": "node scripts/preflight.js",
     "seed:demo": "node scripts/seed-demo.js",
-    "seed:records": "node scripts/seed-treatment-records.js"
+    "seed:records": "node scripts/seed-treatment-records.js",
+    "seed:reviewer": "node scripts/seed-reviewer.js"
   },
   "dependencies": {
     "@fastify/cookie": "^9.4.0",
