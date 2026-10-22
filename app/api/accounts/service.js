@@ -262,7 +262,7 @@ export function computeTotals({ items, discount = 0, tax_percent: taxPercent = 0
 // Paid = what the patient has paid towards the invoice's treatment (cash
 // received plus advance used), capped at the invoice total.
 const INVOICE_COLUMNS = `
-  i.*, u.fullname AS patient_name, u.mobile_number AS patient_phone, cl.name AS clinic_name, cl.address AS clinic_address,
+  i.*, u.fullname AS patient_name, u.mobile_number AS patient_phone, cl.name AS clinic_name, cl.address AS clinic_address, cl.contact_phone AS clinic_phone,
   s.name AS service_name,
   LEAST(i.total, coalesce((SELECT sum(p.amount_paid + coalesce(p.advance_used, 0)) FROM treatment_payments p
                             WHERE p.treatment_id = i.treatment_id), 0))::int AS paid`;

@@ -87,7 +87,8 @@ const getById = async (req, res) => {
 };
 
 const getByTreatmentId = async (req, res) => {
-  const treatment = await table.TreatmentModel.getByPk(req);
+  // The route names its param :treatment_id, not :id.
+  const treatment = await table.TreatmentModel.getByPk(null, req.params.treatment_id);
   if (!treatment)
     return res
       .code(404)

@@ -103,6 +103,8 @@ const envSchema = z.object({
   SMTP_SERVER: optional,
   SMTP_PASSWORD: optional,
   PATIENT_MESSAGES_CRON: z.string().optional().default("0 10 * * *"),
+  EMAIL_INBOUND_SYNC_CRON: z.string().optional().default("*/5 * * * *"),
+  EMAIL_CAMPAIGN_SEND_INTERVAL_MS: z.coerce.number().int().min(0).optional().default(1500),
   PATIENT_MESSAGE_SEND_INTERVAL_MS: z.coerce.number().int().min(0).optional().default(1000),
 
   WAFFLY_LICENSE: optional,
@@ -205,6 +207,10 @@ const config = Object.freeze({
   smtp_port: env.SMTP_PORT,
   smtp_host: env.SMTP_SERVER,
   smtp_password: env.SMTP_PASSWORD,
+  email: {
+    inbound_sync_cron: env.EMAIL_INBOUND_SYNC_CRON,
+    campaign_interval_ms: env.EMAIL_CAMPAIGN_SEND_INTERVAL_MS,
+  },
   patient_messages: {
     cron: env.PATIENT_MESSAGES_CRON,
     send_interval_ms: env.PATIENT_MESSAGE_SEND_INTERVAL_MS,

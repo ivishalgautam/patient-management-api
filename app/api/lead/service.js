@@ -14,6 +14,7 @@ import {
   writeCustomValues,
 } from "../../lib/leads/custom-values.js";
 import { resolveTagIds } from "../tag/service.js";
+import { emitLeadEvent } from "../../lib/email/events.js";
 
 // ---------------------------------------------------------------------------
 // Context helpers. Integrations and public forms call in with a system
@@ -342,6 +343,7 @@ export async function createLead(ctx, input, options = {}) {
       );
       await recomputeFollowUp(lead.id, transaction);
     }
+    emitLeadEvent(transaction, { type: "lead_created", practiceId: ctx.practiceId, leadId: lead.id });
     return { lead, created: true, duplicateOf };
   };
   return outer ? run(outer) : withTransaction(run);
@@ -490,6 +492,7 @@ export async function moveLead(ctx, id, { stage_id: stageId, lost_reason: lostRe
       },
       { transaction },
     );
+    emitLeadEvent(transaction, { type: "stage_reached", practiceId: ctx.practiceId, leadId: id, stageId });
     return { ...lead, stage_id: stageId };
   };
   return outer ? run(outer) : withTransaction(run);

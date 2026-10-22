@@ -4,7 +4,8 @@ import table from "../../db/models.js";
 import { createBooking, notifyBookingConfirmed } from "./service.js";
 import { bookingSchema } from "../../validation-schema/booking.schema.js";
 import { badRequest } from "../../lib/app-error.js";
-import { assertBookable, assertBookingOpen, assertStatusChange } from "../../lib/booking-rules.js";
+import { assertBookable, assertBookingOpen, assertStatusChange, normalizeSlot } from "../../lib/booking-rules.js";
+import { notifyBookingEventSafe } from "../notification/booking-events.js";
 
 const create = async (req, res) => {
   const data = bookingSchema.parse(req.body);
@@ -19,6 +20,7 @@ const create = async (req, res) => {
   notifyBookingConfirmed(result).catch((error) =>
     req.log.error({ err: error }, "booking confirmation not sent"),
   );
+  await notifyBookingEventSafe(req.log, "booked", result.booking.id, { actorUserId: req.user_data.id });
 
   res.send({ status: true, message: "Successfully booked a slot." });
 };
@@ -72,14 +74,21 @@ const updateById = async (req, res) => {
     const clinic = await table.ClinicModel.getById(0, clinicId);
     if (!clinic) return res.code(404).send({ status: false, message: "Clinic not found." });
     const date = req.body.date ?? bookingRecord.date;
-    const slot = req.body.slot ?? bookingRecord.slot;
-    if (clinicId !== bookingRecord.clinic_id || date !== bookingRecord.date || slot !== bookingRecord.slot) {
+    const slot = normalizeSlot(req.body.slot ?? bookingRecord.slot);
+    const moved = clinicId !== bookingRecord.clinic_id || date !== bookingRecord.date || slot !== normalizeSlot(bookingRecord.slot);
+    if (moved) {
       await assertBookable({ clinic, date, slot, excludeBookingId: bookingRecord.id }, { transaction });
     }
     req.body = { clinic_id: clinicId, doctor_id: clinic.doctor_id, date, slot };
 
     const data = await table.BookingModel.update(req, 0, { transaction });
     await transaction.commit();
+    if (moved) {
+      await notifyBookingEventSafe(req.log, "rescheduled", bookingRecord.id, {
+        actorUserId: req.user_data.id,
+        previous: { date: bookingRecord.date, slot: bookingRecord.slot },
+      });
+    }
     res.send({ status: true, data: data, message: "Updated." });
   } catch (error) {
     await transaction.rollback();
@@ -148,6 +157,9 @@ const updateStatus = async (req, res) => {
     }
 
     await transaction.commit();
+    if (status === "completed" || status === "canceled") {
+      await notifyBookingEventSafe(req.log, status, bookingRecord.id, { actorUserId: req.user_data.id });
+    }
     res.send({ status: true, data: data, message: "Updated." });
   } catch (error) {
     await transaction.rollback();

@@ -223,6 +223,7 @@ async function sendOne(row) {
   if (row.channel === "email") {
     await mailer.send({
       practiceId: row.practice_id,
+      patientId: row.patient_id,
       to: row.to_address,
       subject: fillPlaceholders(content.email_subject, values),
       text: fillPlaceholders(content.email_body, values),

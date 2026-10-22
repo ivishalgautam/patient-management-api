@@ -1,6 +1,6 @@
 "use strict";
 import constants from "../../lib/constants/index.js";
-import { DataTypes, Deferrable } from "sequelize";
+import { DataTypes, Deferrable, QueryTypes } from "sequelize";
 
 let TreatmentHistoryModel = null;
 
@@ -97,13 +97,16 @@ const updateById = async (req, id) => {
     }
   );
 };
+// Newest first, with the author's name like the other treatment records.
 const getByTreatmentId = async (req, treatment_id) => {
-  return await TreatmentHistoryModel.findAll({
-    where: {
-      treatment_id: req?.params?.treatment_id || treatment_id,
-    },
-    raw: true,
-  });
+  return await TreatmentHistoryModel.sequelize.query(
+    `SELECT th.*, usr.fullname AS added_by
+       FROM ${constants.models.TREATMENT_HISTORY_TABLE} th
+       LEFT JOIN ${constants.models.USER_TABLE} usr ON usr.id = th.added_by
+      WHERE th.treatment_id = :treatmentId
+      ORDER BY th.created_at DESC`,
+    { type: QueryTypes.SELECT, replacements: { treatmentId: req?.params?.treatment_id || treatment_id }, raw: true },
+  );
 };
 
 const getByPk = async (req, id) => {

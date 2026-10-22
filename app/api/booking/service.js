@@ -4,11 +4,12 @@ import table from "../../db/models.js";
 import { one } from "../../db/sql.js";
 import { QUEUES, enqueue } from "../../jobs/queue.js";
 import { notFound } from "../../lib/app-error.js";
-import { assertBookable } from "../../lib/booking-rules.js";
+import { assertBookable, normalizeSlot } from "../../lib/booking-rules.js";
 
 // Books a slot for a patient at a clinic. Patients book for themselves;
 // staff pass patient_id. Returns the created booking.
-export async function createBooking({ clinicId, patientId, date, slot }, { user, transaction }) {
+export async function createBooking({ clinicId, patientId, date, slot: rawSlot }, { user, transaction }) {
+  const slot = normalizeSlot(rawSlot);
   const clinic = await table.ClinicModel.getById(0, clinicId);
   if (!clinic) throw notFound("Clinic not found!");
 

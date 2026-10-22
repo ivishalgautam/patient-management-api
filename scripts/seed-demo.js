@@ -4,7 +4,9 @@
 // labs + lab orders, leads (pipeline, follow-ups, tags, custom fields),
 // forms + submissions, lead imports, WhatsApp templates/inbox/campaigns,
 // email templates/inbox/campaigns/automation, patient message rules +
-// broadcasts, notifications and failed background jobs.
+// broadcasts, notifications and failed background jobs. Finally every
+// active treatment gets clinical records wherever a section is blank
+// (see seed-treatment-records.js, also runnable alone as seed:records).
 //
 //   npm run seed:demo            # refuses to run if demo data already exists
 //   npm run seed:demo -- --reset # deletes the demo rows first, then reseeds
@@ -14,6 +16,7 @@
 import "dotenv/config";
 import crypto from "node:crypto";
 import pg from "pg";
+import { resetTreatmentRecords, seedTreatmentRecords } from "./seed-treatment-records.js";
 
 const RESET = process.argv.includes("--reset");
 const uuid = () => crypto.randomUUID();
@@ -132,6 +135,7 @@ async function main() {
     ]) {
       await client.query(sql, [P]);
     }
+    await resetTreatmentRecords(client);
   }
 
   // ---- reference data -------------------------------------------------
@@ -761,6 +765,10 @@ async function main() {
     ],
     { returning: null },
   );
+
+  // ---- Treatment records -------------------------------------------------
+  console.log("Treatment records (active treatments)");
+  await seedTreatmentRecords(client);
 
   await client.query("COMMIT");
   console.log("\nDemo data seeded for practice", practice.name);

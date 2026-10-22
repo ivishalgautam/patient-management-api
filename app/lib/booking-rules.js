@@ -18,24 +18,32 @@ export async function clinicToday({ transaction } = {}) {
   return today;
 }
 
+// Schedules store slots as "HH:MM:SS"; the apps send "HH:MM". Compare and
+// store the long form so both match.
+export const normalizeSlot = (slot) => {
+  const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(String(slot ?? "").trim());
+  return m ? `${m[1].padStart(2, "0")}:${m[2]}:${m[3] ?? "00"}` : slot;
+};
+
 const weekday = (date) => new Date(`${date}T00:00:00Z`).getUTCDay();
 
 // A slot can be booked (or a booking moved to it) when the date isn't in
 // the past, the clinic works that day, the time is in its schedule, it
 // isn't blocked, and there's room. excludeBookingId: the booking being moved.
-export async function assertBookable({ clinic, date, slot, excludeBookingId = null }, { transaction } = {}) {
+export async function assertBookable({ clinic, date, slot: rawSlot, excludeBookingId = null }, { transaction } = {}) {
+  const slot = normalizeSlot(rawSlot);
   if (!DATE.test(String(date)) || Number.isNaN(Date.parse(date))) throw badRequest("Use a date like 2026-10-15.");
   if (date < (await clinicToday({ transaction }))) throw rule("Appointments can't be booked in the past.", "BOOKING_IN_PAST");
 
   const schedule = await one(`SELECT slots, days_off FROM slots WHERE clinic_id = :clinicId LIMIT 1`, { clinicId: clinic.id }, { transaction });
-  if (!schedule?.slots?.includes(slot)) throw new AppError(404, "Slot not found.", { code: "SLOT_NOT_IN_SCHEDULE" });
+  if (!(schedule?.slots ?? []).some((s) => normalizeSlot(s) === slot)) throw new AppError(404, "Slot not found.", { code: "SLOT_NOT_IN_SCHEDULE" });
   if ((schedule.days_off ?? []).includes(weekday(date))) throw rule("The clinic is closed on that day.", "CLINIC_DAY_OFF");
 
   const block = await one(`SELECT type, slots FROM blocked_slots WHERE clinic_id = :clinicId AND date = :date LIMIT 1`, {
     clinicId: clinic.id,
     date,
   }, { transaction });
-  if (block && (block.type === "date" || (block.slots ?? []).includes(slot))) {
+  if (block && (block.type === "date" || (block.slots ?? []).some((s) => normalizeSlot(s) === slot))) {
     throw rule("That time is blocked in the clinic's calendar.", "SLOT_BLOCKED");
   }
 

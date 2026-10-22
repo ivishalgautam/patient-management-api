@@ -19,6 +19,11 @@ export const QUEUES = {
   WHATSAPP_CAMPAIGN: "whatsapp-cloud.campaign",
   PATIENT_MESSAGES_DAILY: "patient-messages.daily",
   PATIENT_MESSAGES_DELIVER: "patient-messages.deliver",
+  EMAIL_SEND: "email.send",
+  EMAIL_CAMPAIGN: "email.campaign",
+  EMAIL_CAMPAIGN_DISPATCH: "email.campaign-dispatch",
+  EMAIL_AUTOMATION: "email.automation",
+  EMAIL_INBOUND_SYNC: "email.inbound-sync",
 };
 
 // Retry policy per queue.
@@ -35,6 +40,11 @@ const QUEUE_OPTIONS = {
   [QUEUES.WHATSAPP_CAMPAIGN]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
   [QUEUES.PATIENT_MESSAGES_DAILY]: { retryLimit: 2, retryDelay: 300 },
   [QUEUES.PATIENT_MESSAGES_DELIVER]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
+  [QUEUES.EMAIL_SEND]: { retryLimit: 0 },
+  [QUEUES.EMAIL_CAMPAIGN]: { retryLimit: 3, retryDelay: 60, retryBackoff: true },
+  [QUEUES.EMAIL_CAMPAIGN_DISPATCH]: { retryLimit: 0 },
+  [QUEUES.EMAIL_AUTOMATION]: { retryLimit: 3, retryDelay: 30, retryBackoff: true },
+  [QUEUES.EMAIL_INBOUND_SYNC]: { retryLimit: 0 },
 };
 
 export function getBoss() {

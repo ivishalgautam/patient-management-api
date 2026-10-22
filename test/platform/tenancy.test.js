@@ -228,6 +228,21 @@ beforeAll(async () => {
     `INSERT INTO lab_orders (practice_id, clinic_id, lab_id, patient_id, number, work_type) VALUES (${practiceOf}, :c, :l, :p, 'LAB-FIXTURE', 'Crown') RETURNING id`,
     { l: ids.lab, p: A.patient.id },
   );
+  ids.email_account = await insert(
+    `INSERT INTO email_accounts (practice_id, email_address, smtp_host, smtp_port, credentials_encrypted) VALUES (${practiceOf}, 'fx@clinic.test', 'smtp.test', 587, 'x') RETURNING id`,
+  );
+  ids.email_template = await insert(`INSERT INTO email_templates (practice_id, name, subject) VALUES (${practiceOf}, 'Fixture', 'Hi') RETURNING id`);
+  ids.email_message = await insert(
+    `INSERT INTO email_messages (practice_id, direction, folder, status, from_address) VALUES (${practiceOf}, 'inbound', 'inbox', 'received', 'a@b.test') RETURNING id`,
+  );
+  ids.email_campaign = await insert(
+    `INSERT INTO email_campaigns (practice_id, name, template_id, audience_type) VALUES (${practiceOf}, 'Fixture', :t, 'upload') RETURNING id`,
+    { t: ids.email_template },
+  );
+  ids.email_automation_rule = await insert(
+    `INSERT INTO email_automation_rules (practice_id, name, trigger_type, template_id) VALUES (${practiceOf}, 'Fixture', 'lead_created', :t) RETURNING id`,
+    { t: ids.email_template },
+  );
   ids.patient_broadcast = await insert(`INSERT INTO patient_broadcasts (practice_id, name) VALUES (${practiceOf}, 'Fixture') RETURNING id`);
   Object.assign(ids, {
     clinic: A.clinic.id,

@@ -7,6 +7,7 @@ import config from "../../config/index.js";
 import { select, one, exec } from "../../db/sql.js";
 import { AppError, badRequest, conflict, notFound } from "../../lib/app-error.js";
 import { clinicToday } from "../../lib/booking-rules.js";
+import { notifyBookingEventSafe } from "../notification/booking-events.js";
 
 const rule = (message, code) => new AppError(400, message, { code });
 
@@ -169,6 +170,7 @@ export async function checkIn(ctx, id) {
   if (b.checked_in_at) throw rule("The patient is already checked in.", "ALREADY_CHECKED_IN");
   if (b.date > (await clinicToday())) throw rule("Patients can only be checked in on the day of their appointment.", "NOT_TODAY");
   await exec(`UPDATE bookings SET checked_in_at = now(), updated_at = now() WHERE id = :id`, { id });
+  await notifyBookingEventSafe(null, "checked_in", id, { actorUserId: ctx.userId });
   return reload(ctx, id);
 }
 
@@ -187,6 +189,7 @@ export async function seat(ctx, id, { chair_id: chairId }) {
       WHERE id = :id`,
     { id, chairId: target },
   );
+  await notifyBookingEventSafe(null, "seated", id, { actorUserId: ctx.userId });
   return reload(ctx, id);
 }
 

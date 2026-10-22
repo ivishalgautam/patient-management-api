@@ -3,10 +3,11 @@ import config from "../../config/index.js";
 import { select, one, exec } from "../../db/sql.js";
 import { notFound } from "../../lib/app-error.js";
 
-// In-app notifications for the signed-in user (follow-up reminders today).
+// In-app notifications for the signed-in user: lead follow-up reminders and
+// appointment events (see booking-events.js).
 export async function listNotifications(ctx, { unread, page = 1, limit = 20 }) {
   const rows = await select(
-    `SELECT id, type, title, body, link, lead_id, read_at, created_at, count(*) OVER()::int AS total
+    `SELECT id, type, title, body, link, lead_id, booking_id, read_at, created_at, count(*) OVER()::int AS total
        FROM user_notifications
       WHERE user_id = :userId ${unread ? "AND read_at IS NULL" : ""}
       ORDER BY created_at DESC LIMIT :limit OFFSET :offset`,

@@ -11,6 +11,9 @@ import { processImport, purgeImportRows } from "../api/lead-import/service.js";
 import { purgeNotifications, sendFollowUpReminders } from "../api/notification/service.js";
 import { runCampaign } from "../api/whatsapp/service.js";
 import { deliverPending, runDaily } from "../api/patient-messages/service.js";
+import { deliverMessage, syncAll as syncEmailInbound } from "../api/email/messages.service.js";
+import { dispatchScheduled, runCampaign as runEmailCampaign } from "../api/email/campaigns.service.js";
+import { handleLeadEvent } from "../api/email/automation.service.js";
 import {
   findDueReminders,
   sendReminder,
@@ -47,6 +50,11 @@ export const HANDLERS = {
   [QUEUES.WHATSAPP_CAMPAIGN]: each((data) => runCampaign(data)),
   [QUEUES.PATIENT_MESSAGES_DAILY]: each(() => runDaily()),
   [QUEUES.PATIENT_MESSAGES_DELIVER]: each((data) => deliverPending(data)),
+  [QUEUES.EMAIL_SEND]: each((data) => deliverMessage(data)),
+  [QUEUES.EMAIL_CAMPAIGN]: each((data) => runEmailCampaign(data)),
+  [QUEUES.EMAIL_CAMPAIGN_DISPATCH]: each(() => dispatchScheduled()),
+  [QUEUES.EMAIL_AUTOMATION]: each((data) => handleLeadEvent(data)),
+  [QUEUES.EMAIL_INBOUND_SYNC]: each(() => syncEmailInbound()),
 };
 
 export default HANDLERS;

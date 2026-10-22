@@ -1,71 +1,61 @@
 "use strict";
-// Outgoing email. A practice's own SMTP settings (email_settings, set in the
-// dashboard) win; otherwise the server-wide SMTP_* settings from config are
-// used. `smtp.createTransport` and `mailer.send` are the seams tests stub.
-import nodemailer from "nodemailer";
+// Outgoing email for other modules (patient messages). Sends from the
+// practice's default email account and records the message in the
+// mailbox's Sent folder; falls back to the server-wide SMTP_* settings
+// when the practice has no account. `mailer.send` is the seam tests stub.
 import config from "../config/index.js";
 import { one } from "../db/sql.js";
-import { decryptJson } from "./integrations/secrets.js";
+import { sendFromAccount, smtp } from "./email/transport.js";
 
-export const smtp = { createTransport: (options) => nodemailer.createTransport(options) };
+export { smtp };
 
 const serverConfigured = () => !!(config.smtp_host && config.smtp_from_email && config.smtp_password);
 
-function serverSettings() {
+// The account a practice sends from: settings' default, else the marked
+// default, else any connected one.
+export async function defaultAccount(practiceId) {
+  if (!practiceId) return null;
+  return one(
+    `SELECT a.* FROM email_accounts a LEFT JOIN email_settings s ON s.practice_id = a.practice_id
+      WHERE a.practice_id = :practiceId AND a.status <> 'paused' AND coalesce(s.is_enabled, true)
+      ORDER BY (a.id = s.default_account_id) DESC NULLS LAST, a.is_default DESC, a.created_at LIMIT 1`,
+    { practiceId },
+  );
+}
+
+export const emailConfigured = async (practiceId) => !!(await defaultAccount(practiceId)) || serverConfigured();
+
+async function sendFromServer({ to, subject, text, html, fromName }) {
   const port = Number(config.smtp_port) || 587;
-  return {
-    source: "server",
-    transport: { host: config.smtp_host, port, secure: port === 465, auth: { user: config.smtp_from_email, pass: config.smtp_password } },
-    from_email: config.smtp_from_email,
-    from_name: null,
-    reply_to: null,
-  };
-}
-
-// Transport options for a stored settings row (or a draft being tested).
-export function transportOptions({ host, port, secure, username, password }) {
-  return {
-    host,
+  const transport = smtp.createTransport({
+    host: config.smtp_host,
     port,
-    secure: !!secure,
-    auth: { user: username, pass: password },
-    connectionTimeout: 15_000,
-    greetingTimeout: 15_000,
-  };
+    secure: port === 465,
+    auth: { user: config.smtp_from_email, pass: config.smtp_password },
+  });
+  const from = fromName ? `"${fromName.replace(/["\\]/g, "")}" <${config.smtp_from_email}>` : config.smtp_from_email;
+  const info = await transport.sendMail({ from, to, subject, text, ...(html ? { html } : {}) });
+  return info?.messageId ?? null;
 }
-
-// The settings a practice sends with, or null when email isn't set up.
-export async function resolveSettings(practiceId) {
-  if (practiceId) {
-    const row = await one(`SELECT * FROM email_settings WHERE practice_id = :practiceId AND is_active`, { practiceId });
-    if (row) {
-      return {
-        source: "practice",
-        transport: transportOptions({ ...row, password: decryptJson(row.password_encrypted)?.password }),
-        from_email: row.from_email,
-        from_name: row.from_name,
-        reply_to: row.reply_to,
-      };
-    }
-  }
-  return serverConfigured() ? serverSettings() : null;
-}
-
-export const emailConfigured = async (practiceId) => !!(await resolveSettings(practiceId));
-
-const fromHeader = (email, name) => (name ? `"${String(name).replace(/["\\]/g, "")}" <${email}>` : email);
 
 export const mailer = {
-  // fromName is used only when the settings don't set a sender name.
-  async send({ practiceId = null, to, subject, text, fromName }) {
-    const settings = await resolveSettings(practiceId);
-    if (!settings) throw new Error("Email isn't set up. Add your email account in Settings › Email.");
-    return smtp.createTransport(settings.transport).sendMail({
-      from: fromHeader(settings.from_email, settings.from_name || fromName),
-      ...(settings.reply_to ? { replyTo: settings.reply_to } : {}),
-      to,
-      subject,
-      text,
-    });
+  // Returns { messageId, accountId }. patientId / leadId link the Sent copy.
+  async send({ practiceId = null, to, subject, text, html, fromName, patientId = null, leadId = null }) {
+    const account = await defaultAccount(practiceId);
+    if (!account) {
+      if (!serverConfigured()) throw new Error("Email isn't set up. Connect an email account in Email › Accounts.");
+      return { messageId: await sendFromServer({ to, subject, text, html, fromName }), accountId: null };
+    }
+    const settings = await one(`SELECT default_from_name FROM email_settings WHERE practice_id = :practiceId`, { practiceId });
+    const name = account.display_name || settings?.default_from_name || fromName;
+    const messageId = await sendFromAccount(account, { fromName: name, to, subject, html, text });
+    await one(
+      `INSERT INTO email_messages (practice_id, account_id, direction, folder, status, from_address, from_name, to_addresses,
+                                   subject, body_html, body_text, patient_id, lead_id, provider_message_id, sent_at)
+       VALUES (:practiceId, :accountId, 'outbound', 'sent', 'sent', :from, :name, ARRAY[:to]::text[], :subject, :html, :text,
+               :patientId, :leadId, :messageId, now()) RETURNING id`,
+      { practiceId, accountId: account.id, from: account.email_address, name, to, subject, html: html ?? null, text, patientId, leadId, messageId },
+    );
+    return { messageId, accountId: account.id };
   },
 };

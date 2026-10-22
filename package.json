@@ -16,7 +16,8 @@
     "migrate:status": "node scripts/migrate.js status",
     "migrate:baseline": "node scripts/migrate.js baseline",
     "preflight": "node scripts/preflight.js",
-    "seed:demo": "node scripts/seed-demo.js"
+    "seed:demo": "node scripts/seed-demo.js",
+    "seed:records": "node scripts/seed-treatment-records.js"
   },
   "dependencies": {
     "@fastify/cookie": "^9.4.0",
@@ -32,8 +33,10 @@
     "fastify": "^4.18.0",
     "fastify-plugin": "^4.5.1",
     "fastify-raw-body": "^4.3.0",
+    "imapflow": "^1.7.8",
     "jsonwebtoken": "^9.0.0",
     "libphonenumber-js": "^1.13.14",
+    "mailparser": "^3.9.36",
     "moment": "^2.29.4",
     "nodemailer": "^6.10.1",
     "pg": "^8.11.0",

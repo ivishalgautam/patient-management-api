@@ -19,6 +19,7 @@ export function applyTestEnv() {
   process.env.SMTP_EMAIL = "clinic@test.dev";
   process.env.SMTP_PASSWORD = "smtp-test-password";
   process.env.PATIENT_MESSAGE_SEND_INTERVAL_MS = "0";
+  process.env.EMAIL_CAMPAIGN_SEND_INTERVAL_MS = "0";
   process.env.INTEGRATION_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
   process.env.FACEBOOK_APP_ID = "test-app-id";
   process.env.FACEBOOK_APP_SECRET = "test-app-secret";
