@@ -42,3 +42,4 @@ next-env.d.ts
 # database dumps (may contain patient data)
 backup.sql
 *.sql
+!migrations/sql/*.sql
