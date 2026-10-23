@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 
 export default [
-  { ignores: ["node_modules/**", "public/**", "uploads/**", "coverage/**"] },
+  { ignores: ["node_modules/**", "public/**", "uploads/**", "coverage/**", "website/**"] },
   js.configs.recommended,
   {
     languageOptions: {
